@@ -13,4 +13,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added: `packages/shared` — `BUCKETS`/`Bucket` constant, consumed by both apps via `workspace:*` (#3226662418)
 - Added: stub trading provider (`apps/api/src/providers/stub`) implementing `getPositions`/`getCash`/`getHistory` with fake per-bucket data, selected via `PROVIDER_MODE=stub` (#3226662452)
 - Added: Postgres + Drizzle wiring in `apps/api` — `drizzle.config.ts`, lazy `DATABASE_URL` client, minimal multi-user schema (`users`, `allowlist`); no live DB touched by tests (#3226662656)
+- Added: CI pipeline (`.github/workflows/ci.yml`) — install, lint, format check, test, build on every push to `main` and every PR, stub mode only, no secrets configured (#3226662384)
+- Added: `docs/ARCHITECTURE.md` and `docs/FEATURES.md`, plus a `docs/DESIGN.md` placeholder blocked on the Phase 1 Claude Design handover (#3226662383)
+- Added: this changelog, in keep-a-changelog format (#3226660804)
 - Changed: Phase 0's DB task rescoped from SQLite to Postgres + multi-user schema to match the updated CLAUDE.md; see `docs/phases/phase-0.md`
