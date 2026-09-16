@@ -36,7 +36,10 @@ finance-app-personal/
 │       ├── fixtures/recorded/  ← real T212 practice / Yahoo / Alpha Vantage responses, anonymised, for tests to replay
 │       └── src/
 │           ├── app.ts       ← Fastify instance: guard, then routes
-│           ├── server.ts    ← process entrypoint, listens on PORT
+│           ├── server.ts    ← process entrypoint: config, redacted logger, listens on PORT
+│           ├── config.ts    ← PROVIDER_MODE + master key, checked at startup
+│           ├── logging.ts   ← pino redaction paths
+│           ├── crypto/      ← secret box: provider keys sealed at rest (AES-256-GCM)
 │           ├── auth/       ← Supabase JWT verification, allowlist, guard, /me, waitlist
 │           ├── db/
 │           │   ├── client.ts   ← lazy Drizzle/Postgres client (getDb())
@@ -281,14 +284,40 @@ Auth is the first thing that needs a live database to exercise by hand; its test
 
 ## Env flags
 
-| Var              | Purpose                                                                                                                                         | Default                                     |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| `PROVIDER_MODE`  | `stub` (fake data) or `live` (real providers, from Phase 2+)                                                                                    | `stub`                                      |
-| `DATABASE_URL`   | Postgres connection string                                                                                                                      | none — required once a route touches the DB |
-| `PORT`           | apps/api listen port                                                                                                                            | `3001`                                      |
-| `STUB_STALENESS` | Stub only: force the staleness ladder, e.g. `Degen:2` (amber), `Degen:failed` (red), `all:closed`. Unreadable values stop the server at startup | empty — everything fresh                    |
+| Var                                                  | Purpose                                                                                                                                         | Default                                     |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `PROVIDER_MODE`                                      | `stub` (fake data) or `t212` (Trading 212, Phase 2+). `t212` needs `MASTER_KEY`, and until Phase 2 wires the read routes the server refuses it  | `stub`                                      |
+| `MASTER_KEY`                                         | 32 random bytes, base64 — seals provider keys. **Render only**; never in Supabase, git or chat. `pnpm --filter api master-key` makes one        | none — required for `t212`                  |
+| `MASTER_KEY_VERSION`                                 | Which version `MASTER_KEY` is; stamped on every sealed value                                                                                    | `1`                                         |
+| `MASTER_KEY_PREVIOUS`, `MASTER_KEY_PREVIOUS_VERSION` | Only during a rotation: the old key, so old values can be opened and re-sealed                                                                  | none                                        |
+| `LOG_LEVEL`                                          | pino level for the server                                                                                                                       | `info`                                      |
+| `DATABASE_URL`                                       | Postgres connection string                                                                                                                      | none — required once a route touches the DB |
+| `PORT`                                               | apps/api listen port                                                                                                                            | `3001`                                      |
+| `STUB_STALENESS`                                     | Stub only: force the staleness ladder, e.g. `Degen:2` (amber), `Degen:failed` (red), `all:closed`. Unreadable values stop the server at startup | empty — everything fresh                    |
 
-Provider secrets (`T212_API_KEY`, `KRAKEN_API_KEY`, etc.) don't exist as env vars yet — Phase 2+ moves to per-user encrypted keys stored in Postgres, not global env vars (CLAUDE.md section 3, "Key storage").
+Provider keys are never server env vars in a deployed Pip: each user's keys are sealed per user in Postgres (below). `T212_API_KEY`/`T212_API_SECRET` in a local `apps/api/.env` exist only for developer verification against a practice account (Phase 2 task 1), and are never read by the server.
+
+## Key encryption
+
+`crypto/secrets.ts` is the only code that seals or opens a provider key (CLAUDE.md s3 "Key storage", hard line 6).
+
+- **AES-256-GCM** with `MASTER_KEY`, a fresh random 12-byte IV per value, and the 16-byte auth tag stored alongside. Stored form: `pip:<keyVersion>:<iv>:<tag>:<ciphertext>` (base64url parts).
+- **Bound to where it belongs.** Every seal and open takes a context — `user:<id>|<provider>|<account kind>|key` or `…|secret` — passed to GCM as additional data. A value copied into another user's row, or from the key column to the secret column, fails to open instead of decrypting as someone else's credential.
+- **Where the halves live.** Ciphertext in Supabase; `MASTER_KEY` only in Render's environment. Reading a broker key needs both. Opening happens in Fastify's memory for the moment of a provider call; nothing returns plaintext to a client, and failures say only "Could not open sealed value".
+- **Startup.** `config.ts` refuses `PROVIDER_MODE=t212` without a valid `MASTER_KEY` (32 bytes, base64); error messages never echo the key.
+- **Logging.** The server's pino logger redacts auth and job-secret headers and any `key`, `secret`, `apiKey`, `apiSecret`, `password`, `accessToken` or `masterKey` field (`logging.ts`); a test logs real-looking values and checks none reach the output. Fastify's default request serializer logs no headers or bodies in the first place.
+
+**Losing `MASTER_KEY`** makes every stored key unreadable. Nothing else is lost: users re-paste their keys (they're read-only until Phase 8). Keep a copy somewhere safe outside Render and Supabase — a password manager.
+
+### Rotating `MASTER_KEY` (runbook)
+
+1. Generate a new key: `pnpm --filter api master-key`. Don't paste it anywhere but the next step.
+2. In Render, set `MASTER_KEY_PREVIOUS` = the current `MASTER_KEY`, `MASTER_KEY_PREVIOUS_VERSION` = the current `MASTER_KEY_VERSION`, then `MASTER_KEY` = the new key and `MASTER_KEY_VERSION` = current + 1. Deploy. New seals use the new key; old values still open.
+3. Re-seal every stored credential with the new key (the re-seal job arrives with the credentials table, Phase 2 task 3: open with the old version, seal with the new, in one transaction per row; `isStale` finds what's left).
+4. Confirm nothing is stale, then remove `MASTER_KEY_PREVIOUS` and `MASTER_KEY_PREVIOUS_VERSION` and deploy.
+5. Update the offline copy of the key.
+
+Never delete the old key before step 4 — anything still sealed with it becomes unreadable.
 
 ## How stub mode works
 

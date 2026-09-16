@@ -1,4 +1,4 @@
-import Fastify from "fastify";
+import Fastify, { type FastifyServerOptions } from "fastify";
 import { dbAllowlistStore, type AllowlistStore } from "./auth/allowlist.js";
 import { registerAuthGuard } from "./auth/guard.js";
 import { refuseEveryone, type TokenVerifier } from "./auth/jwt.js";
@@ -22,10 +22,12 @@ export interface BuildAppOptions {
   waitlistStore?: WaitlistStore;
   /** Prices, history and freshness. Phase 1 has only the stub. */
   marketData?: MarketData;
+  /** Off in tests; `server.ts` passes the redacted production logger. */
+  logger?: FastifyServerOptions["logger"];
 }
 
 export function buildApp(options: BuildAppOptions = {}) {
-  const app = Fastify({ logger: false });
+  const app = Fastify({ logger: options.logger ?? false });
   const allowlist = options.allowlistStore ?? dbAllowlistStore;
 
   // The guard goes on first and covers everything registered afterwards, so a

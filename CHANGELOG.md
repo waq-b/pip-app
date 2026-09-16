@@ -7,6 +7,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Phase 2 — T212 paper + market data
 
+- Added: secret box for provider keys — AES-256-GCM with `MASTER_KEY`, random IV per value, sealed values bound to user + provider + account + field, key version stamped for rotation; vague failures; 13 tests incl. tampering, wrong key and a value moved between rows (#3228268479)
+- Added: startup config — `PROVIDER_MODE` validated, `t212` refused without a valid `MASTER_KEY`; `pnpm --filter api master-key` generates one (#3228268479)
+- Added: server logger with pino redaction of auth and job-secret headers and key-shaped fields, with a test that real-looking secrets never reach the log (#3228268479)
+- Added: key encryption section and `MASTER_KEY` rotation runbook in ARCHITECTURE.md (#3228268479)
 - Added: recorded, anonymised responses from a Trading 212 practice ISA, Yahoo's chart endpoint and Alpha Vantage in `apps/api/fixtures/recorded/`, for tests to replay (#3228269249)
 - Changed: CLAUDE.md s13 rewritten from real calls — T212 key + secret auth, current endpoints, bare-403 missing permissions, no account type, pence prices, ticker-not-ISIN mapping, rate limits; Yahoo and Alpha Vantage facts; Supabase free-tier facts (#3228269249)
 - Added: task 1 findings in `docs/phases/phase-2.md` — map by ticker, market hours from T212 exchange schedules, ISA vs Invest must be asked (#3228269249)
