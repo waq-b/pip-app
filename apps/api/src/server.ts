@@ -60,9 +60,10 @@ function realAccounts(): Partial<BuildAppOptions> {
     ? { clientFor: (key: string, secret: string) => createKrakenClient({ key, secret }), directory }
     : undefined;
 
+  const rulesStore = dbRulesStore(db);
   return {
-    rulesStore: dbRulesStore(db),
-    readModel: liveReadModel({ db, marketFor }),
+    rulesStore,
+    readModel: liveReadModel({ db, marketFor, rulesStore }),
     connections: liveConnectionService({
       db,
       box,

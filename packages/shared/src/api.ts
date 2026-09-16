@@ -62,10 +62,25 @@ export interface SeriesPoint {
  */
 export type BucketStatus = "live" | "not_connected" | "syncing";
 
+/**
+ * What the rules engine says about a pot (Phase 4): on its line, drifted from
+ * its target, over its cap, or not judged because it isn't connected.
+ */
+export type RuleStatus = "ok" | "drifted" | "over_cap" | "unavailable";
+
+/** How far Side Bet is over its cap — pounds first. */
+export interface OverBy {
+  percent: Percent;
+  amount: Pence;
+}
+
 /** A pot as it appears on the home screen. */
 export interface BucketSummary {
   bucket: Bucket;
   status?: BucketStatus;
+  /** From the rules engine; the same answer `/rules` gives. */
+  ruleStatus?: RuleStatus;
+  overBy?: OverBy;
   /** True when there isn't enough history to state `change` for the timeframe asked. */
   changeUnavailable?: boolean;
   value: Pence;
@@ -90,6 +105,8 @@ export interface PortfolioSummary {
   changeUnavailable?: boolean;
   /** "What changed" isn't built from real accounts yet (Phase 2 decision 4). */
   activityComingSoon?: boolean;
+  /** A cap is broken: the red dot on Rules. Same engine as `/rules`. */
+  rulesNeedAttention?: boolean;
 }
 
 export interface Holding {
@@ -118,6 +135,8 @@ export interface MonthlyContribution {
 export interface BucketDetail {
   bucket: Bucket;
   status?: BucketStatus;
+  ruleStatus?: RuleStatus;
+  overBy?: OverBy;
   changeUnavailable?: boolean;
   value: Pence;
   change: Change;
@@ -175,15 +194,37 @@ export interface BucketRule {
   plain: string;
   /** False when the pot has no source yet; its actual is then meaningless. Absent means true. */
   available?: boolean;
+  status?: RuleStatus;
+  /**
+   * The target it's judged against: the one set, scaled over connected pots
+   * when some aren't connected. For Side Bet, the cap itself.
+   */
+  judgedAgainstPercent?: Percent;
+  /** Actual − judged against, in points (targets only). */
+  driftPoints?: number;
   /** Degen only, and only when it is over: drives the one red thing in the app. */
-  overBy?: {
-    percent: Percent;
-    amount: Pence;
-  };
+  overBy?: OverBy;
 }
 
 export interface RulesView {
   rules: BucketRule[];
+  /** The two numbers the user sets; Foundation is the rest. */
+  settings?: { handpickedTarget: number; sideBetCap: number };
+  /** ISO timestamp of the last change; absent until the user first changes a rule. */
+  lastChangedAt?: string;
+  /** A cap is broken. */
+  needsAttention?: boolean;
+  /** Pots left out of the shape because they aren't connected — targets are scaled over the rest. */
+  leftOut?: Bucket[];
+  /**
+   * When the cap is broken: the two amounts that would bring Side Bet back to
+   * it. Arithmetic, not advice; shown with equal weight.
+   */
+  fixIt?: {
+    outOfSideBet: Pence;
+    /** Null when the cap is 0 — no amount would do. */
+    intoOtherPots: Pence | null;
+  };
   /** What the user pays in monthly, as set up at their broker — Pip only reads it. */
   monthlySplit: {
     total: Pence;

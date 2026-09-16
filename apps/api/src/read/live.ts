@@ -1,10 +1,8 @@
 import {
   BUCKETS,
-  displayNameFor,
   type Bucket,
   type BucketDetail,
   type BucketFreshness,
-  type BucketRule,
   type BucketStatus,
   type BucketSummary,
   type Change,
@@ -42,6 +40,9 @@ import {
 import type { withFallback } from "../market/sources/fallback.js";
 import { londonDay } from "../sync/poll.js";
 import { bucketForAccountKind, poundsPerUnit } from "../valuation/value.js";
+import { evaluateRules } from "../rules/engine.js";
+import { dbRulesStore, type RulesStore } from "../rules/store.js";
+import { rulesView, ruleFlagFor } from "../rules/view.js";
 import type { ReadModel, ReadUser } from "./model.js";
 
 /**
@@ -66,9 +67,9 @@ export interface LiveReadOptions {
   now?: () => Date;
   /** How long a read waits for due prices before answering with what's cached. */
   refreshWaitMs?: number;
+  /** Where the user's rules are kept; defaults to the database. */
+  rulesStore?: RulesStore;
 }
-
-const TARGETS: Record<Bucket, number> = { Base: 70, Medium: 25, Degen: 5 };
 
 const COPY: Record<Bucket, { blurb: string; plain: string }> = {
   Base: {
@@ -134,6 +135,21 @@ interface Snapshot {
 export function liveReadModel(options: LiveReadOptions): ReadModel {
   const now = options.now ?? (() => new Date());
   const waitMs = options.refreshWaitMs ?? 2_000;
+  const rulesStore = options.rulesStore ?? dbRulesStore(options.db);
+
+  /** One engine for every route: the same snapshot and rules give the same answer. */
+  async function judge(user: ReadUser, snapshot: Snapshot) {
+    const stored = await rulesStore.get(user);
+    const evaluation = evaluateRules(
+      BUCKETS.map((bucket) => ({
+        bucket,
+        connected: snapshot.pots[bucket].status !== "not_connected",
+        valuePence: snapshot.pots[bucket].investedPence + snapshot.pots[bucket].cashPence,
+      })),
+      stored.settings,
+    );
+    return { stored, evaluation };
+  }
 
   async function refreshFirst(user: ReadUser) {
     const held = await asUser(options.db, user.authUserId, (tx) =>
@@ -158,6 +174,7 @@ export function liveReadModel(options: LiveReadOptions): ReadModel {
       await refreshFirst(user);
       const snapshot = await load(user);
       const at = now();
+      const { evaluation } = await judge(user, snapshot);
       const live = BUCKETS.map((bucket) => snapshot.pots[bucket]).filter(
         (pot) => pot.status !== "not_connected",
       );
@@ -184,7 +201,8 @@ export function liveReadModel(options: LiveReadOptions): ReadModel {
           blurb: COPY[bucket].blurb,
           shareOfTotal:
             pot.status === "not_connected" || total === 0 ? 0 : round2((value / total) * 100),
-          targetPercent: TARGETS[bucket],
+          targetPercent: evaluation.pots.find((p) => p.bucket === bucket)!.linePercent,
+          ...ruleFlagFor(evaluation, bucket),
           series: potSeries(snapshot.values, bucket, 31, at),
         };
       });
@@ -194,7 +212,8 @@ export function liveReadModel(options: LiveReadOptions): ReadModel {
         total,
         change,
         changeUnavailable,
-        verdict: verdictFor(change, timeframe, changeUnavailable),
+        verdict: verdictFor(change, timeframe, changeUnavailable, evaluation.needsAttention),
+        rulesNeedAttention: evaluation.needsAttention,
         buckets,
         // Only pots with a source have prices to be fresh or stale; including the
         // others would make "everything else updated just now" mean nothing.
@@ -269,9 +288,11 @@ export function liveReadModel(options: LiveReadOptions): ReadModel {
         });
       }
 
+      const { evaluation } = await judge(user, snapshot);
       const detail: BucketDetail = {
         bucket,
         status: pot.status,
+        ...ruleFlagFor(evaluation, bucket),
         value,
         change: potChange ? toChange(potChange.amount, potChange.base) : flat(),
         changeUnavailable: pot.status !== "not_connected" && potChange === null,
@@ -322,35 +343,16 @@ export function liveReadModel(options: LiveReadOptions): ReadModel {
 
     async rules(user) {
       const snapshot = await load(user);
-      const live = BUCKETS.filter((bucket) => snapshot.pots[bucket].status !== "not_connected");
-      const total = live.reduce(
-        (sum, bucket) =>
-          sum + snapshot.pots[bucket].investedPence + snapshot.pots[bucket].cashPence,
-        0,
+      const { stored, evaluation } = await judge(user, snapshot);
+      return rulesView(
+        evaluation,
+        stored,
+        { total: 0, perBucket: [], comingSoon: true },
+        (bucket) =>
+          bucket === "Degen"
+            ? "Connect your Kraken account in Setup to see where Side Bet sits against its cap."
+            : `Connect your Trading 212 ${bucket === "Base" ? "ISA" : "Invest"} account in Setup to see where it sits.`,
       );
-
-      const rules: BucketRule[] = BUCKETS.map((bucket) => {
-        const pot = snapshot.pots[bucket];
-        const available = pot.status !== "not_connected";
-        const actual =
-          !available || total === 0
-            ? 0
-            : round2(((pot.investedPence + pot.cashPence) / total) * 100);
-        return {
-          bucket,
-          kind: bucket === "Degen" ? "cap" : "target",
-          targetPercent: TARGETS[bucket],
-          actualPercent: actual,
-          available,
-          plain: available
-            ? `${displayNameFor(bucket)} is ${formatPercentPlain(actual)} of your money, against the ${TARGETS[bucket]}% you set.`
-            : bucket === "Degen"
-              ? "Connect your Kraken account in Setup to see where Side Bet sits against its cap."
-              : `Connect your Trading 212 ${bucket === "Base" ? "ISA" : "Invest"} account in Setup to see where it sits.`,
-        };
-      });
-
-      return { rules, monthlySplit: { total: 0, perBucket: [], comingSoon: true } };
     },
 
     async activity() {
@@ -708,8 +710,15 @@ const WHEN: Record<Timeframe, string> = {
   all: "since you started",
 };
 
-function verdictFor(change: Change, timeframe: Timeframe, unavailable: boolean): string {
-  if (unavailable) return "Pip is still gathering your history.";
+function verdictFor(
+  change: Change,
+  timeframe: Timeframe,
+  unavailable: boolean,
+  capBroken: boolean,
+): string {
+  // A broken cap is named even before there's history to state a change (DESIGN.md §4.3).
+  const tail = capBroken ? "Side Bet needs a look." : "Nothing needs you.";
+  if (unavailable) return capBroken ? tail : "Pip is still gathering your history.";
   const pounds = `£${(Math.abs(change.amount) / 100).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const moved =
     change.direction === "up"
@@ -717,7 +726,7 @@ function verdictFor(change: Change, timeframe: Timeframe, unavailable: boolean):
       : change.direction === "down"
         ? `Down ${pounds} ${WHEN[timeframe]}.`
         : `Level ${WHEN[timeframe]}.`;
-  return `${moved} Nothing needs you.`;
+  return `${moved} ${tail}`;
 }
 
 function chartCaption(series: SeriesPoint[]): string {
@@ -765,8 +774,4 @@ function subtitleFor(held: HeldInstrument): string {
     return `${held.shortName} · incl. ${staked} staked`;
   }
   return held.shortName;
-}
-
-function formatPercentPlain(value: number): string {
-  return `${Number.isInteger(value) ? value : value.toFixed(1)}%`;
 }

@@ -105,9 +105,6 @@ export const BUCKET_FIXTURES: Record<Bucket, BucketFixture> = {
   },
 };
 
-/** How far over its cap Side Bet currently sits — the only red thing in the app. */
-export const DEGEN_OVER_BY = { percent: 1.8, amount: 20_800 };
-
 /**
  * The hero line. Money first, and it only says "nothing needs you" when that's
  * true — a breached cap is named instead (DESIGN.md §4.3).

@@ -1,3 +1,9 @@
+import {
+  BUCKETS,
+  type BucketDetail,
+  type PortfolioSummary,
+  type RulesView,
+} from "@finance-app/shared";
 import { describe, expect, it } from "vitest";
 import { buildApp } from "../app.js";
 import { memoryRulesStore } from "../rules/store.js";
@@ -56,5 +62,47 @@ describe("PUT /rules", () => {
     await put({ handpickedTarget: 40, sideBetCap: 10 });
     const other = { userId: "someone-else", authUserId: "x" };
     expect((await store.get(other)).settings).toEqual({ handpickedTarget: 25, sideBetCap: 5 });
+  });
+});
+
+describe("one engine, one answer", () => {
+  it("gives /rules, /portfolio and /buckets/:id identical rule results for identical input", async () => {
+    const store = memoryRulesStore();
+    const app = buildApp({ ...auth.options, rulesStore: store });
+    const get = async <T>(url: string) => {
+      const response = await app.inject({ method: "GET", url, headers: SIGNED_IN });
+      expect(response.statusCode).toBe(200);
+      return response.json() as T;
+    };
+
+    // Once over the default 5% cap, once back under a raised one.
+    for (const cap of [5, 10]) {
+      const saved = await app.inject({
+        method: "PUT",
+        url: "/rules",
+        headers: SIGNED_IN,
+        payload: { handpickedTarget: 25, sideBetCap: cap },
+      });
+      expect(saved.statusCode).toBe(200);
+
+      const view = await get<RulesView>("/rules");
+      const summary = await get<PortfolioSummary>("/portfolio");
+      for (const bucket of BUCKETS) {
+        const rule = view.rules.find((r) => r.bucket === bucket)!;
+        const card = summary.buckets.find((b) => b.bucket === bucket)!;
+        const pot = await get<BucketDetail>(`/buckets/${bucket}`);
+        expect({ status: card.ruleStatus, overBy: card.overBy }).toEqual({
+          status: rule.status,
+          overBy: rule.overBy,
+        });
+        expect({ status: pot.ruleStatus, overBy: pot.overBy }).toEqual({
+          status: rule.status,
+          overBy: rule.overBy,
+        });
+      }
+      expect(summary.rulesNeedAttention).toBe(view.needsAttention);
+      expect(summary.verdict.includes("Side Bet needs a look")).toBe(view.needsAttention);
+      expect(view.needsAttention).toBe(cap === 5);
+    }
   });
 });

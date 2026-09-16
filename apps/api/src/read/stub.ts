@@ -8,12 +8,10 @@ import {
   type Holding,
   type InstrumentDetail,
   type PortfolioSummary,
-  type RulesView,
 } from "@finance-app/shared";
 import {
   ACTIVITY,
   BUCKET_FIXTURES,
-  DEGEN_OVER_BY,
   INSTRUMENT_FIXTURES,
   MONTHLY_SPLIT,
   TOTAL_CHANGE,
@@ -22,16 +20,37 @@ import {
 } from "../fixtures/portfolio.js";
 import type { MarketData } from "../market/market.js";
 import { allStubPositions, StubProvider } from "../providers/stub/index.js";
-import type { ReadModel } from "./model.js";
+import { evaluateRules } from "../rules/engine.js";
+import { memoryRulesStore, type RulesStore } from "../rules/store.js";
+import { ruleFlagFor, rulesView } from "../rules/view.js";
+import type { ReadModel, ReadUser } from "./model.js";
 
 /**
  * Stub mode: the design's sample data, composed from the stub trading provider
- * (what is held) and the stub market layer (what it's worth). Unchanged from
- * Phase 1.
+ * (what is held) and the stub market layer (what it's worth). Rules are the
+ * user's own (kept in memory) judged by the real engine against the sample
+ * values, so changing a rule in stub mode changes what the screens say.
  */
-export function stubReadModel(market: MarketData): ReadModel {
+export function stubReadModel(
+  market: MarketData,
+  rulesStore: RulesStore = memoryRulesStore(),
+): ReadModel {
+  async function judge(user: ReadUser) {
+    const stored = await rulesStore.get(user);
+    const evaluation = evaluateRules(
+      BUCKETS.map((bucket) => ({
+        bucket,
+        connected: true,
+        valuePence: BUCKET_FIXTURES[bucket].value,
+      })),
+      stored.settings,
+    );
+    return { stored, evaluation };
+  }
+
   return {
-    async portfolio(_user, timeframe) {
+    async portfolio(user, timeframe) {
+      const { evaluation } = await judge(user);
       const buckets: BucketSummary[] = [];
       for (const bucket of BUCKETS) {
         const fixture = BUCKET_FIXTURES[bucket];
@@ -41,7 +60,8 @@ export function stubReadModel(market: MarketData): ReadModel {
           change: fixture.change[timeframe],
           blurb: fixture.blurb,
           shareOfTotal: fixture.shareOfTotal,
-          targetPercent: fixture.targetPercent,
+          targetPercent: evaluation.pots.find((p) => p.bucket === bucket)!.linePercent,
+          ...ruleFlagFor(evaluation, bucket),
           series: await market.getSeries(seriesIdFor(bucket), "month"),
         });
       }
@@ -55,15 +75,17 @@ export function stubReadModel(market: MarketData): ReadModel {
         timeframe,
         total: TOTAL_VALUE,
         change: TOTAL_CHANGE[timeframe],
-        verdict: verdictFor(timeframe, isOverCap()),
+        verdict: verdictFor(timeframe, evaluation.needsAttention),
+        rulesNeedAttention: evaluation.needsAttention,
         buckets,
         freshness,
       };
       return summary;
     },
 
-    async bucket(_user, bucket, timeframe) {
+    async bucket(user, bucket, timeframe) {
       const fixture = BUCKET_FIXTURES[bucket];
+      const { evaluation } = await judge(user);
       const provider = new StubProvider(bucket);
       const positions = await provider.getPositions();
       const history = await provider.getHistory();
@@ -86,6 +108,7 @@ export function stubReadModel(market: MarketData): ReadModel {
 
       const detail: BucketDetail = {
         bucket,
+        ...ruleFlagFor(evaluation, bucket),
         value: fixture.value,
         change: fixture.change[timeframe],
         blurb: fixture.blurb,
@@ -129,35 +152,15 @@ export function stubReadModel(market: MarketData): ReadModel {
       return detail;
     },
 
-    async rules() {
-      const view: RulesView = {
-        rules: BUCKETS.map((bucket) => {
-          const fixture = BUCKET_FIXTURES[bucket];
-          const over = bucket === "Degen" && isOverCap();
-          return {
-            bucket,
-            kind: fixture.isCap ? ("cap" as const) : ("target" as const),
-            targetPercent: fixture.targetPercent,
-            actualPercent: fixture.shareOfTotal,
-            plain: fixture.rulePlain,
-            ...(over ? { overBy: DEGEN_OVER_BY } : {}),
-          };
-        }),
-        monthlySplit: MONTHLY_SPLIT,
-      };
-      return view;
+    async rules(user) {
+      const { stored, evaluation } = await judge(user);
+      return rulesView(evaluation, stored, MONTHLY_SPLIT, () => "");
     },
 
     async activity(): Promise<ActivityEntry[]> {
       return ACTIVITY;
     },
   };
-}
-
-/** Side Bet is the only pot with a hard cap, and the only one that can go over. */
-function isOverCap(): boolean {
-  const degen = BUCKET_FIXTURES.Degen;
-  return degen.shareOfTotal > degen.targetPercent;
 }
 
 /**

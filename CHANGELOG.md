@@ -9,6 +9,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Added: rules engine — pure `evaluateRules` for drift (named 5-point threshold), Side Bet's cap (broken at any amount over, compared in pence), targets scaled over connected pots, over-by in points and pounds, and the two fix-it amounts; shared rule constants (defaults 70/25/5, cap max 20, FCA note above 10); 13 tests incl. edges and determinism (#3229114698)
 - Added: saving rules — `PUT /rules` with server-side limits (whole numbers, cap 0–20, shape ≤ 100), `user_rules` with own-row RLS and matching `CHECK` constraints (migration 0011, applied), database and in-memory stores; 15 tests (#3229114873)
+- Added: rules from the engine on every screen — `/rules` gives status, drift, scaling and fix-it amounts with the user's saved settings and last change; `/portfolio` and `/buckets/:id` carry the same `ruleStatus` and `overBy`, `rulesNeedAttention` and a verdict naming a broken cap; stub mode judged the same way; a route test proves the three agree over and under the cap; sample Side Bet now £208.50 over (engine arithmetic) (#3229114635)
 
 ## [0.3.0] — 2026-09-16
 

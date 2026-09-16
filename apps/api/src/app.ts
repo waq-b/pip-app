@@ -74,12 +74,16 @@ export function buildApp(options: BuildAppOptions = {}) {
 
   registerMeRoute(app, { allowlist });
   registerWaitlistRoute(app, { store: options.waitlistStore ?? dbWaitlistStore });
+  const rulesStore = options.rulesStore ?? memoryRulesStore();
   registerReadRoutes(app, {
     model:
       options.readModel ??
-      stubReadModel(options.marketData ?? createStubMarketData({ anchors: stubSeriesAnchors() })),
+      stubReadModel(
+        options.marketData ?? createStubMarketData({ anchors: stubSeriesAnchors() }),
+        rulesStore,
+      ),
   });
-  registerRulesRoutes(app, { store: options.rulesStore ?? memoryRulesStore() });
+  registerRulesRoutes(app, { store: rulesStore });
   registerJobRoutes(app, { refresh: options.refreshJob });
   registerConnectionRoutes(app, { service: options.connections ?? stubConnectionService });
 

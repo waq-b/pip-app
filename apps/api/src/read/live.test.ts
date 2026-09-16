@@ -17,6 +17,7 @@ import type { Db } from "../db/user-scope.js";
 import { withFallback } from "../market/sources/fallback.js";
 import type { PriceSource } from "../market/sources/types.js";
 import { testDatabase } from "../test-support/pglite.js";
+import { memoryRulesStore } from "../rules/store.js";
 import { liveReadModel } from "./live.js";
 
 // Wednesday 16 Sep 2026, 14:00 UTC — London and US markets open.
@@ -377,13 +378,23 @@ describe("live rules", () => {
     expect(view.rules.find((r) => r.bucket === "Base")).toMatchObject({
       actualPercent: 100,
       available: true,
-      plain: "Foundation is 100% of your money, against the 70% you set.",
+      // Only Foundation is connected, so its 70% is judged as the whole shape.
+      status: "ok",
+      judgedAgainstPercent: 100,
+      plain:
+        "Foundation is 100% of your money, against 100% — your 70% scaled to the pots Pip can see.",
     });
     expect(view.rules.find((r) => r.bucket === "Degen")).toMatchObject({
       available: false,
       actualPercent: 0,
     });
     expect(view.rules.some((r) => r.overBy)).toBe(false);
+    expect(view).toMatchObject({
+      needsAttention: false,
+      leftOut: ["Medium", "Degen"],
+      settings: { handpickedTarget: 25, sideBetCap: 5 },
+    });
+    expect(view.lastChangedAt).toBeUndefined();
     expect(view.monthlySplit.comingSoon).toBe(true);
   });
 });
@@ -514,6 +525,50 @@ describe("a live Side Bet (Kraken)", () => {
   it("shows a coin's quantity in coins", async () => {
     const detail = await model().instrument(ALICE, "kraken:XBT", "day");
     expect(detail).toMatchObject({ quantity: "0.01 BTC", price: 5_000_000, ticker: "BTC" });
+  });
+
+  it("flags Side Bet over its cap everywhere it shows, from one engine", async () => {
+    // Side Bet is £570 of £1,565 — far over a 5% cap.
+    const reader = model();
+    const [view, summary, pot] = await Promise.all([
+      reader.rules(ALICE),
+      reader.portfolio(ALICE, "day"),
+      reader.bucket(ALICE, "Degen", "day"),
+    ]);
+    const rule = view.rules.find((r) => r.bucket === "Degen")!;
+    const card = summary.buckets.find((b) => b.bucket === "Degen")!;
+    expect(rule).toMatchObject({ status: "over_cap", overBy: { amount: 57_000 - 7_825 } });
+    expect(view.needsAttention).toBe(true);
+    expect(view.fixIt).toEqual({ outOfSideBet: 51_764, intoOtherPots: 983_500 });
+    expect(summary.rulesNeedAttention).toBe(true);
+    expect(summary.verdict).toContain("Side Bet needs a look.");
+    for (const bucket of ["Base", "Medium", "Degen"] as const) {
+      const fromRules = view.rules.find((r) => r.bucket === bucket)!;
+      const fromPots = summary.buckets.find((b) => b.bucket === bucket)!;
+      expect(fromPots.ruleStatus).toBe(fromRules.status);
+      expect(fromPots.overBy).toEqual(fromRules.overBy);
+    }
+    expect(card.targetPercent).toBe(5);
+    expect(pot).toMatchObject({ ruleStatus: rule.status, overBy: rule.overBy });
+  });
+
+  it("clears when the cap is raised above where Side Bet sits", async () => {
+    const store = memoryRulesStore();
+    await store.set(ALICE, { handpickedTarget: 25, sideBetCap: 20 }, NOW);
+    const reader = liveReadModel({
+      db,
+      marketFor: () => withFallback([{ source, symbolFor: (target) => target }]),
+      now: () => NOW,
+      refreshWaitMs: 50,
+      rulesStore: store,
+    });
+    // 57,000 of 156,500 is 36.4% — still over 20%.
+    expect((await reader.rules(ALICE)).needsAttention).toBe(true);
+    await db.delete(holdings).where(eq(holdings.instrumentId, "kraken:XBT"));
+    // 7,000 of 106,500 is 6.6% — under 20%.
+    const view = await reader.rules(ALICE);
+    expect(view).toMatchObject({ needsAttention: false, lastChangedAt: NOW.toISOString() });
+    expect((await reader.portfolio(ALICE, "day")).verdict).toContain("Nothing needs you.");
   });
 
   it("states Side Bet's share against its cap", async () => {

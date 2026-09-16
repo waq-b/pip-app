@@ -177,7 +177,8 @@ describe("GET /rules", () => {
     const view = await get<RulesView>("/rules");
     const degen = view.rules.find((r) => r.bucket === "Degen");
 
-    expect(degen?.overBy).toEqual({ percent: 1.8, amount: 20_800 });
+    // 78,000 of 1,143,000 against a 5% cap, judged by the rules engine.
+    expect(degen?.overBy).toEqual({ percent: 1.82, amount: 20_850 });
   });
 
   it("marks no other pot as over", async () => {
