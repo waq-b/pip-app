@@ -89,6 +89,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Fixed: month labels could read "Sept" on some machines, because ICU versions disagree; the API's money-in labels and the chart's start label now use fixed three-letter names (#3226677041)
 - Added: Rules screen, display only — a card per pot with its target or hard cap, a bar showing where it sits and a plain-English line; an over-cap banner led by pounds and marked not advice; the monthly split described as the user's own broker setup; loading and error states; three cards side by side on desktop. No steppers or fix-it buttons — rule editing is Phase 5 (#3226682603)
 - Added: the red dot on Rules is now wired — it lights across the app when a rule reports an over-cap amount (#3226682603)
+- Added: Setup screen — connected accounts with what they feed, freshness and a Live/Expired badge; a connection card with "This key cannot place orders. Pip checked." and Disconnect; "Nothing plugged in yet" with both providers; connections and preferences side by side on desktop (#3226691747)
+- Added: connect flow — numbered steps, key field, a checking state, an unrecognised key shown back masked with "Try that again", a key that can trade refused on purpose with what must be off and no way round it, and a can't-reach-Pip state (#3226691747)
+- Added: preferences — Appearance with a way back to following the device, Hide the numbers (blurs big totals until tapped, remembered per device), currency fixed to GBP; no Nudge me until Phase 7 (#3226691747)
+- Removed: the placeholder screen, now that every section is built (#3226691747)
 
 #### Docs
 

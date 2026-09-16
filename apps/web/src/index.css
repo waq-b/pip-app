@@ -45,6 +45,10 @@
 
   /* The one red thing in the chrome: Side Bet's colour, whatever scope it's in. */
   --pip-alert: #c0392c;
+  /* Provider swatches on Setup. Brand colours, so the same in both themes and
+     never overridden by a pot scope (DESIGN.md §3). */
+  --pip-swatch-trading212: #1f3a5f;
+  --pip-swatch-kraken: #5741d9;
 
   --pip-hatch: repeating-linear-gradient(135deg, rgb(192 57 44 / 0.07) 0 9px, transparent 9px 18px);
 }
@@ -200,6 +204,8 @@
   --color-amber-tint: var(--pip-amber-tint);
   --color-amber-line: var(--pip-amber-line);
   --color-alert: var(--pip-alert);
+  --color-swatch-trading212: var(--pip-swatch-trading212);
+  --color-swatch-kraken: var(--pip-swatch-kraken);
 
   --font-heading: "Caprasimo", ui-serif, serif;
   --font-body: "Figtree Variable", "Figtree", ui-sans-serif, system-ui, sans-serif;

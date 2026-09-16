@@ -1,5 +1,7 @@
 import type { Change, Pence } from "@finance-app/shared";
+import { useState } from "react";
 import { changeTone, formatPercent, formatSignedPounds, splitPounds } from "../lib/format";
+import { useHideNumbers } from "../lib/hide-numbers";
 
 export interface BigNumberProps {
   /** "Everything you own", "What it's worth to you". */
@@ -14,15 +16,18 @@ export interface BigNumberProps {
 /**
  * Answers "how much have I got". One per screen, never two (DESIGN.md §4.2).
  * The pence are set smaller so the pounds carry the weight, and the change
- * leads with money.
+ * leads with money. With "Hide the numbers" on (Setup), the figures stay
+ * blurred until tapped, and stay shown for as long as this number is on screen.
  */
 export function BigNumber({ label, value, change, when, size = "phone" }: BigNumberProps) {
   const { whole, fraction } = splitPounds(value);
   const isDesktop = size === "desktop";
+  const hideNumbers = useHideNumbers();
+  const [revealed, setRevealed] = useState(false);
+  const blurred = hideNumbers && !revealed;
 
-  return (
+  const figures = (
     <div>
-      <div className="text-ink2 text-[12.5px] font-medium">{label}</div>
       <div className="mt-1 flex items-baseline gap-2">
         <span
           className={`font-heading leading-none ${
@@ -44,6 +49,26 @@ export function BigNumber({ label, value, change, when, size = "phone" }: BigNum
           </span>
         </div>
       ) : null}
+    </div>
+  );
+
+  return (
+    <div>
+      <div className="text-ink2 text-[12.5px] font-medium">{label}</div>
+      {blurred ? (
+        <button
+          type="button"
+          aria-label="Show the numbers"
+          onClick={() => setRevealed(true)}
+          className="text-ink block cursor-pointer border-0 bg-transparent p-0 text-left"
+        >
+          <div aria-hidden className="blur-[10px] select-none">
+            {figures}
+          </div>
+        </button>
+      ) : (
+        figures
+      )}
     </div>
   );
 }
