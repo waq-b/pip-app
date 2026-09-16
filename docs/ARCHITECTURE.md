@@ -20,10 +20,14 @@ finance-app-personal/
 │       └── src/
 │           ├── app.ts       ← Fastify instance + routes (currently just /health)
 │           ├── server.ts    ← process entrypoint, listens on PORT
+│           ├── auth/       ← Auth.js config, Fastify mount, guard, waitlist
 │           ├── db/
 │           │   ├── client.ts   ← lazy Drizzle/Postgres client (getDb())
-│           │   └── schema.ts   ← users, allowlist tables
-│           └── providers/
+│           │   └── schema.ts   ← users, allowlist, waitlist, Auth.js tables
+│           ├── market/     ← MARKET DATA: what it's worth, what it's done
+│           │   ├── market.ts   ← common market-data interface
+│           │   └── stub/       ← deterministic fake prices
+│           └── providers/  ← TRADING: what is held, how much cash
 │               ├── provider.ts ← common trading-provider interface
 │               └── stub/       ← fake data, used in tests and Phase 0/1
 └── packages/
@@ -33,7 +37,7 @@ finance-app-personal/
             └── api.ts        ← response types for every API route
 ```
 
-`apps/api/src/auth/`, `market/`, `rules/`, `research/` don't exist yet — they arrive with the phases that need them (1, 2, 5, 6 respectively). Don't scaffold them early.
+`apps/api/src/rules/` and `research/` don't exist yet — they arrive with the phases that need them (5 and 6). Don't scaffold them early. `auth/` and `market/` arrived in Phase 1: `market/` earlier than originally planned, because instrument charts need price history and prices may never come from a trading API.
 
 ## Brand assets and fonts (Phase 1)
 
@@ -90,7 +94,22 @@ interface Provider {
 
 `StubProvider` (`apps/api/src/providers/stub/index.ts`) is the only implementation so far. It returns fixed fake data per bucket, so unit tests never make a network call. `t212/` and `kraken/` implementations arrive in Phase 2 and 4.
 
-A separate `market/` provider layer (prices, historical series — CLAUDE.md section 4) does not exist yet; it's introduced in Phase 2 alongside the first market data source.
+## Market data layer
+
+`apps/api/src/market/market.ts` is the other provider interface, and it answers a different question: _what is it worth, and what has it done?_ Trading providers only ever answer _what is held, and how much cash?_ Keeping the two apart is how hard line 8 stays true — every price and every chart in the app comes from here, and nothing reads a price from a trading API.
+
+```ts
+interface MarketData {
+  readonly source: string; // named in the provenance line
+  getPrice(instrumentId: string): Promise<Pence>;
+  getSeries(instrumentId: string, range: PriceRange): Promise<SeriesPoint[]>;
+  getFreshness(bucket: Bucket): Promise<PriceFreshness>;
+}
+```
+
+`getFreshness` is per pot, not global, because the staleness ladder names the affected pot ("Side Bet is 2 hours old") and because different pots get different sources from Phase 4 on.
+
+`market/stub` is the only implementation so far. It generates prices from a small deterministic PRNG seeded by the instrument id, so the same holding always draws the same chart and fixtures, tests and screenshots agree. It also takes per-pot staleness overrides — an age in hours, an outright failure, or markets-closed — which is how the green/amber/red ladder gets exercised end to end without a real feed ever having to break.
 
 ## Auth
 

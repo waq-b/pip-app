@@ -34,6 +34,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added: waitlist signup — a rejected sign-in mints a 15-minute HMAC token carrying the Google-verified address, and `POST /waitlist` takes the email from inside that token rather than the request body (#3226682602)
 - Added: `WaitlistStore` with Postgres and in-memory implementations; asking twice is idempotent and keeps the first ask (#3226682602)
 - Changed: `/waitlist` joins `/health` and `/auth/*` as a session-free path, gated by its own signed token; the route is not registered at all when no `AUTH_SECRET` is configured (#3226682602)
+- Added: `market/market.ts` — the market-data interface (price, series, per-pot freshness), kept separate from trading providers so no price ever comes from a trading API (#3226691678)
+- Added: `market/stub` — deterministic prices seeded by instrument id, so fixtures, tests and screenshots agree, with per-pot staleness overrides (age, outright failure, markets closed) to exercise the amber/red ladder (#3226691678)
 
 ### Phase 0 — Scaffold
 
