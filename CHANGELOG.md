@@ -5,6 +5,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Docs
+
+- Added: a Release column on the board with a `Pre POC release` label, documented in CLAUDE.md s7; the first two items are rotating the database password and scaling sign-in emails (#3228228974, #3228232318)
+
 ## [0.1.0] — 2026-09-16
 
 ### Phase 1 — Base UI + auth
