@@ -66,6 +66,6 @@ describe("the not-on-the-list screen", () => {
 
   it("sends someone who is allowed on into the app", async () => {
     renderRoute("/not-on-the-list", { session: WAQAR, api: ME_ALLOWED });
-    expect(await screen.findByRole("heading", { name: "Pots" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Your pots" })).toBeInTheDocument();
   });
 });

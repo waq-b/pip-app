@@ -60,7 +60,7 @@ describe("the sign-in screen", () => {
   it("sends someone already signed in straight through", async () => {
     renderRoute("/sign-in", { session: WAQAR, api: ME_ALLOWED });
 
-    expect(await screen.findByRole("heading", { name: "Pots" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Your pots" })).toBeInTheDocument();
   });
 
   it("has no navigation, because there's nowhere to go until you're in", async () => {

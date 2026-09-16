@@ -47,7 +47,7 @@ The sample data has one correction from the design: the prototype showed ISA mon
 
 ## The app so far: the frame, not the pictures
 
-The web app has its colours, fonts and layout, but every screen is still a placeholder.
+The web app has its colours, fonts and layout. Sign-in, the refusal screen and the Pots home screen are built (see Screens built); pot detail, holdings, Rules and Setup are still placeholders.
 
 - **Three places to go**, the same at every size: **Pots**, **Rules** and **Setup**. On a phone they sit along the bottom; on a tablet they become a narrow rail of icons down the left; on a computer that rail widens into a sidebar with labels, the Pip mark, and a permanent "Read-only access" badge.
 - **You always know where you are.** The current section is lit — and Pots stays lit while you're inside a pot or looking at a single holding, because those live under it.
@@ -60,6 +60,7 @@ The web app has its colours, fonts and layout, but every screen is still a place
 
 - **Sign in.** The promise first — "Three pots. One number. No homework." — then one button, Continue with Google, and a line saying Pip reads your name and email, nothing else. No password field. While Google answers it says "Checking you're on the list". If sign-in can't start, it says so and offers the button again. Already signed in, it sends you straight through. On a computer it gains a second column.
 - **Not on the list.** For someone signed in but not allowed. It names the account back, offers "Put me on the waiting list", and confirms with "Waqar will let you know when there's room" — no queue position, no countdown, no promise of an email. "Try a different account" signs you out and returns you to sign in.
+- **Pots (home).** Everything you own as one big number, pence set small, with what it did and a one-line verdict — "Up £25.80 today. Side Bet needs a look." Today, This month and All time change every figure on the screen, and the old numbers stay up until the new ones arrive. Below: the three pots — Side Bet always fenced with a hatch and a hard border, and red only when it's over its cap — then how the money splits against the shape you asked for ("You asked for 70 / 25 / 5. You're at 72 / 21 / 7."), then what changed last week, ending "That's the lot." A line names where prices come from. It ends by saying Pip can't trade. While loading it shows the numbers' shape rather than a spinner; with nothing in any pot it says so and points you to connect an account; if it can't load, it says your money is fine and offers a retry. On a tablet the pots become single rows; on a computer they sit side by side, and "The shape you asked for" appears beside what changed.
 - **Where you land.** Signed out, any page sends you to sign in. Signed in but not allowed, you land on the refusal screen. If Pip can't be reached at all, it says so and reassures you your money is fine.
 
 ## The pieces screens are built from

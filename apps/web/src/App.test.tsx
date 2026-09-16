@@ -9,14 +9,14 @@ describe("routing through the two walls", () => {
     renderRoute("/", { session: WAQAR, api: ME_ALLOWED });
 
     // By role, not text: the nav also says "Pots".
-    expect(await screen.findByRole("heading", { name: "Pots" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Your pots" })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "Sections" })).toBeInTheDocument();
   });
 
   it("asks the API with the signed-in person's token", async () => {
     const { fetchMock } = renderRoute("/", { session: WAQAR, api: ME_ALLOWED });
 
-    await screen.findByRole("heading", { name: "Pots" });
+    await screen.findByRole("heading", { name: "Your pots" });
     const [, init] = fetchMock.mock.calls.find(([input]) => String(input) === "/me")!;
     expect((init?.headers as Record<string, string>).authorization).toBe("Bearer token-for-waqar");
   });
@@ -60,7 +60,7 @@ describe("routing through the two walls", () => {
 
   it("follows a sign-out that happens while you're in", async () => {
     const { auth } = renderRoute("/", { session: WAQAR, api: ME_ALLOWED });
-    await screen.findByRole("heading", { name: "Pots" });
+    await screen.findByRole("heading", { name: "Your pots" });
 
     auth.setSession(null);
 

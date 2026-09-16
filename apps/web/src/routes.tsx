@@ -1,6 +1,7 @@
 import type { RouteObject } from "react-router";
 import { NotOnTheListScreen } from "./screens/not-on-the-list";
 import { Placeholder } from "./screens/placeholder";
+import { PotsScreen } from "./screens/pots";
 import { SignInScreen } from "./screens/sign-in";
 import { RequireSession } from "./shell/require-session";
 
@@ -14,7 +15,7 @@ export const routes: RouteObject[] = [
     path: "/",
     element: <RequireSession />,
     children: [
-      { index: true, element: <Placeholder name="Pots" /> },
+      { index: true, element: <PotsScreen /> },
       { path: "pots/:bucket", element: <Placeholder name="Pot" /> },
       { path: "instruments/:id", element: <Placeholder name="Holding" /> },
       { path: "rules", element: <Placeholder name="Your rules" /> },

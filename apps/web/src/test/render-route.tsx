@@ -12,7 +12,7 @@ export interface StubResponse {
   body: unknown;
 }
 
-export type Handler = StubResponse | ((init?: RequestInit) => StubResponse);
+export type Handler = StubResponse | ((init: RequestInit | undefined, url: URL) => StubResponse);
 
 /**
  * Renders the real route table at a path, signed in as `session` (or signed
@@ -28,12 +28,12 @@ export function renderRoute(
 
   const fetchMock = vi.fn<typeof fetch>(async (input, init) => {
     const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
-    const { pathname } = new URL(url, "http://localhost");
-    const handler = api[pathname];
+    const parsed = new URL(url, "http://localhost");
+    const handler = api[parsed.pathname];
 
-    if (!handler) return json({ error: `not stubbed: ${pathname}` }, 500);
+    if (!handler) return json({ error: `not stubbed: ${parsed.pathname}` }, 500);
 
-    const { status = 200, body } = typeof handler === "function" ? handler(init) : handler;
+    const { status = 200, body } = typeof handler === "function" ? handler(init, parsed) : handler;
     return json(body, status);
   });
   vi.stubGlobal("fetch", fetchMock);

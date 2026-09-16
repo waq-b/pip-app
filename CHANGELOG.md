@@ -75,6 +75,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added: sign-in screen — the promise, one Google button, a checking state, a retry when sign-in can't start, and a desktop two-column layout (#3226677040)
 - Added: not-on-the-list screen — names the account back, joins the waiting list with the sign-in alone, and offers a different account; no promise of an email (#3226677040)
 - Fixed: a session the API rejects looped between the app and sign-in; the browser now signs it out, and the auth provider keeps its actions and unchanged state stable so signing out can't retrigger itself (#3227832120)
+- Added: Pots home screen — the hero total and verdict, timeframe pills that change every figure (keeping the old numbers up while new ones load), the three pots with Side Bet fenced and red only over its cap, the allocation ring with the target stated in words, what changed, the provenance line and the read-only footer (#3226691689)
+- Added: phone, tablet and desktop layouts for Pots — single-row pots on a tablet; pots side by side and "The shape you asked for" on desktop (#3226691689)
+- Added: loading (skeleton shapes), empty (points to connecting an account) and error (reassures, offers a retry) states for Pots (#3226691689)
+- Changed: stubbed test responses now receive the request URL, so tests can answer by query string (#3226691689)
 
 #### Docs
 
