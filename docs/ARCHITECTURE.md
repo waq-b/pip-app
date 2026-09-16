@@ -326,6 +326,10 @@ The guard is an `onRequest` hook on the root instance — deliberately not added
 
 **Env vars** (see `.env.example`): `SUPABASE_URL` for the API — the server won't start without it. The web app needs `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`; without them it shows "Pip isn't configured" rather than a blank page. The publishable key is public by design — which is exactly why every table has RLS on.
 
+## Signing in locally without email
+
+`pnpm --filter api sign-in-link [email]` (`src/dev/sign-in-link.ts`) asks Supabase's admin API for a one-time magic link back to `http://localhost:5173` — no email sent, so no rate limit. Authentication is unchanged: the link signs the browser in through Supabase like an emailed one, and the API still verifies every request and checks the allowlist. There is deliberately no "skip sign-in" switch or test email that bypasses it (hard line 4). The script needs `SUPABASE_SERVICE_ROLE_KEY` in `apps/api/.env` only, refuses to run with `NODE_ENV=production` or on Render, and only redirects to localhost.
+
 ## Deploy (Render, Phase 2)
 
 One **Render free web service**, `pip` — https://pip-old.example.net — in Frankfurt (nearest to Supabase's eu-west-1), deploying `main` automatically on every push.
