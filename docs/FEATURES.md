@@ -25,7 +25,7 @@ What does work, all of it server-side:
 - **Google is the only way in**, through Supabase. Being known to Google isn't enough: your email has to be on Pip's allowlist, and an empty allowlist admits nobody at all.
 - **Two checks on every request.** Without a valid sign-in the API answers "not signed in"; signed in but not on the list, it answers "not on the list". The only thing that answers without either is the health check, and a test walks the real route table to prove nothing else has slipped through.
 - **Removing someone works straight away.** The allowlist is checked on every request, not just at sign-in.
-- **Staying signed in** follows Supabase's defaults: a short-lived token that the app refreshes while you use it. (Screens for signing in through Supabase are still to come.)
+- **Staying signed in** follows Supabase's defaults: a short-lived token that the app refreshes while you use it. If a sign-in stops being accepted, Pip signs you out cleanly rather than leaving you stuck.
 - **Asking to be let in.** Someone turned away is still signed in, so they can put themselves on the waiting list. Pip takes the address from their sign-in, so there's no form to fill in and no way to submit somebody else's. Asking twice is harmless.
 - **No promises are made.** No queue position, no countdown, no "we'll email you" — there is no email system. Waqar grants access by hand.
 - **Access is granted by hand**, with `pnpm --filter api allowlist add <email>`. There is no self-service sign-up, by design.
@@ -55,6 +55,12 @@ The web app has its colours, fonts and layout, but every screen is still a place
 - **Wide screens don't get stretched.** Content stops at a comfortable width and the rest is plain background — no widgets, no ticker, no filler.
 - **Light or dark follows your device**, until you choose otherwise.
 - **Sign-in stands alone**, with no navigation around it, because there's nowhere to go until you're in.
+
+## Screens built
+
+- **Sign in.** The promise first — "Three pots. One number. No homework." — then one button, Continue with Google, and a line saying Pip reads your name and email, nothing else. No password field. While Google answers it says "Checking you're on the list". If sign-in can't start, it says so and offers the button again. Already signed in, it sends you straight through. On a computer it gains a second column.
+- **Not on the list.** For someone signed in but not allowed. It names the account back, offers "Put me on the waiting list", and confirms with "Waqar will let you know when there's room" — no queue position, no countdown, no promise of an email. "Try a different account" signs you out and returns you to sign in.
+- **Where you land.** Signed out, any page sends you to sign in. Signed in but not allowed, you land on the refusal screen. If Pip can't be reached at all, it says so and reassures you your money is fine.
 
 ## The pieces screens are built from
 

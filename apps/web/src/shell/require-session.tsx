@@ -1,0 +1,51 @@
+import { useEffect } from "react";
+import { Navigate } from "react-router";
+import { UnauthenticatedError } from "../lib/api";
+import { useAuth } from "../lib/auth-context";
+import { useMe } from "../lib/me";
+import { AppShell } from "./app-shell";
+
+/**
+ * The frontend's view of the two walls. It is cosmetic — the API refuses every
+ * request that fails either check regardless (CLAUDE.md hard line 4) — but it
+ * sends people to the right screen instead of a page of failures:
+ *
+ * signed out → sign in · signed in but not on the list → the refusal screen ·
+ * allowed → the app.
+ */
+export function RequireSession() {
+  const { state, signOut } = useAuth();
+  const me = useMe(state.status === "signedIn");
+  const rejected = me.error instanceof UnauthenticatedError;
+
+  // The browser holds a session the API won't accept — revoked, or expired
+  // past refreshing. Clear it. Simply redirecting to sign-in would loop: the
+  // sign-in screen sees a session and sends you straight back.
+  useEffect(() => {
+    if (rejected) void signOut();
+  }, [rejected, signOut]);
+
+  if (state.status === "loading") return <Waiting />;
+  if (state.status === "signedOut") return <Navigate to="/sign-in" replace />;
+  if (rejected) return <Waiting />;
+  if (me.isError) return <CantReachPip />;
+  if (!me.data) return <Waiting />;
+  if (!me.data.allowed) return <Navigate to="/not-on-the-list" replace />;
+
+  return <AppShell userName={me.data.name ?? state.session.name ?? undefined} />;
+}
+
+function Waiting() {
+  return <div className="bg-ground min-h-svh" aria-busy="true" />;
+}
+
+function CantReachPip() {
+  return (
+    <main className="bg-ground text-ink grid min-h-svh place-items-center px-6 text-center">
+      <div>
+        <h1 className="font-heading m-0 text-xl font-normal">Can't reach Pip right now</h1>
+        <p className="text-ink2 mt-2 text-sm">Your money is fine. Reload in a moment.</p>
+      </div>
+    </main>
+  );
+}

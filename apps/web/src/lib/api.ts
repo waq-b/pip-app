@@ -1,7 +1,7 @@
 /**
- * The only way the app talks to its own API. Requests go to the same origin —
- * Vite proxies them in dev — so the session cookie is sent normally rather than
- * cross-site.
+ * The only way the app talks to its own API. Every request carries the
+ * Supabase access token as a bearer token; the API verifies it and checks the
+ * allowlist on every route (CLAUDE.md s3).
  */
 
 export class ApiError extends Error {
@@ -18,15 +18,28 @@ export class ApiError extends Error {
   }
 }
 
-/**
- * Its own class because the app responds to it differently from every other
- * failure: not an error to show, a sign-in to go to.
- */
+/** Not signed in, or the sign-in has expired: not an error to show, a sign-in to go to. */
 export class UnauthenticatedError extends ApiError {
   constructor(code = "unauthenticated") {
     super(401, code, "Not signed in");
     this.name = "UnauthenticatedError";
   }
+}
+
+/** Signed in, but not on the allowlist: the refusal screen, not an error. */
+export class NotOnTheListError extends ApiError {
+  constructor() {
+    super(403, "not_on_the_list", "Not on the list");
+    this.name = "NotOnTheListError";
+  }
+}
+
+type TokenGetter = () => Promise<string | undefined>;
+let getAccessToken: TokenGetter = async () => undefined;
+
+/** Set by `AuthProvider`. Until then requests go without a token, and the API refuses them. */
+export function configureApiAuth(getter: TokenGetter): void {
+  getAccessToken = getter;
 }
 
 export async function apiGet<T>(path: string, init?: RequestInit): Promise<T> {
@@ -37,7 +50,10 @@ export async function apiPost<T>(path: string, body?: unknown, init?: RequestIni
   return request<T>(path, {
     ...init,
     method: "POST",
-    headers: { "content-type": "application/json", ...(init?.headers ?? {}) },
+    headers:
+      body === undefined
+        ? init?.headers
+        : { "content-type": "application/json", ...(init?.headers ?? {}) },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
 }
@@ -47,11 +63,15 @@ export async function apiDelete<T>(path: string, init?: RequestInit): Promise<T>
 }
 
 async function request<T>(path: string, init: RequestInit): Promise<T> {
+  const token = await getAccessToken();
+
   const response = await fetch(path, {
     ...init,
-    // Without this the session cookie is simply not sent, and every route 401s.
-    credentials: "include",
-    headers: { accept: "application/json", ...(init.headers ?? {}) },
+    headers: {
+      accept: "application/json",
+      ...(token ? { authorization: `Bearer ${token}` } : {}),
+      ...(init.headers ?? {}),
+    },
   });
 
   if (response.status === 401) {
@@ -59,11 +79,9 @@ async function request<T>(path: string, init: RequestInit): Promise<T> {
   }
 
   if (!response.ok) {
-    throw new ApiError(
-      response.status,
-      await errorCode(response),
-      `Request failed with ${response.status}`,
-    );
+    const code = await errorCode(response);
+    if (response.status === 403 && code === "not_on_the_list") throw new NotOnTheListError();
+    throw new ApiError(response.status, code, `Request failed with ${response.status}`);
   }
 
   return (await response.json()) as T;

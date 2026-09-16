@@ -1,16 +1,18 @@
 import type { RouteObject } from "react-router";
-import { AppShell } from "./shell/app-shell";
+import { NotOnTheListScreen } from "./screens/not-on-the-list";
 import { Placeholder } from "./screens/placeholder";
+import { SignInScreen } from "./screens/sign-in";
+import { RequireSession } from "./shell/require-session";
 
 /**
  * Every screen the design describes (DESIGN.md §7). The signed-in screens sit
- * inside the shell; sign-in and the not-on-the-list screen deliberately don't,
- * because neither has a sidebar or a hero number.
+ * inside the shell, behind the session check; sign-in and the refusal screen
+ * deliberately don't, because neither has a sidebar or a hero number.
  */
 export const routes: RouteObject[] = [
   {
     path: "/",
-    element: <AppShell />,
+    element: <RequireSession />,
     children: [
       { index: true, element: <Placeholder name="Pots" /> },
       { path: "pots/:bucket", element: <Placeholder name="Pot" /> },
@@ -19,6 +21,6 @@ export const routes: RouteObject[] = [
       { path: "setup", element: <Placeholder name="Setup" /> },
     ],
   },
-  { path: "/sign-in", element: <Placeholder name="Sign in" /> },
-  { path: "/not-on-the-list", element: <Placeholder name="Not on the list" /> },
+  { path: "/sign-in", element: <SignInScreen /> },
+  { path: "/not-on-the-list", element: <NotOnTheListScreen /> },
 ];

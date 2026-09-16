@@ -1,4 +1,11 @@
 import "@testing-library/jest-dom/vitest";
+import { afterEach, vi } from "vitest";
+
+// Every test that stubs fetch gets it put back, so one file's stubs can never
+// answer another file's requests.
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 /**
  * jsdom has no matchMedia, and the shell decides between the tab bar, the rail

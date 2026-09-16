@@ -6,13 +6,12 @@ import { defineConfig } from "vitest/config";
 const API_ORIGIN = process.env.VITE_API_ORIGIN ?? "http://localhost:3001";
 
 /**
- * The API's own paths, proxied in dev so the browser sees one origin. Without
- * this the session cookie is cross-site and simply isn't sent, and every
- * request 401s (docs/phases/phase-1.md).
+ * The API's own paths, proxied in dev so the app can call them relatively.
+ * Sign-in itself goes straight from the browser to Supabase, not through here.
  */
 const API_PATHS = [
-  "/auth",
   "/health",
+  "/me",
   "/waitlist",
   "/portfolio",
   "/buckets",

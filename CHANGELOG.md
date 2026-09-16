@@ -70,6 +70,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Removed: Auth.js — `@auth/core`, `@auth/drizzle-adapter`, the Fastify mount, database sessions and their store, and the `AUTH_*` env vars (#3227825365)
 - Changed: `users` is now the allowlist, keyed by email and linked to Supabase's `auth.users`; the separate `allowlist` table and the Auth.js tables are gone. Migrations regenerated from scratch — none had ever been applied (#3227824374)
 - Added: Row Level Security on every table, with no policies, and `db/rls.test.ts`, which fails if a table in the schema lacks it (#3227824374)
+- Added: web sign-in through Supabase, behind a small `AuthClient` interface so screens never import Supabase and tests use a fake; every API request carries the current access token, read fresh so a refresh is always used (#3227832120)
+- Added: `RequireSession` routes by the two walls — signed out to sign in, not allowed to the refusal screen, allowed into the app — and `GET /me` in shared types as `MeResponse` (#3227832120)
+- Added: sign-in screen — the promise, one Google button, a checking state, a retry when sign-in can't start, and a desktop two-column layout (#3226677040)
+- Added: not-on-the-list screen — names the account back, joins the waiting list with the sign-in alone, and offers a different account; no promise of an email (#3226677040)
+- Fixed: a session the API rejects looped between the app and sign-in; the browser now signs it out, and the auth provider keeps its actions and unchanged state stable so signing out can't retrigger itself (#3227832120)
 
 #### Docs
 

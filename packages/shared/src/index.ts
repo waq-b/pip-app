@@ -23,6 +23,7 @@ export type {
   Direction,
   Holding,
   InstrumentDetail,
+  MeResponse,
   MonthlyContribution,
   Pence,
   Percent,

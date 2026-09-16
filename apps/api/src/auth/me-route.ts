@@ -1,12 +1,6 @@
+import type { MeResponse } from "@finance-app/shared";
 import type { FastifyInstance } from "fastify";
 import type { AllowlistStore } from "./allowlist.js";
-
-export interface MeResponse {
-  email: string;
-  name?: string;
-  /** False means the frontend shows the not-on-the-list screen. */
-  allowed: boolean;
-}
 
 /**
  * Tells a signed-in person whether they're allowed in. Reachable without being

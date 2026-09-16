@@ -176,6 +176,16 @@ export interface ActivityEntry {
   when: string;
 }
 
+/**
+ * `GET /me`: who a signed-in person is, and whether they're allowed in. Reachable
+ * without being on the allowlist, so a refused person can find that out.
+ */
+export interface MeResponse {
+  email: string;
+  name?: string;
+  allowed: boolean;
+}
+
 export type ProviderId = "trading212" | "kraken";
 
 export type ConnectionStatus = "not_connected" | "live" | "expired" | "error";

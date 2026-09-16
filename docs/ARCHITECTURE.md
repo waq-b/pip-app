@@ -6,9 +6,8 @@ Living doc. Reflects what's actually built, not what's planned — check `docs/p
 
 Supabase for Postgres and Auth, with Fastify kept as the backend and the wall (CLAUDE.md s3).
 
-**Built:** the API side of Supabase Auth — see [Auth](#auth) — and Row Level Security switched on for every table. **Not built yet:**
+**Built:** Supabase Auth end to end — sign-in in the browser and token verification in the API, see [Auth](#auth) — and Row Level Security switched on for every table. **Not built yet:**
 
-- **Web sign-in** through the Supabase client (Phase 1 rework task R3).
 - **RLS as a second wall.** Today RLS, with no policies, only shuts Supabase's REST API off from the tables; Fastify queries as a role that bypasses it. Making it a real wall behind the API means querying as a non-bypass role with the verified user's claims set per request, inside a transaction. That arrives with the first user-owned table in Phase 2 — built now it would guard nothing.
 - **Scheduled work** from `pg_cron`. Price refresh, which touches no user secret, may run in an Edge Function. Anything that uses a provider key is triggered by `pg_cron` but executed by Fastify, because provider keys are never decrypted outside it (hard line 6).
 - **Provider keys** encrypted with our own AES-256-GCM and a `MASTER_KEY` held in Render — not Supabase Vault (Phase 2).
@@ -38,7 +37,7 @@ finance-app-personal/
 │           ├── auth/       ← Supabase JWT verification, allowlist, guard, /me, waitlist
 │           ├── db/
 │           │   ├── client.ts   ← lazy Drizzle/Postgres client (getDb())
-│           │   └── schema.ts   ← users, allowlist, waitlist, Auth.js tables
+│           │   └── schema.ts   ← users (the allowlist), waitlist
 │           ├── fixtures/   ← the design's sample words and numbers
 │           ├── market/     ← MARKET DATA: what it's worth, what it's done
 │           │   ├── market.ts   ← common market-data interface
@@ -98,7 +97,10 @@ apps/web/src/
 ├── App.tsx              ← query client, router, appearance
 ├── routes.tsx           ← the route table
 ├── lib/
-│   ├── api.ts           ← the only way to reach the API; same-origin, 401 is its own error
+│   ├── api.ts           ← the only way to reach the API; bearer token, 401 and 403 are their own errors
+│   ├── auth-client.ts   ← Supabase, behind a four-method interface
+│   ├── auth-context.ts  ← useAuth()
+│   ├── me.ts            ← useMe(): allowed or not
 │   ├── format.ts        ← every figure: pounds before percent, true minus signs
 │   ├── theme.ts         ← appearance: follow the device, or a stored choice
 │   └── use-appearance.ts
@@ -112,11 +114,13 @@ apps/web/src/
 │   ├── nav.ts           ← the three destinations, and what lights each one
 │   ├── use-breakpoint.ts
 │   ├── pointer-words.ts ← tap/click, phone/computer
-│   └── pip-mark.tsx     ← the mark, choosing its own cut by size
-└── screens/             ← one per screen, arriving in tasks 15–20
+│   ├── pip-mark.tsx     ← the mark, choosing its own cut by size
+│   ├── auth-provider.tsx
+│   └── require-session.tsx ← routes by the two walls
+└── screens/             ← sign-in and not-on-the-list so far; the rest arrive in tasks 16–20
 ```
 
-**Tokens.** `index.css` declares every colour as a `--pip-*` variable for light, overrides them for dark, and maps them into Tailwind with `@theme inline` — so `bg-card` resolves to the live variable and dark mode is a variable swap, never a second set of classes. Pot scopes (`.pot-fnd`, `.pot-pick`, `.pot-bet`) override only the accent trio, so anything inside one paints itself in that pot's colour without knowing which pot it is. No component carries a hex value — and `shell/pip-mark.test.tsx` enforces that rather than trusting it, because two slipped through before the test existed and both broke dark mode. The mark's seeds and the alert dot have their own tokens (`--pip-seed-fnd/pick/bet`, `--pip-alert`), separate from the accent, because they must not change when a pot scope does.
+**Tokens.** `index.css` declares every colour as a `--pip-*` variable for light, overrides them for dark, and maps them into Tailwind with `@theme inline` — so `bg-card` resolves to the live variable and dark mode is a variable swap, never a second set of classes. Pot scopes (`.pot-fnd`, `.pot-pick`, `.pot-bet`) override only the accent trio, so anything inside one paints itself in that pot's colour without knowing which pot it is. No component carries a hex value — and `shell/pip-mark.test.tsx` enforces that rather than trusting it, because two slipped through before the test existed and both broke dark mode. The mark's seeds and the alert dot have their own tokens (`--pip-seed-fnd/pick/bet`, `--pip-alert`), separate from the accent, because they must not change when a pot scope does. The one deliberate exception is Google's "G" on the sign-in button (`screens/google-mark.tsx`): Google's branding rules require it in its own colours, so it lives in its own file, outside the folders the no-hex tests cover.
 
 **Appearance.** Follows the device until someone chooses in Setup. The `data-theme` attribute is written only for an explicit choice; leaving it off for "system" keeps the media query in charge, so the app follows the device live rather than at load. Storage access is wrapped, because private browsing throws rather than returning null.
 
@@ -241,7 +245,9 @@ The guard is an `onRequest` hook on the root instance — deliberately not added
 
 **Admin.** `pnpm --filter api allowlist <list|add|remove> [email]` is the only way to grant access.
 
-**Env vars** (see `.env.example`): `SUPABASE_URL` for the API — the server won't start without it. The web app's `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` arrive with web sign-in.
+**In the browser.** Screens never import Supabase. `lib/auth-client.ts` wraps it in a four-method `AuthClient` (get session, listen for changes, sign in with Google, sign out); `shell/auth-provider.tsx` holds the signed-in state and gives the API client a token getter. The token is read fresh on every request, so one Supabase has just refreshed is always the one sent. `RequireSession` routes by the two walls: no session → `/sign-in`; a session → ask `GET /me`; not allowed → `/not-on-the-list`; allowed → the app. If the API rejects a session the browser still holds (revoked, or expired past refreshing), the browser signs it out rather than redirecting — the sign-in screen would otherwise see a session and send you straight back, forever. Two details keep that from looping: the provider's sign-in and sign-out functions are stable for the life of the client, and a session update that changes nothing hands back the same state object. Tests use `test/fake-auth.ts` instead of Supabase.
+
+**Env vars** (see `.env.example`): `SUPABASE_URL` for the API — the server won't start without it. The web app needs `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`; without them it shows "Pip isn't configured" rather than a blank page. The publishable key is public by design — which is exactly why every table has RLS on.
 
 ## Storage
 
