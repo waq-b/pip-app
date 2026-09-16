@@ -10,11 +10,13 @@ import { Link, useParams } from "react-router";
 import { BigNumber } from "../components/big-number";
 import { LineChart } from "../components/line-chart";
 import { NotAdviceLabel } from "../components/not-advice-label";
-import { ProvenanceLine } from "../components/provenance";
+import { AgeChip, ProvenanceLine } from "../components/provenance";
+import { StaleCard } from "../components/stale-card";
 import { Skeleton } from "../components/skeleton";
 import { ApiError } from "../lib/api";
 import { changeTone, formatPercent, formatPounds, formatSignedPounds } from "../lib/format";
 import { priceCaption, RANGES, rangeStartLabel, useInstrument } from "../lib/instrument";
+import { ladder } from "../lib/staleness";
 import { ICON_STROKE } from "../shell/nav";
 import { useBreakpoint, type Breakpoint } from "../shell/use-breakpoint";
 
@@ -53,6 +55,7 @@ export function InstrumentDetailScreen() {
           breakpoint={breakpoint}
           range={range}
           onRange={setRange}
+          onRetry={() => void instrument.refetch()}
         />
       )}
     </div>
@@ -64,12 +67,18 @@ function InstrumentLoaded({
   breakpoint,
   range,
   onRange,
+  onRetry,
 }: {
   instrument: InstrumentDetail;
   breakpoint: Breakpoint;
   range: PriceRange;
   onRange: (range: PriceRange) => void;
+  onRetry: () => void;
 }) {
+  const stale = ladder([{ bucket: instrument.bucket, freshness: instrument.freshness }], {
+    single: "Price",
+  });
+  const ageHours = stale.chipped[instrument.bucket];
   const { scope, provider } = BUCKET_META[instrument.bucket];
   const potName = displayNameFor(instrument.bucket);
   const isDesktop = breakpoint === "desktop";
@@ -97,11 +106,18 @@ function InstrumentLoaded({
 
       <div className="bg-line my-4 h-px" />
 
-      <BigNumber
-        label="What it's worth to you"
-        value={instrument.value}
-        size={isDesktop ? "desktop" : "phone"}
-      />
+      {ageHours !== undefined ? (
+        <div className="mb-1.5">
+          <AgeChip hours={ageHours} />
+        </div>
+      ) : null}
+      <div className={stale.dimmed.length > 0 ? "opacity-60" : undefined}>
+        <BigNumber
+          label="What it's worth to you"
+          value={instrument.value}
+          size={isDesktop ? "desktop" : "phone"}
+        />
+      </div>
 
       <div className="mt-3 flex flex-wrap gap-6">
         <Movement label="Today" change={instrument.today} />
@@ -143,9 +159,7 @@ function InstrumentLoaded({
     </div>
   );
 
-  const provenance = (
-    <ProvenanceLine state="fresh" text={`Prices: ${instrument.freshness.source}`} />
-  );
+  const provenance = <ProvenanceLine state={stale.state} text={stale.line} />;
 
   const chart = (
     <section
@@ -193,6 +207,12 @@ function InstrumentLoaded({
       ) : (
         <BackLink to={`/pots/${instrument.bucket}`} label={`Back to ${potName}`} />
       )}
+
+      {stale.card ? (
+        <div className="mb-[11px]">
+          <StaleCard {...stale.card} onRetry={onRetry} />
+        </div>
+      ) : null}
 
       {isDesktop ? (
         <div className="grid grid-cols-[400px_1fr] items-start gap-3.5">

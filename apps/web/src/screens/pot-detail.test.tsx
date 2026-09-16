@@ -58,7 +58,7 @@ function detail(overrides: Partial<BucketDetail> = {}): BucketDetail {
     ],
     freshness: {
       source: "Sample prices · stub data",
-      asOf: "2026-09-16T09:00:00Z",
+      asOf: new Date(Date.now() - 4 * 60_000).toISOString(),
       failed: false,
       marketsClosed: false,
     },
@@ -98,7 +98,7 @@ describe("the pot detail screen", () => {
       await screen.findByText("Up 56% overall, and down 40% twice on the way."),
     ).toBeInTheDocument();
     expect(screen.getByText("Nothing new has gone in since June.")).toBeInTheDocument();
-    expect(screen.getByText("Prices: Sample prices · stub data")).toBeInTheDocument();
+    expect(screen.getByText("Sample prices · stub data · updated 4 min ago")).toBeInTheDocument();
   });
 
   it("lists what's inside, each holding linking to its own page", async () => {
@@ -218,5 +218,31 @@ describe("the pot detail screen on desktop", () => {
       "href",
       "/pots/Base",
     );
+  });
+});
+
+describe("the staleness ladder on a pot", () => {
+  it("dims the value and shows the red card when the feed is gone", async () => {
+    const eightHoursAgo = new Date(Date.now() - 8 * 60 * 60_000).toISOString();
+    renderRoute("/pots/Degen", {
+      session: WAQAR,
+      api: api({
+        body: detail({
+          freshness: {
+            source: "Sample prices · stub data",
+            asOf: eightHoursAgo,
+            failed: false,
+            marketsClosed: false,
+          },
+        }),
+      }),
+    });
+
+    const card = await screen.findByRole("alert");
+    expect(
+      within(card).getByRole("heading", { name: "Prices aren't coming through" }),
+    ).toBeInTheDocument();
+    expect(within(card).getByRole("button", { name: "Try again" })).toBeInTheDocument();
+    expect(screen.getByText("What it's worth").closest(".opacity-60")).toBeInTheDocument();
   });
 });

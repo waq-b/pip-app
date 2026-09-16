@@ -40,7 +40,7 @@ function instrument(
     series: range === "month" ? series([11_820, 14_280]) : series([10_000, 12_000, 14_280]),
     freshness: {
       source: "Sample prices · stub data",
-      asOf: "2026-09-16T09:00:00Z",
+      asOf: new Date(Date.now() - 4 * 60_000).toISOString(),
       failed: false,
       marketsClosed: false,
     },
@@ -108,7 +108,7 @@ describe("the instrument screen", () => {
     expect(
       await screen.findByText("The price went from £100.00 to £142.80 since you bought."),
     ).toBeInTheDocument();
-    expect(screen.getByText("Prices: Sample prices · stub data")).toBeInTheDocument();
+    expect(screen.getByText("Sample prices · stub data · updated 4 min ago")).toBeInTheDocument();
   });
 
   it("redraws for a different range", async () => {
@@ -208,5 +208,31 @@ describe("the instrument screen on desktop", () => {
     );
     expect(within(crumbs).getByText("Nvidia")).toHaveAttribute("aria-current", "page");
     expect(screen.queryByRole("link", { name: "Back to Handpicked" })).not.toBeInTheDocument();
+  });
+});
+
+describe("the staleness ladder on a holding", () => {
+  it("shows an amber line and an age chip, keeping the figure at full strength", async () => {
+    const twoHoursAgo = new Date(Date.now() - 125 * 60_000).toISOString();
+    renderRoute("/instruments/nvidia", {
+      session: WAQAR,
+      api: api({
+        body: instrument("all", {
+          freshness: {
+            source: "Sample prices · stub data",
+            asOf: twoHoursAgo,
+            failed: false,
+            marketsClosed: false,
+          },
+        }),
+      }),
+    });
+
+    expect(await screen.findByText("Price is 2 hours old")).toHaveAttribute("data-state", "amber");
+    expect(screen.getByText("2h old")).toBeInTheDocument();
+    expect(
+      screen.getByText("What it's worth to you").closest(".opacity-60"),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });

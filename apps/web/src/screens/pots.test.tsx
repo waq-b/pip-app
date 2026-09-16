@@ -53,7 +53,7 @@ function portfolio(
       bucket,
       freshness: {
         source: "Sample prices · stub data",
-        asOf: "2026-09-16T09:00:00Z",
+        asOf: new Date(Date.now() - 4 * 60_000).toISOString(),
         failed: false,
         marketsClosed: false,
       },
@@ -162,7 +162,7 @@ describe("the pots screen", () => {
   it("names the price source on the provenance line — a market source, never a broker", async () => {
     renderRoute("/", { session: WAQAR, api: api() });
 
-    const line = await screen.findByText("Prices: Sample prices · stub data");
+    const line = await screen.findByText("Sample prices · stub data · updated 4 min ago");
     expect(line.textContent).not.toMatch(/Trading 212|Kraken/);
   });
 
@@ -248,5 +248,79 @@ describe("the pots screen at other widths", () => {
       await screen.findByRole("heading", { name: "The shape you asked for" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Base blurb")).toBeInTheDocument();
+  });
+});
+
+describe("the staleness ladder on Pots", () => {
+  const minutesAgo = (n: number) => new Date(Date.now() - n * 60_000).toISOString();
+  function withFreshness(ages: Record<"Base" | "Medium" | "Degen", number>, failed = false) {
+    return api({
+      "/portfolio": {
+        body: portfolio("day", {
+          freshness: (["Base", "Medium", "Degen"] as const).map((bucket) => ({
+            bucket,
+            freshness: {
+              source: "Sample prices · stub data",
+              asOf: minutesAgo(ages[bucket]),
+              failed: failed && bucket === "Degen",
+              marketsClosed: false,
+            },
+          })),
+        }),
+      },
+    });
+  }
+
+  it("goes amber with a chip on the late pot, leaving the total alone", async () => {
+    const { container } = renderRoute("/", {
+      session: WAQAR,
+      api: withFreshness({ Base: 4, Medium: 4, Degen: 130 }),
+    });
+
+    expect(
+      await screen.findByText("Side Bet is 2 hours old · everything else updated 4 min ago"),
+    ).toHaveAttribute("data-state", "amber");
+    const sideBet = container.querySelector('[data-pot="Degen"]')!;
+    expect(within(sideBet as HTMLElement).getByText("2h old")).toBeInTheDocument();
+    expect(container.querySelector('[data-pot="Base"]')).not.toHaveTextContent("old");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(container.querySelector(".opacity-60")).not.toBeInTheDocument();
+  });
+
+  it("goes red when a feed fails: a card with a retry, the pot dimmed, the total marked rough", async () => {
+    let calls = 0;
+    const stale = withFreshness({ Base: 4, Medium: 4, Degen: 130 }, true);
+    const fresh = withFreshness({ Base: 4, Medium: 4, Degen: 4 });
+    const { container } = renderRoute("/", {
+      session: WAQAR,
+      api: {
+        ...stale,
+        "/portfolio": (init, url) => {
+          calls += 1;
+          const handler = calls === 1 ? stale["/portfolio"] : fresh["/portfolio"];
+          return typeof handler === "function" ? handler(init, url) : handler!;
+        },
+      },
+    });
+
+    const card = await screen.findByRole("alert");
+    expect(
+      within(card).getByRole("heading", { name: "Side Bet isn't updating" }),
+    ).toBeInTheDocument();
+    expect(card).toHaveTextContent(
+      "Your Side Bet number is from 2 hours ago. Everything else is live.",
+    );
+    expect(screen.getByText("Roughly — one pot is stale")).toBeInTheDocument();
+    expect(screen.queryByText(/is 2 hours old/)).not.toBeInTheDocument();
+    const sideBetValue = within(
+      container.querySelector('[data-pot="Degen"]') as HTMLElement,
+    ).getByText("£780");
+    expect(sideBetValue).toHaveClass("opacity-60");
+
+    fireEvent.click(within(card).getByRole("button", { name: "Try again" }));
+    expect(
+      await screen.findByText("Sample prices · stub data · updated 4 min ago"),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });

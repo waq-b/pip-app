@@ -85,7 +85,7 @@ Both apps import this — nothing hardcodes bucket names elsewhere. Each bucket 
 
 - **Money is integer pence** (`Pence`), so nothing rounds in transit. `Percent` is percentage points.
 - **Every `Change` carries both** an amount and a percent, which is what makes "pounds before percent" (DESIGN.md §4.1) impossible to break by accident.
-- **`PriceFreshness`** carries the market-data source, the last successful read, whether the last fetch failed, and whether markets are closed. It names a market-data source, never a trading API (hard line 8). Deriving the green/amber/red state from it belongs to the staleness ladder task, not to these types.
+- **`PriceFreshness`** carries the market-data source, the last successful read, whether the last fetch failed, and whether markets are closed. It names a market-data source, never a trading API (hard line 8). Deriving the green/amber/red state from it is the web app's staleness ladder (`apps/web/src/lib/staleness.ts`), not these types.
 
 ## Web app
 
@@ -141,6 +141,8 @@ apps/web/src/
 **Setup keeps connection outcomes in the query cache.** Phase 1's `/connections` routes store nothing, so refetching after a connect or disconnect would undo it on screen. `lib/connections.ts` writes the outcome into the `["connections"]` cache instead; Phase 2's encrypted storage makes the server agree and this can become an invalidate. The pasted key lives only in the connect card's input state until it's sent, then only a masked copy (`maskKey`) is kept for showing back. Refusing a key that can trade is the API's decision (`inspectKey`); the screen only explains it.
 
 **Per-device preferences live in localStorage, wrapped.** Appearance (`lib/theme.ts`, `pip.appearance`) and Hide the numbers (`lib/hide-numbers.ts`, `pip.hide-numbers`, read through `useSyncExternalStore` so every `BigNumber` updates when Setup flips it). `BigNumber` blurs its figures behind a "Show the numbers" button when the setting is on.
+
+**The staleness ladder is one pure function.** `lib/staleness.ts` `ladder(entries, {single?})` takes `BucketFreshness[]` and returns the provenance state and line, which pots get an age chip (`chipped`), which dim (`dimmed`) and, on red, the card's words. Pots, pot detail and holding detail all call it and only place what it returns (`ProvenanceLine`, `AgeChip`, `components/stale-card.tsx`, `opacity-60`), so they can't disagree. Rungs per pot: failed → red; markets closed → closed (green, whatever the age); over 6h → red; 1h and up → amber; else fresh. Across pots, any red wins and amber stands down; three pots amber at once also goes red — that rule is skipped with `single`, which pot and holding detail pass so the line doesn't name the pot you're already on. Ages are measured against `Date.now()` in the browser, from the API's `asOf`. The red card's Try again refetches that screen's query.
 
 **The mark** is a component rather than an imported SVG so it can pick its cut: below 48px it draws the small cut (DESIGN.md §3), which the rail and sidebar need at 26–27px. The SVG files remain the source for favicons and app icons.
 
@@ -222,7 +224,7 @@ interface MarketData {
 
 `getFreshness` is per pot, not global, because the staleness ladder names the affected pot ("Side Bet is 2 hours old") and because different pots get different sources from Phase 4 on.
 
-`market/stub` is the only implementation so far. It generates prices from a small deterministic PRNG seeded by the instrument id, so the same holding always draws the same chart and fixtures, tests and screenshots agree. It also takes per-pot staleness overrides — an age in hours, an outright failure, or markets-closed — which is how the green/amber/red ladder gets exercised end to end without a real feed ever having to break.
+`market/stub` is the only implementation so far. It generates prices from a small deterministic PRNG seeded by the instrument id, so the same holding always draws the same chart and fixtures, tests and screenshots agree. It also takes per-pot staleness overrides — an age in hours, an outright failure, or markets-closed — which is how the green/amber/red ladder gets exercised end to end without a real feed ever having to break. `server.ts` reads them from `STUB_STALENESS` (`market/stub/staleness-env.ts`), so the dev server can be put on any rung.
 
 ## Auth
 
@@ -276,11 +278,12 @@ Auth is the first thing that needs a live database to exercise by hand; its test
 
 ## Env flags
 
-| Var             | Purpose                                                      | Default                                     |
-| --------------- | ------------------------------------------------------------ | ------------------------------------------- |
-| `PROVIDER_MODE` | `stub` (fake data) or `live` (real providers, from Phase 2+) | `stub`                                      |
-| `DATABASE_URL`  | Postgres connection string                                   | none — required once a route touches the DB |
-| `PORT`          | apps/api listen port                                         | `3001`                                      |
+| Var              | Purpose                                                                                                                                         | Default                                     |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `PROVIDER_MODE`  | `stub` (fake data) or `live` (real providers, from Phase 2+)                                                                                    | `stub`                                      |
+| `DATABASE_URL`   | Postgres connection string                                                                                                                      | none — required once a route touches the DB |
+| `PORT`           | apps/api listen port                                                                                                                            | `3001`                                      |
+| `STUB_STALENESS` | Stub only: force the staleness ladder, e.g. `Degen:2` (amber), `Degen:failed` (red), `all:closed`. Unreadable values stop the server at startup | empty — everything fresh                    |
 
 Provider secrets (`T212_API_KEY`, `KRAKEN_API_KEY`, etc.) don't exist as env vars yet — Phase 2+ moves to per-user encrypted keys stored in Postgres, not global env vars (CLAUDE.md section 3, "Key storage").
 

@@ -93,6 +93,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added: connect flow — numbered steps, key field, a checking state, an unrecognised key shown back masked with "Try that again", a key that can trade refused on purpose with what must be off and no way round it, and a can't-reach-Pip state (#3226691747)
 - Added: preferences — Appearance with a way back to following the device, Hide the numbers (blurs big totals until tapped, remembered per device), currency fixed to GBP; no Nudge me until Phase 7 (#3226691747)
 - Removed: the placeholder screen, now that every section is built (#3226691747)
+- Added: the staleness ladder — one pure function turns per-pot freshness into green, amber (line naming the late pots, age chips), red (card with Try again, amber stands down, affected figures at 60%, total marked "Roughly") or markets-closed green; wired into Pots, pot detail and holding detail (#3227558097)
+- Changed: provenance lines now read "<source> · updated N min ago" instead of "Prices: <source>" (#3227558097)
+- Added: `STUB_STALENESS` env flag puts the stub dev server on any rung of the ladder; unreadable values stop startup (#3227558097)
 
 #### Docs
 

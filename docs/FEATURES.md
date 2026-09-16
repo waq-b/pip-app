@@ -81,4 +81,13 @@ None of these appear on a screen yet, but they decide how every number will read
 - **A month with nothing paid in** shows as a small faded bar, so it reads as zero rather than as missing data.
 - **The holdings list** sorts by name, value or change; you tap or click a whole row to open a holding, and each keeps its colour when the order changes.
 
-Still to come in Phase 1: the screens themselves, and the staleness ladder that turns freshness into green, amber and red. Nothing here touches real money or a real broker.
+## How old the prices are
+
+Every screen with a live figure has one small line saying where prices come from and how old they are. It never names a broker, because prices don't come from one. The line climbs a ladder, and only ever speaks with one voice:
+
+- **Under an hour — green, and quiet.** "Sample prices · stub data · updated 4 min ago".
+- **1 to 6 hours — amber.** The line names the late pot first, then reassures: "Side Bet is 2 hours old · everything else updated 4 min ago". Two late pots are still one line ("Handpicked and Side Bet are 2 hours old · Foundation updated 4 min ago"). A small "2H OLD" chip sits beside that pot's figure. The total isn't dimmed, no card appears, nothing is added to the navigation. On a pot or a holding it just says "Prices are 2 hours old" or "Price is 2 hours old".
+- **Over 6 hours, or the price feed failed — red.** A card says which pot isn't updating ("Your Side Bet number is from 2 hours ago. Everything else is live.") with Try again. The amber line stands down. That pot's figure drops to 60%, because the feed is gone rather than late; the total stays at full strength but says "Roughly — one pot is stale". If every pot is affected — including all three being an hour or more late — the card says "All prices are 2 hours old" and the total dims too. On a pot or a holding, the card says when Pip last saw a figure and that what you own hasn't changed.
+- **Markets closed — green, always.** A Saturday price isn't stale: "Prices from Friday's close".
+
+The number never disappears at any rung. Nothing here touches real money or a real broker.

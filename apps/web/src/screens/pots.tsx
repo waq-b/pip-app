@@ -11,6 +11,7 @@ import { BigNumber } from "../components/big-number";
 import { ProgressCapBar } from "../components/progress-cap-bar";
 import { ProvenanceLine } from "../components/provenance";
 import { Skeleton } from "../components/skeleton";
+import { StaleCard } from "../components/stale-card";
 import {
   isEmptyPortfolio,
   TIMEFRAMES,
@@ -18,6 +19,7 @@ import {
   useActivity,
   usePortfolio,
 } from "../lib/portfolio";
+import { ladder } from "../lib/staleness";
 import { PipMark } from "../shell/pip-mark";
 import { useBreakpoint, type Breakpoint } from "../shell/use-breakpoint";
 import { ActivityFeed } from "./activity-feed";
@@ -28,7 +30,8 @@ import { PotCard, PotRow } from "./pot-card";
  * they split against the shape you asked for, and what changed (DESIGN.md §7–8).
  *
  * The provenance line names where prices came from. Whether it reads green,
- * amber or red is the staleness ladder's decision (task 21), not this screen's.
+ * amber or red is the staleness ladder's decision (`lib/staleness.ts`), not
+ * this screen's: it only places the line, the chips, the dimming and the card.
  */
 export function PotsScreen() {
   const breakpoint = useBreakpoint();
@@ -51,6 +54,7 @@ export function PotsScreen() {
           breakpoint={breakpoint}
           timeframe={timeframe}
           onTimeframe={setTimeframe}
+          onRetry={() => void portfolio.refetch()}
         />
       )}
 
@@ -66,15 +70,32 @@ function PotsLoaded({
   breakpoint,
   timeframe,
   onTimeframe,
+  onRetry,
 }: {
   portfolio: PortfolioSummary;
   breakpoint: Breakpoint;
   timeframe: Timeframe;
   onTimeframe: (timeframe: Timeframe) => void;
+  onRetry: () => void;
 }) {
   const { label, words } = TIMEFRAMES.find((entry) => entry.id === timeframe)!;
-  const sources = [...new Set(portfolio.freshness.map((entry) => entry.freshness.source))];
-  const provenance = <ProvenanceLine state="fresh" text={`Prices: ${sources.join(" · ")}`} />;
+  const stale = ladder(portfolio.freshness);
+  const provenance = <ProvenanceLine state={stale.state} text={stale.line} />;
+  const card = stale.card ? <StaleCard {...stale.card} onRetry={onRetry} /> : null;
+  const everyPotDimmed = stale.dimmed.length === portfolio.buckets.length;
+  // Amber never touches the total. Red dims it only when every pot's feed is
+  // gone; otherwise it says the total is rough and dims the pots that are.
+  const roughly =
+    stale.dimmed.length > 0 && !everyPotDimmed ? (
+      <div className="text-ink2 mt-1.5 text-[12.5px] font-semibold">
+        Roughly — {stale.dimmed.length === 1 ? "one pot is" : "two pots are"} stale
+      </div>
+    ) : null;
+  const potProps = (bucket: PortfolioSummary["buckets"][number]["bucket"]) => ({
+    ageHours: stale.chipped[bucket],
+    dimmed: stale.dimmed.includes(bucket),
+  });
+  const totalClass = everyPotDimmed ? "opacity-60" : undefined;
   const foundation = portfolio.buckets.find((bucket) => bucket.bucket === "Base");
 
   const ring = (
@@ -98,6 +119,7 @@ function PotsLoaded({
   if (breakpoint === "desktop") {
     return (
       <div className="flex flex-col gap-3.5">
+        {card}
         <div className="flex items-end justify-between gap-5">
           <div>
             <div className="text-ink2 text-[11.5px] font-bold tracking-[0.11em] uppercase">
@@ -112,13 +134,16 @@ function PotsLoaded({
 
         <section className="bg-card grid grid-cols-[1fr_340px] items-center gap-10 rounded-[30px] px-[30px] py-7">
           <div>
-            <BigNumber
-              label="Everything you own"
-              value={portfolio.total}
-              change={portfolio.change}
-              when={words}
-              size="desktop"
-            />
+            <div className={totalClass}>
+              <BigNumber
+                label="Everything you own"
+                value={portfolio.total}
+                change={portfolio.change}
+                when={words}
+                size="desktop"
+              />
+            </div>
+            {roughly}
             <div className="mt-4">{provenance}</div>
           </div>
           <div className="border-line border-l pl-9">{ring}</div>
@@ -126,7 +151,13 @@ function PotsLoaded({
 
         <div className="grid grid-cols-3 gap-3.5">
           {portfolio.buckets.map((pot) => (
-            <PotCard key={pot.bucket} pot={pot} when={words} size="desktop" />
+            <PotCard
+              key={pot.bucket}
+              pot={pot}
+              when={words}
+              size="desktop"
+              {...potProps(pot.bucket)}
+            />
           ))}
         </div>
 
@@ -159,6 +190,7 @@ function PotsLoaded({
 
   return (
     <div className="flex flex-col">
+      {card ? <div className="mb-3">{card}</div> : null}
       <section className="bg-card flex flex-col gap-4 rounded-[30px] px-[22px] pt-6 pb-[22px]">
         <div className="text-ink2 text-[11px] font-semibold tracking-[0.11em] uppercase">
           {label}
@@ -167,12 +199,15 @@ function PotsLoaded({
           {portfolio.verdict}
         </p>
         <div className="bg-line h-px" />
-        <BigNumber
-          label="Everything you own"
-          value={portfolio.total}
-          change={portfolio.change}
-          when={words}
-        />
+        <div className={totalClass}>
+          <BigNumber
+            label="Everything you own"
+            value={portfolio.total}
+            change={portfolio.change}
+            when={words}
+          />
+        </div>
+        {roughly}
       </section>
 
       <div className="mx-0.5 mt-3">{provenance}</div>
@@ -181,9 +216,9 @@ function PotsLoaded({
       <div className="flex flex-col gap-[11px]">
         {portfolio.buckets.map((pot) =>
           breakpoint === "tablet" ? (
-            <PotRow key={pot.bucket} pot={pot} when={words} />
+            <PotRow key={pot.bucket} pot={pot} when={words} {...potProps(pot.bucket)} />
           ) : (
-            <PotCard key={pot.bucket} pot={pot} when={words} />
+            <PotCard key={pot.bucket} pot={pot} when={words} {...potProps(pot.bucket)} />
           ),
         )}
       </div>

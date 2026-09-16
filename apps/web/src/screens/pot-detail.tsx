@@ -13,10 +13,12 @@ import { BarChart } from "../components/bar-chart";
 import { BigNumber } from "../components/big-number";
 import { HoldingsTable } from "../components/holdings-table";
 import { LineChart } from "../components/line-chart";
-import { ProvenanceLine } from "../components/provenance";
+import { AgeChip, ProvenanceLine } from "../components/provenance";
+import { StaleCard } from "../components/stale-card";
 import { Skeleton } from "../components/skeleton";
 import { ApiError } from "../lib/api";
 import { parseBucket, useBucketDetail } from "../lib/pot";
+import { ladder } from "../lib/staleness";
 import { ICON_STROKE } from "../shell/nav";
 import { useBreakpoint, type Breakpoint } from "../shell/use-breakpoint";
 
@@ -60,7 +62,11 @@ export function PotDetailScreen() {
       ) : detail.isError ? (
         <PotError onRetry={() => void detail.refetch()} />
       ) : (
-        <PotLoaded detail={detail.data} breakpoint={breakpoint} />
+        <PotLoaded
+          detail={detail.data}
+          breakpoint={breakpoint}
+          onRetry={() => void detail.refetch()}
+        />
       )}
 
       {bucket && !notFound ? (
@@ -72,14 +78,26 @@ export function PotDetailScreen() {
   );
 }
 
-function PotLoaded({ detail, breakpoint }: { detail: BucketDetail; breakpoint: Breakpoint }) {
+function PotLoaded({
+  detail,
+  breakpoint,
+  onRetry,
+}: {
+  detail: BucketDetail;
+  breakpoint: Breakpoint;
+  onRetry: () => void;
+}) {
   const { scope } = BUCKET_META[detail.bucket];
   const isSideBet = scope === "bet";
   const isEmpty = detail.value === 0 && detail.holdings.length === 0;
 
   if (isEmpty) return <PotEmpty bucket={detail.bucket} />;
 
-  const provenance = <ProvenanceLine state="fresh" text={`Prices: ${detail.freshness.source}`} />;
+  const stale = ladder([{ bucket: detail.bucket, freshness: detail.freshness }], {
+    single: "Prices",
+  });
+  const provenance = <ProvenanceLine state={stale.state} text={stale.line} />;
+  const ageHours = stale.chipped[detail.bucket];
   const isDesktop = breakpoint === "desktop";
 
   const header = (
@@ -105,13 +123,20 @@ function PotLoaded({ detail, breakpoint }: { detail: BucketDetail; breakpoint: B
         {isDesktop ? null : (
           <p className="text-ink2 m-0 mb-4 text-[13px] leading-normal">{detail.blurb}</p>
         )}
-        <BigNumber
-          label="What it's worth"
-          value={detail.value}
-          change={detail.change}
-          when="today"
-          size={isDesktop ? "desktop" : "phone"}
-        />
+        {ageHours !== undefined ? (
+          <div className="mb-1.5">
+            <AgeChip hours={ageHours} />
+          </div>
+        ) : null}
+        <div className={stale.dimmed.length > 0 ? "opacity-60" : undefined}>
+          <BigNumber
+            label="What it's worth"
+            value={detail.value}
+            change={detail.change}
+            when="today"
+            size={isDesktop ? "desktop" : "phone"}
+          />
+        </div>
       </div>
       {isDesktop ? (
         <div className="border-line border-l pl-9">
@@ -168,6 +193,7 @@ function PotLoaded({ detail, breakpoint }: { detail: BucketDetail; breakpoint: B
 
   return (
     <div className={`pot-${scope} flex flex-col gap-[11px]`}>
+      {stale.card ? <StaleCard {...stale.card} onRetry={onRetry} /> : null}
       {header}
       {isDesktop ? (
         <div className="grid grid-cols-[1fr_1.25fr] items-start gap-3.5">

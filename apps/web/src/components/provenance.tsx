@@ -3,7 +3,8 @@
  * never a tooltip, never hidden behind an icon (DESIGN.md §5).
  *
  * These components only draw a state they're given. Deciding which state a
- * pot is in — green, amber or red — is the staleness ladder's job (task 21).
+ * pot is in — green, amber or red — is the staleness ladder's job
+ * (`lib/staleness.ts`).
  */
 export type ProvenanceState = "fresh" | "amber" | "red" | "closed";
 
