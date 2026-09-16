@@ -37,6 +37,8 @@ export interface AuthGuardOptions {
   allowlist: AllowlistStore;
   /** From `JOB_SECRET`. Absent means job routes refuse every caller. */
   jobSecret?: string;
+  /** In production the web app's files are served under `/app/*`, and are public. */
+  servesWebApp?: boolean;
 }
 
 /**
@@ -51,6 +53,8 @@ export function registerAuthGuard(app: FastifyInstance, options: AuthGuardOption
   app.addHook("onRequest", async (request, reply) => {
     const path = request.url.split("?")[0] ?? request.url;
     if (isPublicPath(path)) return;
+    // The sign-in screen and the code that runs it: public, and holding no data.
+    if (options.servesWebApp && path.startsWith("/app/")) return;
     if (JOB_PATHS.includes(path)) {
       return jobSecretMatches(options.jobSecret, request.headers["x-job-secret"])
         ? undefined

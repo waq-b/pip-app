@@ -2,6 +2,7 @@ import Fastify, { type FastifyServerOptions } from "fastify";
 import { dbAllowlistStore, type AllowlistStore } from "./auth/allowlist.js";
 import { registerAuthGuard } from "./auth/guard.js";
 import { registerJobRoutes } from "./jobs/routes.js";
+import { registerWebApp, rewriteForWebApp } from "./web.js";
 import { refuseEveryone, type TokenVerifier } from "./auth/jwt.js";
 import { registerMeRoute } from "./auth/me-route.js";
 import { registerWaitlistRoute } from "./auth/waitlist-route.js";
@@ -37,12 +38,19 @@ export interface BuildAppOptions {
   refreshJob?: { run(): Promise<unknown> };
   /** From `JOB_SECRET`; job routes refuse everyone without it. */
   jobSecret?: string;
+  /**
+   * Built web app to serve from the same origin, with the API under `/api`
+   * (production). Absent in dev (Vite serves the app) and tests.
+   */
+  webAppDir?: string;
   /** Off in tests; `server.ts` passes the redacted production logger. */
   logger?: FastifyServerOptions["logger"];
 }
 
 export function buildApp(options: BuildAppOptions = {}) {
-  const app = Fastify({ logger: options.logger ?? false });
+  const serverOptions: FastifyServerOptions = { logger: options.logger ?? false };
+  if (options.webAppDir) serverOptions.rewriteUrl = (req) => rewriteForWebApp(req.url ?? "/");
+  const app = Fastify(serverOptions);
   const allowlist = options.allowlistStore ?? dbAllowlistStore;
 
   // The guard goes on first and covers everything registered afterwards, so a
@@ -52,7 +60,10 @@ export function buildApp(options: BuildAppOptions = {}) {
     verifier: options.verifier ?? refuseEveryone,
     allowlist,
     jobSecret: options.jobSecret,
+    servesWebApp: Boolean(options.webAppDir),
   });
+
+  if (options.webAppDir) registerWebApp(app, options.webAppDir);
 
   // The one route that needs no token.
   app.get("/health", async () => ({ status: "ok" }));

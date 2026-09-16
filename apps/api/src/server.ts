@@ -22,6 +22,8 @@ const base: BuildAppOptions = {
   allowlistStore: dbAllowlistStore,
   waitlistStore: dbWaitlistStore,
   jobSecret: config.jobSecret,
+  // Production: serve the built web app from the same origin (see web.ts).
+  webAppDir: process.env.WEB_DIST_DIR || undefined,
   logger: {
     level: process.env.LOG_LEVEL ?? "info",
     redact: { paths: LOG_REDACT_PATHS, censor: "[redacted]" },
