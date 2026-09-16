@@ -91,6 +91,34 @@ describe("Pots with real accounts", () => {
     );
   });
 
+  it("says a connected pot with nothing in it is empty, not £0.00 today", async () => {
+    const empty = portfolio({
+      buckets: [
+        pot({}),
+        pot({
+          bucket: "Degen",
+          value: 0,
+          change: flat,
+          shareOfTotal: 0,
+          targetPercent: 5,
+          blurb: "Your Kraken account",
+        }),
+      ],
+    });
+    renderRoute("/", {
+      session: WAQAR,
+      api: {
+        ...ME_ALLOWED,
+        "/portfolio": { body: empty },
+        "/activity": { body: [] },
+        "/rules": { body: { rules: [], monthlySplit: { total: 0, perBucket: [] } } },
+      },
+    });
+    const sideBet = (await screen.findByText("Your Kraken account")).closest("a")!;
+    expect(sideBet).toHaveTextContent("Nothing in it yet");
+    expect(sideBet).not.toHaveTextContent("£0.00 ·");
+  });
+
   it("says what changed is coming soon", async () => {
     renderRoute("/", {
       session: WAQAR,
@@ -207,6 +235,16 @@ describe("a pot with a real account", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Connect Kraken" })).toHaveAttribute("href", "/setup");
     expect(screen.queryByText("£0")).not.toBeInTheDocument();
+  });
+
+  it("doesn't offer to connect an account that is connected but empty", async () => {
+    const empty = bucketDetail({ bucket: "Degen", value: 0, holdings: [], change: flat });
+    renderRoute("/pots/Degen", {
+      session: WAQAR,
+      api: { ...ME_ALLOWED, "/buckets/Degen": { body: empty } },
+    });
+    expect(await screen.findByText(/perfectly good place to leave it/)).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Connect/ })).not.toBeInTheDocument();
   });
 
   it("says a pot still reading its account is doing so", async () => {

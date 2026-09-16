@@ -5,6 +5,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-09-16
+
 ### Phase 3 — Kraken (read-only)
 
 - Added: Kraken and CoinGecko verified with real calls — `GetApiKeyInfo` reports a read-only key's permissions, CoinGecko GBP prices and its 365-day history cap, Kraken public daily OHLC; anonymised recordings in `apps/api/fixtures/recorded/{kraken,coingecko}`, facts in CLAUDE.md s13 (#3229045898)
@@ -16,6 +18,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added: Side Bet live in the read model — counted in totals, split and rules once Kraken is connected, coins shown in coin units with staked amounts and "No price yet", "since bought" and all-time marked unavailable while cost is unknown, never "markets closed"; hourly crypto refresh outside market hours only while someone holds crypto (migration 0010, applied); 6 tests (#3229040481)
 - Added: Kraken in Setup — steps for a read-only Spot key, API key and hidden private-key fields, the permission-check note; offered whenever the server can price coins; Side Bet's not-connected page links to Setup; holdings and holding pages say "Cost not known yet" instead of a flat change; 4 web tests (#3229046122)
 - Fixed: a Kraken key refused outright (as its IP restriction does) now says to check the restriction, not to tick Query funds (#3229045414)
+- Fixed: from the run-through — a connected but empty pot says "Nothing in it yet" instead of "£0.00 · today", names no price source, and doesn't offer to connect an account that is already connected (#3229045414)
+- Changed: Phase 3 close-out — deployed, run-through at three widths with Kraken connected, docs pass, 0.3.0 (#3229045414)
 
 ### Roadmap
 

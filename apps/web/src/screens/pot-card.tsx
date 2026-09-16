@@ -123,11 +123,17 @@ function potLine(pot: BucketSummary, when: string): string {
   if (pot.status === "not_connected") return "Not connected yet";
   if (pot.status === "syncing") return "Reading your account…";
   if (pot.changeUnavailable) return "Not enough history yet";
+  if (pot.value === 0) return "Nothing in it yet";
   return `${formatSignedPounds(pot.change.amount)} · ${when}`;
 }
 
 function potLineTone(pot: BucketSummary): string {
-  if (pot.status === "not_connected" || pot.status === "syncing" || pot.changeUnavailable) {
+  if (
+    pot.status === "not_connected" ||
+    pot.status === "syncing" ||
+    pot.changeUnavailable ||
+    pot.value === 0
+  ) {
     return "text-ink3";
   }
   return changeTone(pot.change);

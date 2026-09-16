@@ -271,6 +271,27 @@ describe("the live portfolio", () => {
     expect(summary.freshness.map((f) => f.bucket)).toEqual(["Base"]);
   });
 
+  it("leaves a connected but empty pot out of freshness, so it names no source", async () => {
+    await db.insert(providerCredentials).values({
+      userId: ALICE.userId,
+      provider: "kraken",
+      accountKind: "spot",
+      sealedKey: "pip:1:x:y:z",
+      sealedSecret: "pip:1:x:y:z",
+      keyVersion: 1,
+      status: "live",
+      accountCurrency: "GBP",
+      lastPolledAt: NOW,
+      backfillStatus: "done",
+    });
+    const summary = await model().portfolio(ALICE, "day");
+    expect(summary.buckets.find((b) => b.bucket === "Degen")).toMatchObject({
+      status: "live",
+      value: 0,
+    });
+    expect(summary.freshness.map((f) => f.bucket)).toEqual(["Base"]);
+  });
+
   it("marks prices failed when the last refresh failed", async () => {
     await db.update(prices).set({ lastFailedAt: NOW });
     const summary = await model().portfolio(ALICE, "day");

@@ -198,12 +198,15 @@ export function liveReadModel(options: LiveReadOptions): ReadModel {
         buckets,
         // Only pots with a source have prices to be fresh or stale; including the
         // others would make "everything else updated just now" mean nothing.
-        freshness: BUCKETS.filter((bucket) => snapshot.pots[bucket].status !== "not_connected").map(
-          (bucket): BucketFreshness => ({
-            bucket,
-            freshness: freshnessFor(snapshot.pots[bucket], snapshot.schedules, at),
-          }),
-        ),
+        // An empty pot has nothing priced, so it doesn't name a source either.
+        freshness: BUCKETS.filter(
+          (bucket) =>
+            snapshot.pots[bucket].status !== "not_connected" &&
+            snapshot.pots[bucket].held.length > 0,
+        ).map((bucket): BucketFreshness => ({
+          bucket,
+          freshness: freshnessFor(snapshot.pots[bucket], snapshot.schedules, at),
+        })),
         activityComingSoon: true,
       };
       return summary;

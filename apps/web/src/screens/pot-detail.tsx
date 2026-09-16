@@ -92,7 +92,16 @@ function PotLoaded({
   const isEmpty = detail.value === 0 && detail.holdings.length === 0;
 
   if (detail.status === "not_connected") return <PotNotConnected bucket={detail.bucket} />;
-  if (isEmpty) return <PotEmpty bucket={detail.bucket} syncing={detail.status === "syncing"} />;
+  if (isEmpty) {
+    return (
+      <PotEmpty
+        bucket={detail.bucket}
+        syncing={detail.status === "syncing"}
+        // Sample data has no status; a real account with one is already connected.
+        connected={detail.status !== undefined}
+      />
+    );
+  }
 
   const stale = ladder([{ bucket: detail.bucket, freshness: detail.freshness }], {
     single: "Prices",
@@ -282,7 +291,15 @@ function PotNotConnected({ bucket }: { bucket: Bucket }) {
   );
 }
 
-function PotEmpty({ bucket, syncing = false }: { bucket: Bucket; syncing?: boolean }) {
+function PotEmpty({
+  bucket,
+  syncing = false,
+  connected = false,
+}: {
+  bucket: Bucket;
+  syncing?: boolean;
+  connected?: boolean;
+}) {
   const { scope, provider } = BUCKET_META[bucket];
   const isSideBet = scope === "bet";
 
@@ -302,14 +319,18 @@ function PotEmpty({ bucket, syncing = false }: { bucket: Bucket; syncing?: boole
           ? "Pip is reading your account for the first time. Your holdings will appear here in a moment."
           : isSideBet
             ? "Nothing in here, which is a perfectly good place to leave it. If you do want a flutter, you've set yourself a cap, and Pip will tell you the day it creeps over."
-            : "Nothing in here yet. Connect the account that feeds this pot and Pip will fill it in."}
+            : connected
+              ? `Nothing in here yet. What you hold at ${provider} will show up here.`
+              : "Nothing in here yet. Connect the account that feeds this pot and Pip will fill it in."}
       </p>
-      <Link
-        to="/setup"
-        className="bg-solid text-solid-ink mt-4 inline-block rounded-full px-[18px] py-[11px] text-[13.5px] font-bold no-underline"
-      >
-        Connect {provider}
-      </Link>
+      {connected ? null : (
+        <Link
+          to="/setup"
+          className="bg-solid text-solid-ink mt-4 inline-block rounded-full px-[18px] py-[11px] text-[13.5px] font-bold no-underline"
+        >
+          Connect {provider}
+        </Link>
+      )}
       {isSideBet ? (
         <p className="text-ink3 m-0 mt-3.5 text-[11.5px] leading-normal font-medium">
           You don't need this pot. It's just allowed to exist.
