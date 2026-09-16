@@ -165,7 +165,7 @@ function PotLoaded({
   const chart = (
     <Card
       title="How it's gone"
-      aside={detail.chart.from ? `Since ${detail.chart.from}` : undefined}
+      aside={hasHistory && detail.chart.from ? `Since ${detail.chart.from}` : undefined}
     >
       <LineChart
         series={detail.chart.series}

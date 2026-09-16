@@ -189,10 +189,14 @@ export function liveReadModel(options: LiveReadOptions): ReadModel {
         changeUnavailable,
         verdict: verdictFor(change, timeframe, changeUnavailable),
         buckets,
-        freshness: BUCKETS.map((bucket): BucketFreshness => ({
-          bucket,
-          freshness: freshnessFor(snapshot.pots[bucket], snapshot.schedules, at),
-        })),
+        // Only pots with a source have prices to be fresh or stale; including the
+        // others would make "everything else updated just now" mean nothing.
+        freshness: BUCKETS.filter((bucket) => snapshot.pots[bucket].status !== "not_connected").map(
+          (bucket): BucketFreshness => ({
+            bucket,
+            freshness: freshnessFor(snapshot.pots[bucket], snapshot.schedules, at),
+          }),
+        ),
         activityComingSoon: true,
       };
       return summary;
@@ -624,26 +628,30 @@ function potSeries(
 }
 
 function freshnessFor(pot: Pot, schedules: Map<number, ScheduleEvent[]>, at: Date): PriceFreshness {
-  const priced = pot.held.map((held) => held.price).filter((price) => price !== undefined);
-  const sources = [...new Set(priced.map((price) => price.source))];
+  const closedNow = (held: HeldInstrument) => {
+    const schedule =
+      held.workingScheduleId === null ? undefined : schedules.get(held.workingScheduleId);
+    return schedule !== undefined && scheduleCovers(schedule, at) && !isMarketOpen(schedule, at);
+  };
+  const priced = pot.held.filter((held) => held.price !== undefined);
+  const sources = [...new Set(priced.map((held) => held.price!.source))];
   const failed =
     pot.held.some((held) => !held.price) ||
-    priced.some((price) => price.lastFailedAt !== null && price.lastFailedAt >= price.fetchedAt);
-  const asOf = priced.length
-    ? new Date(Math.min(...priced.map((price) => price.asOf.getTime())))
+    priced.some(
+      (held) =>
+        held.price!.lastFailedAt !== null && held.price!.lastFailedAt >= held.price!.fetchedAt,
+    );
+  // A closing price for a market that's shut isn't stale — it's the price. Only
+  // listings still trading (or with no known schedule) count towards the age.
+  const trading = priced.filter((held) => !closedNow(held));
+  const asOf = trading.length
+    ? new Date(Math.min(...trading.map((held) => held.price!.asOf.getTime())))
     : at;
-  const marketsClosed =
-    pot.held.length > 0 &&
-    pot.held.every((held) => {
-      const schedule =
-        held.workingScheduleId === null ? undefined : schedules.get(held.workingScheduleId);
-      return schedule !== undefined && scheduleCovers(schedule, at) && !isMarketOpen(schedule, at);
-    });
   return {
     source: sources.length ? sources.join(" · ") : "Yahoo Finance",
     asOf: asOf.toISOString(),
     failed: pot.held.length > 0 && failed,
-    marketsClosed,
+    marketsClosed: pot.held.length > 0 && pot.held.every(closedNow),
   };
 }
 

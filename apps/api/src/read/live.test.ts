@@ -1,3 +1,4 @@
+import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   cash,
@@ -240,6 +241,34 @@ describe("the live portfolio", () => {
       marketsClosed: false,
     });
     expect(JSON.stringify(summary)).not.toMatch(/Trading 212 price|currentValue/);
+  });
+
+  it("doesn't call a closed market's closing price stale, even hours later", async () => {
+    // Greggs last traded at London's close, 4 hours before Nvidia's latest price.
+    await db
+      .update(prices)
+      .set({ asOf: new Date("2026-09-16T15:30:00Z") })
+      .where(eq(prices.key, "GRGl_EQ"));
+    const evening = liveReadModel({
+      db,
+      marketFor: () => withFallback([{ source, symbolFor: (target) => target }]),
+      now: () => new Date("2026-09-16T19:30:00Z"),
+      refreshWaitMs: 50,
+    });
+    await db
+      .update(prices)
+      .set({ asOf: new Date("2026-09-16T19:26:00Z"), fetchedAt: new Date("2026-09-16T19:30:00Z") })
+      .where(eq(prices.key, "NVDA_US_EQ"));
+
+    const summary = await evening.portfolio(ALICE, "day");
+    const freshness = summary.freshness.find((f) => f.bucket === "Base")!.freshness;
+    expect(freshness.asOf).toBe("2026-09-16T19:26:00.000Z");
+    expect(freshness.marketsClosed).toBe(false);
+  });
+
+  it("gives freshness only for pots that have a source", async () => {
+    const summary = await model().portfolio(ALICE, "day");
+    expect(summary.freshness.map((f) => f.bucket)).toEqual(["Base"]);
   });
 
   it("marks prices failed when the last refresh failed", async () => {
