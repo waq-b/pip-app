@@ -5,6 +5,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-09-16
+
 ### Phase 4 — Rules engine
 
 - Added: rules engine — pure `evaluateRules` for drift (named 5-point threshold), Side Bet's cap (broken at any amount over, compared in pence), targets scaled over connected pots, over-by in points and pounds, and the two fix-it amounts; shared rule constants (defaults 70/25/5, cap max 20, FCA note above 10); 13 tests incl. edges and determinism (#3229114698)
@@ -15,6 +17,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Changed: rules are set with sliders instead of −/+ steppers, and saved with one Save rules button rather than on every change — far fewer API calls, and no waiting between taps (Waqar) (#3229115872)
 - Fixed: the same Trading 212 account can no longer be connected to both Foundation and Handpicked — Pip stores each account's id and refuses the second pot with "That's the account already connected as…" (migration 0012, applied); 3 tests (#3229114694)
 - Fixed: moving one rules slider no longer shifts the other's thumb — each keeps a fixed range (Handpicked 0–100, cap 0–20) and the one being moved stops where the other leaves room (#3229115872)
+- Added: "Foundation takes whatever's left." under each rules slider, and Foundation's number lights briefly when a slider changes it (#3229115872)
+- Changed: Phase 4 close-out — Waqar checked saving rules on the deployed Pip; run-through locally with real data and a broken cap on sample data; docs pass; 0.4.0 (#3229114694)
 
 ## [0.3.0] — 2026-09-16
 

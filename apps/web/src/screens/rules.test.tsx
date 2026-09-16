@@ -253,6 +253,21 @@ describe("changing your rules", () => {
     expect(sent).toEqual([]);
   });
 
+  it("says Foundation takes whatever's left, and lights its number when a slider changes it", async () => {
+    withSaving(editable(), () => ({}));
+    const target = await screen.findByRole("slider", { name: "Handpicked's target" });
+    expect(screen.getAllByText("Foundation takes whatever's left.")).toHaveLength(2);
+    expect(screen.getByText("70%")).not.toHaveAttribute("data-changed");
+
+    fireEvent.change(target, { target: { value: "35" } });
+    expect(screen.getByText("60%")).toHaveAttribute("data-changed", "true");
+    // Side Bet's cap stays as it was.
+    expect(screen.getByRole("slider", { name: "Side Bet's cap" })).toHaveValue("5");
+    await waitFor(() => expect(screen.getByText("60%")).not.toHaveAttribute("data-changed"), {
+      timeout: 2000,
+    });
+  });
+
   it("gives Foundation no slider — it's the rest", async () => {
     withSaving(editable(), () => ({}));
     expect(await screen.findByText("The rest, after Handpicked and Side Bet")).toBeInTheDocument();

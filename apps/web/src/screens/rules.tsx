@@ -331,6 +331,17 @@ function RuleCard({
         : settings.sideBetCap
     : rule.targetPercent;
 
+  // Foundation is the rest: when a slider changes it, its number briefly lights so the link is visible.
+  const [changed, setChanged] = useState(false);
+  const previous = useRef(line);
+  useEffect(() => {
+    if (rule.bucket !== "Base" || previous.current === line) return;
+    previous.current = line;
+    setChanged(true);
+    const timer = setTimeout(() => setChanged(false), 900);
+    return () => clearTimeout(timer);
+  }, [line, rule.bucket]);
+
   return (
     <section
       className={`pot-${scope} bg-card rounded-[26px] border-[1.5px] px-[19px] py-[18px] ${
@@ -348,7 +359,16 @@ function RuleCard({
       <div className="text-ink2 text-[11.5px] font-semibold tracking-[0.04em] uppercase">
         {kind}
       </div>
-      <div className="font-heading mt-0.5 mb-3 text-[34px] leading-none">{formatPercent(line)}</div>
+      <div className="mt-0.5 mb-3">
+        <span
+          data-changed={changed || undefined}
+          className={`font-heading -mx-1.5 inline-block rounded-[10px] px-1.5 text-[34px] leading-none transition-colors duration-500 ${
+            changed ? "bg-tint text-aink" : "bg-transparent"
+          }`}
+        >
+          {formatPercent(line)}
+        </span>
+      </div>
       {settings ? (
         <RuleSlider
           bucket={rule.bucket}
@@ -450,6 +470,9 @@ function RuleSlider({
         <span>0%</span>
         <span>{max}%</span>
       </div>
+      <p className="text-ink2 m-0 mt-1.5 text-[11.5px] font-semibold">
+        Foundation takes whatever's left.
+      </p>
     </div>
   );
 }
