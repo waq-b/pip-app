@@ -39,7 +39,7 @@ finance-app-personal/
 │           ├── server.ts    ← process entrypoint: config, redacted logger, listens on PORT
 │           ├── config.ts    ← PROVIDER_MODE + master key, checked at startup
 │           ├── logging.ts   ← pino redaction paths
-│           ├── crypto/      ← secret box: provider keys sealed at rest (AES-256-GCM)
+│           ├── crypto/      ← secret box (AES-256-GCM), credential contexts, re-seal job
 │           ├── auth/       ← Supabase JWT verification, allowlist, guard, /me, waitlist
 │           ├── db/
 │           │   ├── client.ts   ← lazy Drizzle/Postgres client (getDb())
@@ -269,18 +269,34 @@ The guard is an `onRequest` hook on the root instance — deliberately not added
 
 Postgres via Drizzle ORM, on Supabase. Single `DATABASE_URL` env var, nothing else host-specific (CLAUDE.md s3; never Render's free Postgres, it expires after 30 days).
 
-- **The database is hosted in every environment** — on Supabase, with a separate project for development. There is no local Postgres and no Docker: one `DATABASE_URL` is the whole story, which is also what keeps the app portable (CLAUDE.md s3). Nothing in the test suite or CI ever talks to it.
-- `apps/api/drizzle.config.ts` — drizzle-kit config, points at `DATABASE_URL`
-- `apps/api/drizzle/` — generated migration SQL, committed. `pnpm --filter api db:generate` writes a new one from the schema; `db:migrate` applies it.
-- `apps/api/src/db/schema.ts` — current tables:
-  - `users` (id, email, name, auth_user_id, created_at) — **the allowlist**. Rows are added by hand, keyed by email, before anyone signs in. `auth_user_id` links a row to Supabase's `auth.users` on first arrival; it's a plain uuid rather than a foreign key, so our migrations never reach into the `auth` schema Supabase owns.
-  - `waitlist` (email, name, requested_at) — someone refused, holding the address from their verified token only.
-- **Row Level Security is on for every table**, with no policies (`drizzle/0001_enable_row_level_security.sql`). The web app ships Supabase's public key, and Supabase's REST API exposes every `public` table to it, so a table without RLS would be readable by anyone. `db/rls.test.ts` reads the migrations and fails if any table in the schema lacks the line, so a new table can't forget.
-- `apps/api/src/db/client.ts` — `getDb()` is a lazy singleton. No socket opens until a caller actually queries. Nothing in the test suite or CI imports/calls it, so tests never touch a real database (hard line: no real network calls in tests).
+- **The database is hosted in every environment** — on Supabase, with a separate project for development (`pip`, eu-west-1). No local Postgres, no Docker. The server connects through the **session pooler** (port 5432), which suits a long-running process. Nothing in the test suite or CI ever talks to it.
+- `apps/api/drizzle/` — migration SQL, committed. `pnpm --filter api db:generate` writes one from the schema; hand-written SQL (RLS, policies, grants, functions) uses `drizzle-kit generate --custom`. `db:migrate` applies them; they're applied to the dev project.
+- `apps/api/src/db/client.ts` — `getDb()` is a lazy singleton on the privileged connection. No socket opens until a caller queries; nothing in tests or CI calls it.
 
-The migrations are generated and committed but have not been applied anywhere yet — that waits on a hosted `DATABASE_URL`. Until then the schema is verified by type-checking and by drizzle-kit's own generation step. To apply them: put the connection string in `apps/api/.env` (gitignored) and run `pnpm --filter api db:migrate`.
+**Tables** (`src/db/schema.ts`). Money in pence of pounds is `bigint`; provider prices and quantities keep full precision as `numeric` and become pence only at the edge.
 
-Auth is the first thing that needs a live database to exercise by hand; its tests use in-memory stores instead, so CI stays databaseless whatever happens to the hosting.
+| Table                  | What                                                                                                                                                                            | Who can read it (as `authenticated`)                                  |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `users`                | **The allowlist** — email, name, `auth_user_id` (links to Supabase `auth.users` on first sign-in; a plain uuid, so migrations never touch Supabase's `auth` schema)             | nobody — server only                                                  |
+| `waitlist`             | Refused sign-ins, address from the verified token only                                                                                                                          | nobody — server only                                                  |
+| `provider_credentials` | One row per user + provider + account kind (`isa`/`invest`): sealed key and secret, key version, status, account currency, last verified/polled, backfill status, history start | own rows, **status columns only** — the sealed columns aren't granted |
+| `holdings`             | Latest poll per credential: instrument, quantity, average price paid, total cost in pence                                                                                       | own rows                                                              |
+| `cash`                 | Latest poll per credential, in pence                                                                                                                                            | own rows                                                              |
+| `trades`               | Filled orders from provider history, keyed by fill id so re-reading never double-counts                                                                                         | own rows                                                              |
+| `daily_values`         | Each pot's value and cost at each day's close (`backfill` or `snapshot`)                                                                                                        | own rows                                                              |
+| `instruments`          | Keyed by **T212 ticker** (ISINs aren't unique across listings); ISIN, name, currency incl. GBX, working schedule, Yahoo / Alpha Vantage symbols (+ override flag)               | any signed-in user                                                    |
+| `prices`               | Latest price per instrument or `FX:<pair>`, previous close, source, as-of, last failure                                                                                         | any signed-in user                                                    |
+| `daily_closes`         | Daily closes per instrument or FX pair                                                                                                                                          | any signed-in user                                                    |
+| `intraday_series`      | Today's points per instrument, for the Day chart                                                                                                                                | any signed-in user                                                    |
+| `source_usage`         | Calls per market-data source per day, for call budgets                                                                                                                          | nobody — server only                                                  |
+
+**Row Level Security is on for every table** (`0001`, `0003`). The web app ships Supabase's public key and Supabase's REST API exposes `public` tables to it, so a table without RLS would be readable by anyone.
+
+- **Signed-in users only ever read.** All grants to `anon` and `authenticated` are revoked, then `SELECT` is granted back where the table above says so. Every write goes through the server's privileged connection.
+- **"Own rows"** means `user_id = private.current_app_user_id()`: a `SECURITY DEFINER` function mapping `auth.uid()` to the caller's allowlist row. It lives in a `private` schema (`0004`) because Supabase exposes `public` functions over REST.
+- **Checked twice.** `db/rls.test.ts` reads the migrations and fails if a table lacks RLS, a user-owned table (any table with `user_id`) lacks an own-rows policy using the private helper, or the sealed credential columns are ever granted. And the policies were probed on the dev database as two throwaway users in a rolled-back transaction: each saw only their own rows; sealed columns, writes and `source_usage` were refused; shared instruments were visible. Supabase's security advisor reports nothing beyond the intended "RLS enabled, no policy" on the server-only tables.
+
+Auth and route tests use in-memory stores, so CI stays databaseless.
 
 ## Env flags
 
@@ -313,7 +329,7 @@ Provider keys are never server env vars in a deployed Pip: each user's keys are 
 
 1. Generate a new key: `pnpm --filter api master-key`. Don't paste it anywhere but the next step.
 2. In Render, set `MASTER_KEY_PREVIOUS` = the current `MASTER_KEY`, `MASTER_KEY_PREVIOUS_VERSION` = the current `MASTER_KEY_VERSION`, then `MASTER_KEY` = the new key and `MASTER_KEY_VERSION` = current + 1. Deploy. New seals use the new key; old values still open.
-3. Re-seal every stored credential with the new key (the re-seal job arrives with the credentials table, Phase 2 task 3: open with the old version, seal with the new, in one transaction per row; `isStale` finds what's left).
+3. Re-seal every stored credential: `pnpm --filter api reseal-keys` (with both keys set). It opens each credential still on an older version and seals it with the new key, row by row; rerunning is harmless, and it prints counts only. It exits non-zero if any row couldn't be opened.
 4. Confirm nothing is stale, then remove `MASTER_KEY_PREVIOUS` and `MASTER_KEY_PREVIOUS_VERSION` and deploy.
 5. Update the offline copy of the key.
 

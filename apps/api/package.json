@@ -13,7 +13,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "allowlist": "tsx --env-file-if-exists=.env src/auth/cli.ts",
-    "master-key": "tsx src/crypto/master-key-cli.ts"
+    "master-key": "tsx src/crypto/master-key-cli.ts",
+    "reseal-keys": "tsx --env-file-if-exists=.env src/crypto/reseal-cli.ts"
   },
   "dependencies": {
     "@finance-app/shared": "workspace:*",
