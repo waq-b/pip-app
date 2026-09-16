@@ -86,8 +86,14 @@ apps/web/src/
 ├── routes.tsx           ← the route table
 ├── lib/
 │   ├── api.ts           ← the only way to reach the API; same-origin, 401 is its own error
+│   ├── format.ts        ← every figure: pounds before percent, true minus signs
 │   ├── theme.ts         ← appearance: follow the device, or a stored choice
 │   └── use-appearance.ts
+├── components/          ← the data display system (DESIGN.md §7)
+│   ├── big-number.tsx, progress-cap-bar.tsx, provenance.tsx, not-advice-label.tsx, skeleton.tsx
+│   ├── sparkline.tsx, line-chart.tsx, bar-chart.tsx, allocation.tsx, holdings-table.tsx
+│   ├── chart-geometry.ts ← path maths, tested once for flat series and single points
+│   └── shades.ts        ← per-holding shades as opacity steps of the pot accent
 ├── shell/
 │   ├── app-shell.tsx    ← chrome around every signed-in screen
 │   ├── nav.ts           ← the three destinations, and what lights each one
@@ -114,6 +120,20 @@ apps/web/src/
 **The mark** is a component rather than an imported SVG so it can pick its cut: below 48px it draws the small cut (DESIGN.md §3), which the rail and sidebar need at 26–27px. The SVG files remain the source for favicons and app icons.
 
 **Testing.** jsdom has no `matchMedia`, so `src/test/setup.ts` installs a stub that answers `min-width`/`max-width` queries against a width the test sets with `setViewportWidth()`, and notifies listeners when it changes. Shell tests run at 390, 834 and 1280.
+
+**Formatting enforces the copy rules by shape.** Every figure goes through `lib/format.ts`. `formatChange` takes a whole `Change` and always renders the money first, so there is no function that renders a bare percentage — "pounds before percent" (DESIGN.md §4.1) can't be broken by forgetting it. `splitPounds` hands the hero number its pounds and pence separately so the pence can be set smaller, and truncates rather than rounds (£11,430.99 is never "£11,431"). Losses use a true minus sign, and a flat change is muted rather than green.
+
+**The data display system** (`components/`) is the design's seven blocks plus four supporting pieces. Each takes plain data and draws it; none fetches, and none decides a state it's given (the provenance line draws green/amber/red, but deriving which belongs to the staleness ladder). Rules each one enforces:
+
+- `BigNumber` — money before percent, pence set small.
+- `ProgressCapBar` — fill is where you are, the ink tick is your line. Only a breached _cap_ goes red and hatched; a target you've passed stays calm. A cap can take a `scaleMax` so 5% isn't an invisible sliver, and states the breach in pounds.
+- `LineChart` — `caption` is a required prop, because there is no chart without a sentence; it doubles as the accessible description. Fewer than two points draws a message instead of a line. Each instance gets its own gradient id, or a second chart silently paints with the first one's colour.
+- `BarChart` — value labels above the bars; a zero month is a faded stub, never a gap.
+- `AllocationRing` — arcs use the pots' identity colours (`--pip-seed-*`), which no scope can change; the target is a sentence, never a second ring.
+- `HoldingsTable` — three columns on a phone, four on desktop. Every change shows pounds before percent — deliberately stricter than the prototype, which showed bare percentages here. A holding keeps its shade when the list is re-sorted.
+- `Sparkline` — hidden from assistive tech; the figure beside it carries the meaning.
+
+`components/no-hex.test.ts` globs every file in the folder via `import.meta.glob(..., { query: "?raw" })`, so a component added later is covered by the no-hex rule without anyone listing it, and the test fails if the glob ever finds nothing.
 
 ## Data flow (current — stub only)
 

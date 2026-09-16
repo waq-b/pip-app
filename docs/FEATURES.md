@@ -56,4 +56,15 @@ The web app has its colours, fonts and layout, but every screen is still a place
 - **Light or dark follows your device**, until you choose otherwise.
 - **Sign-in stands alone**, with no navigation around it, because there's nowhere to go until you're in.
 
+## The pieces screens are built from
+
+None of these appear on a screen yet, but they decide how every number will read:
+
+- **Money always comes first.** Anywhere a change is shown, it reads "+£25.80 · +0.23%", never "+0.23%" on its own. That includes the holdings table, where the design prototype showed bare percentages — Pip is stricter than its own mockup here.
+- **The big number** sets the pence smaller so the pounds carry the weight, and never rounds your money up.
+- **A cap you've broken turns red; a target you've drifted past doesn't.** Being 2% over your Foundation target is shown calmly. Side Bet over its cap is red, hatched, and says how much in pounds.
+- **Every chart has a sentence** saying in plain English what the line did. If there isn't enough history to draw one, it says so instead of drawing something misleading.
+- **A month with nothing paid in** shows as a small faded bar, so it reads as zero rather than as missing data.
+- **The holdings list** sorts by name, value or change; you tap or click a whole row to open a holding, and each keeps its colour when the order changes.
+
 Still to come in Phase 1: the screens themselves, and the staleness ladder that turns freshness into green, amber and red. Nothing here touches real money or a real broker.

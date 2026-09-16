@@ -57,6 +57,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Fixed: Pots went dark on pot and instrument detail — `NavLink` overwrote the `aria-current` it was given with its own route match; active state now comes from each destination's `matches` at every width (#3227556742)
 - Fixed: the mark and the Rules alert dot were hard-coded to light-mode hex values, so neither changed palette in dark mode; both now read `--pip-seed-*` and `--pip-alert` tokens (#3227556742)
 - Added: a test that fails if a hex colour appears in the shell's components, reading their source via Vite's `?raw` so it needs no Node APIs (#3227556742)
+- Added: `lib/format.ts` — every figure goes through it; `formatChange` always puts money first, so there is no way to render a bare percentage; losses use a true minus sign (#3226676977)
+- Added: the seven data blocks — `BigNumber`, `Sparkline`, `LineChart`, `BarChart`, `AllocationRing` with `StackedBar`, `HoldingsTable`, `ProgressCapBar` — plus `ProvenanceLine`, `AgeChip`, `NotAdviceLabel` and `Skeleton` (#3226676977)
+- Added: `LineChart` requires a caption and uses it as the accessible description; each instance gets its own gradient id so two charts on a screen don't share a colour (#3226676977)
+- Changed: the holdings table shows pounds before every percentage, stricter than the design prototype, which showed bare percentages there (#3226676977)
+- Added: `components/no-hex.test.ts` globs the whole folder, so new components are held to the token rule without being listed (#3226676977)
 
 ### Phase 0 — Scaffold
 
