@@ -1,0 +1,1 @@
+{"error":[],"result":{"api_key_name":"pip-read-only","api_key":"<api-key>","nonce":"1789592388561001","nonce_window":"0","permissions":["query-funds","query-ledger"],"iban":"<iban>","valid_until":"0","query_from":"0","query_to":"0","created_time":"1789591866","modified_time":"1789592297","ip_allowlist":[],"last_used":"1789592388"}}

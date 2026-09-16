@@ -7,3 +7,8 @@ Real responses captured on 2026-09-16 (Phase 2 task 1), for tests to replay — 
 - `alpha-vantage/` — quote, daily series, FX daily and symbol search. The API key is not in any file.
 
 Kept byte-for-byte as returned (bar anonymisation), so they're excluded from Prettier. Re-record rather than hand-edit; scan for keys and real ids before committing.
+
+Added 2026-09-16 (Phase 3 task 1):
+
+- `kraken/` — Kraken spot REST. Private calls (`GetApiKeyInfo`, `BalanceEx`, `Ledgers`) from a read-only key on an **empty** account, so balances and ledger are empty; key, key name and IBAN replaced with placeholders. `permission-denied.json` is a method the key lacks; `invalid-key.json` is an unknown key. Public `Ticker`, `Assets` (sample) and daily `OHLC` for XBT/GBP (trimmed to the last 40 candles).
+- `coingecko/` — Demo API: `simple/price` in GBP, `market_chart` for 1 day and 365 days daily, the error for asking beyond 365 days, and a 12-ticker sample of `exchanges/kraken/tickers` (Kraken base asset → CoinGecko coin id). The API key is not in any file.
