@@ -36,6 +36,7 @@ import {
   fxKey,
   fxQuoteFor,
   refreshDue,
+  targetFor,
   type PricedInstrument,
 } from "../market/refresh.js";
 import type { withFallback } from "../market/sources/fallback.js";
@@ -554,30 +555,25 @@ async function instrumentSeries(
         : (firstTrade[0]?.at ?? new Date(at.getTime() - 366 * 86_400_000));
 
   // Fill any gap in the shared cache first (privileged, budgeted); a failure just draws what's there.
-  const instrument: PricedInstrument = {
-    id: held.instrumentId,
-    currency: held.currency,
-    yahooSymbol: null,
-    alphaVantageSymbol: null,
-    workingScheduleId: held.workingScheduleId,
-  };
   const [row] = await options.db
     .select()
     .from(instruments)
     .where(eq(instruments.id, held.instrumentId));
-  if (row) {
-    instrument.yahooSymbol = row.yahooSymbol;
-    instrument.alphaVantageSymbol = row.alphaVantageSymbol;
-  }
+  const instrument: PricedInstrument = row ?? {
+    id: held.instrumentId,
+    type: "",
+    currency: held.currency,
+    yahooSymbol: null,
+    alphaVantageSymbol: null,
+    coingeckoId: null,
+    krakenPair: null,
+    workingScheduleId: held.workingScheduleId,
+  };
   await ensureDailyCloses(
     options.db,
     options.marketFor(instrument),
     held.instrumentId,
-    {
-      kind: "instrument",
-      symbol: instrument.yahooSymbol ?? held.instrumentId,
-      currency: held.currency,
-    },
+    targetFor(instrument),
     from,
     at,
   ).catch(() => undefined);

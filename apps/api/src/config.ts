@@ -12,6 +12,8 @@ export interface ServerConfig {
   masterKeyVersion: number;
   jobSecret?: string;
   alphaVantageKey?: string;
+  /** CoinGecko Demo key — crypto prices (Phase 3). Without it, Kraken's public prices only. */
+  coinGeckoKey?: string;
   /** Present whenever real provider keys can be stored or used. */
   secretBox?: SecretBox;
 }
@@ -53,5 +55,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     masterKeyVersion: Number(env.MASTER_KEY_VERSION ?? 1),
     jobSecret: env.JOB_SECRET || undefined,
     alphaVantageKey: env.AV_ACCESS_KEY || undefined,
+    coinGeckoKey: env.COINGECKO_KEY || undefined,
   };
 }

@@ -11,6 +11,10 @@ import { PriceSourceError, type PriceSource } from "./sources/types.js";
 export const DAILY_CALL_LIMITS: Record<PriceSource["id"], number> = {
   yahoo: 1_500,
   "alpha-vantage": 22,
+  /** Demo plan: 10k calls a month, so ~300 a day keeps the month safe. */
+  coingecko: 300,
+  /** Public, keyless; Pip keeps it polite. */
+  kraken: 1_000,
 };
 
 /** UTC day, so the count resets at a fixed moment. */

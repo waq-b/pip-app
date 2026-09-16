@@ -11,6 +11,7 @@ import {
 import type { Db } from "../db/user-scope.js";
 import { testDatabase } from "../test-support/pglite.js";
 import { withBudget } from "./budget.js";
+import { liveMarket } from "./live.js";
 import { ensureDailyCloses, isDue, refreshDue, TTL } from "./refresh.js";
 import { withFallback } from "./sources/fallback.js";
 import { PriceSourceError, type PriceSource } from "./sources/types.js";
@@ -149,6 +150,66 @@ describe("when a price is due", () => {
     expect(isDue(fresh(59), undefined, IN_HOURS, "instrument")).toBe(false);
     expect(isDue(fresh(61), undefined, IN_HOURS, "instrument")).toBe(true);
     expect(isDue(fresh(31), undefined, IN_HOURS, "fx")).toBe(true);
+  });
+
+  it("keeps crypto fresh around the clock — no market to close", () => {
+    const sundayNight = new Date("2026-09-20T23:00:00Z");
+    expect(isDue(fresh(14, sundayNight), undefined, sundayNight, "crypto")).toBe(false);
+    expect(isDue(fresh(16, sundayNight), undefined, sundayNight, "crypto")).toBe(true);
+  });
+});
+
+describe("crypto prices", () => {
+  const bitcoin = {
+    id: "kraken:XBT",
+    isin: "",
+    name: "Bitcoin",
+    shortName: "BTC",
+    currency: "GBP",
+    type: "CRYPTO",
+    workingScheduleId: null,
+    coingeckoId: "bitcoin",
+    krakenPair: "XBTGBP",
+  };
+
+  function routedFetch(seen: string[]) {
+    return vi.fn<typeof fetch>(async (url) => {
+      seen.push(String(url));
+      if (String(url).includes("coingecko")) {
+        return new Response(
+          JSON.stringify({
+            prices: [
+              [Date.parse("2026-09-19T23:55:00Z"), 56_000],
+              [Date.parse("2026-09-20T22:55:00Z"), 57_000],
+            ],
+          }),
+        );
+      }
+      return new Response("{}", { status: 503 });
+    });
+  }
+
+  it("prices a coin from CoinGecko on a Sunday night, never from the stock sources", async () => {
+    await db.insert(instruments).values(bitcoin);
+    const seen: string[] = [];
+    const market = liveMarket(db, { coinGeckoKey: "k", fetch: routedFetch(seen) });
+    const result = await refreshDue(db, market, ["kraken:XBT"], new Date("2026-09-20T23:00:00Z"));
+
+    expect(result.refreshed).toEqual(["kraken:XBT"]);
+    expect(seen).toHaveLength(1);
+    expect(seen[0]).toContain("api.coingecko.com/api/v3/coins/bitcoin/market_chart");
+    const [row] = await db.select().from(prices).where(eq(prices.key, "kraken:XBT"));
+    expect(row).toMatchObject({ price: "57000", previousClose: "56000", source: "CoinGecko" });
+  });
+
+  it("falls back to Kraken's public prices, and uses them alone without a CoinGecko key", async () => {
+    await db.insert(instruments).values(bitcoin);
+    const seen: string[] = [];
+    const market = liveMarket(db, { fetch: routedFetch(seen) });
+    const result = await refreshDue(db, market, ["kraken:XBT"], new Date("2026-09-20T23:00:00Z"));
+
+    expect(result.failed).toEqual(["kraken:XBT"]);
+    expect(seen).toEqual(["https://api.kraken.com/0/public/Ticker?pair=XBTGBP"]);
   });
 });
 

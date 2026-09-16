@@ -17,11 +17,17 @@ type Market = ReturnType<typeof withFallback>;
 /** An instrument as the cache needs to see it. */
 export interface PricedInstrument {
   id: string;
+  /** `CRYPTO` trades around the clock and is priced by the crypto sources. */
+  type: string;
   currency: string;
   yahooSymbol: string | null;
   alphaVantageSymbol: string | null;
+  coingeckoId: string | null;
+  krakenPair: string | null;
   workingScheduleId: number | null;
 }
+
+export const isCrypto = (instrument: { type: string }) => instrument.type === "CRYPTO";
 
 export const FX_PAIRS = ["USD", "EUR"] as const;
 export type FxQuote = (typeof FX_PAIRS)[number];
@@ -33,6 +39,8 @@ export const TTL = {
   marketOpenMs: 15 * 60_000,
   unknownScheduleMs: 60 * 60_000,
   fxMs: 30 * 60_000,
+  /** Crypto never closes (Phase 3 decision 6); the scheduled job refreshes it hourly. */
+  cryptoMs: 15 * 60_000,
   /** After a failure, leave the source alone this long. */
   failureBackoffMs: 5 * 60_000,
 };
@@ -52,7 +60,7 @@ export function isDue(
   cached: CachedPrice | undefined,
   schedule: ScheduleEvent[] | undefined,
   now: Date,
-  kind: "instrument" | "fx",
+  kind: "instrument" | "fx" | "crypto",
 ): boolean {
   if (
     cached?.lastFailedAt &&
@@ -63,6 +71,7 @@ export function isDue(
   if (!cached) return true;
   const age = now.getTime() - cached.fetchedAt.getTime();
   if (kind === "fx") return age >= TTL.fxMs;
+  if (kind === "crypto") return age >= TTL.cryptoMs;
   if (!schedule || !scheduleCovers(schedule, now)) return age >= TTL.unknownScheduleMs;
   if (isMarketOpen(schedule, now)) return age >= TTL.marketOpenMs;
   const lastClose = schedule
@@ -75,14 +84,23 @@ export function isDue(
 export function targetFor(instrument: PricedInstrument): PriceTarget {
   return {
     kind: "instrument",
-    symbol: instrument.yahooSymbol ?? instrument.alphaVantageSymbol ?? instrument.id,
+    symbol:
+      instrument.yahooSymbol ??
+      instrument.alphaVantageSymbol ??
+      instrument.coingeckoId ??
+      instrument.krakenPair ??
+      instrument.id,
     currency: instrument.currency,
   };
 }
 
 /** Per source, which symbol to ask for — or null when that source can't price it. */
 export function symbolsFor(instrument: PricedInstrument) {
+  const own = (symbol: string | null) => (target: PriceTarget) =>
+    target.kind === "instrument" && symbol ? { ...target, symbol } : null;
   return {
+    coingecko: own(instrument.coingeckoId),
+    kraken: own(instrument.krakenPair),
     yahoo: (target: PriceTarget) =>
       target.kind === "fx"
         ? target
@@ -155,7 +173,7 @@ export async function refreshDue(
   for (const row of rows) {
     const schedule =
       row.workingScheduleId === null ? undefined : schedules.get(row.workingScheduleId);
-    if (!isDue(cached.get(row.id), schedule, now, "instrument")) {
+    if (!isDue(cached.get(row.id), schedule, now, isCrypto(row) ? "crypto" : "instrument")) {
       result.skipped.push(row.id);
       continue;
     }

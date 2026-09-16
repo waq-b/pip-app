@@ -35,7 +35,10 @@ function realAccounts(): Partial<BuildAppOptions> {
   const box = config.secretBox!;
   const db = getDb();
   const clientFor = (key: string, secret: string) => createT212Client({ key, secret, env: "demo" });
-  const marketFor = liveMarket(db, { alphaVantageKey: config.alphaVantageKey });
+  const marketFor = liveMarket(db, {
+    alphaVantageKey: config.alphaVantageKey,
+    coinGeckoKey: config.coinGeckoKey,
+  });
 
   return {
     readModel: liveReadModel({ db, marketFor }),

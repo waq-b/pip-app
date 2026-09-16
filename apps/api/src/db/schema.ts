@@ -104,6 +104,10 @@ export const instruments = pgTable("instruments", {
   workingScheduleId: integer("working_schedule_id"),
   yahooSymbol: text("yahoo_symbol"),
   alphaVantageSymbol: text("alpha_vantage_symbol"),
+  /** Crypto (`type` `CRYPTO`): CoinGecko coin id, e.g. `bitcoin`. */
+  coingeckoId: text("coingecko_id"),
+  /** Crypto: Kraken public pair quoted in pounds, e.g. `XBTGBP`, when one exists. */
+  krakenPair: text("kraken_pair"),
   /** True when the symbols above were set by hand and mustn't be re-derived. */
   symbolsOverridden: boolean("symbols_overridden").notNull().default(false),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

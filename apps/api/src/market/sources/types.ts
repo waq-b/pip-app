@@ -37,7 +37,7 @@ export interface DailyClose {
 }
 
 export interface PriceSource {
-  id: "yahoo" | "alpha-vantage";
+  id: "yahoo" | "alpha-vantage" | "coingecko" | "kraken";
   /** What the provenance line names. */
   label: string;
   quote(target: PriceTarget): Promise<Quote>;

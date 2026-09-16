@@ -10,7 +10,13 @@ import {
   trades,
 } from "../db/schema.js";
 import type { Db } from "../db/user-scope.js";
-import { ensureDailyCloses, fxKey, fxQuoteFor, type PricedInstrument } from "../market/refresh.js";
+import {
+  ensureDailyCloses,
+  fxKey,
+  fxQuoteFor,
+  targetFor,
+  type PricedInstrument,
+} from "../market/refresh.js";
 import type { withFallback } from "../market/sources/fallback.js";
 import { tradeRows } from "../providers/t212/rows.js";
 import { bucketForAccountKind, toPencePounds } from "../valuation/value.js";
@@ -109,11 +115,7 @@ export async function backfillHistory(
       ).catch(() => undefined);
     }
     for (const row of instrumentRows) {
-      const target = {
-        kind: "instrument" as const,
-        symbol: row.yahooSymbol ?? row.id,
-        currency: row.currency,
-      };
+      const target = targetFor(row);
       await ensureDailyCloses(db, marketFor(row), row.id, target, earliest, now).catch(
         () => undefined,
       );
