@@ -28,7 +28,9 @@ finance-app-personal/
 │               └── stub/       ← fake data, used in tests and Phase 0/1
 └── packages/
     └── shared/              ← types shared between web and api
-        └── src/buckets.ts    ← BUCKETS constant, Bucket type
+        └── src/
+            ├── buckets.ts    ← BUCKETS, Bucket, BUCKET_META (display names)
+            └── api.ts        ← response types for every API route
 ```
 
 `apps/api/src/auth/`, `market/`, `rules/`, `research/` don't exist yet — they arrive with the phases that need them (1, 2, 5, 6 respectively). Don't scaffold them early.
@@ -54,6 +56,16 @@ export type Bucket = (typeof BUCKETS)[number];
 ```
 
 Both apps import this — nothing hardcodes bucket names elsewhere. Each bucket maps to exactly one trading provider (Base/Medium → Trading 212, Degen → Kraken); see CLAUDE.md section 1 for what each bucket is for.
+
+**Display names are a UI concern only.** `BUCKET_META` maps each id to what the screen calls it (Foundation, Handpicked, Side Bet), the accent scope the theme keys off (`fnd`/`pick`/`bet`), and the provider named in the read-only footer. The ids never reach a screen and the display names never reach the API or the database, so renaming a pot is a one-line change with no migration.
+
+## API types
+
+`packages/shared/src/api.ts` holds the shape of every response `apps/api` returns and `apps/web` consumes — types only, no logic and no formatting. Conventions that matter:
+
+- **Money is integer pence** (`Pence`), so nothing rounds in transit. `Percent` is percentage points.
+- **Every `Change` carries both** an amount and a percent, which is what makes "pounds before percent" (DESIGN.md §4.1) impossible to break by accident.
+- **`PriceFreshness`** carries the market-data source, the last successful read, whether the last fetch failed, and whether markets are closed. It names a market-data source, never a trading API (hard line 8). Deriving the green/amber/red state from it belongs to the staleness ladder task, not to these types.
 
 ## Data flow (current — stub only)
 

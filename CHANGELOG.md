@@ -17,6 +17,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added: small-cut logo `pip-mark-small.svg` (16–48px geometry); favicon rebuilt on it; maskable icon rebuilt as the terracotta plate with the reversed mark (#3226676914)
 - Changed: `docs/DESIGN.md` rewritten — amber state tokens and the staleness ladder, three breakpoints with the sidebar/rail navigation, the desktop four-column table, and both icon cuts (#3226691677)
 - Changed: `docs/phases/phase-1.md` replanned for the second handover — responsive work folded in, task list now 22 items (#3226664834)
+- Added: `BUCKET_META` in `packages/shared` — display name, accent scope and provider per bucket id, so UI names never reach the API or database (#3226691676)
+- Added: `packages/shared/src/api.ts` — response types for portfolio, bucket detail, instrument detail, rules, activity, connections and the connect flow, with money as integer pence and per-pot `PriceFreshness` (#3226691676)
 
 ### Phase 0 — Scaffold
 

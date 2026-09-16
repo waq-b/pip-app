@@ -1,1 +1,36 @@
-export { BUCKETS, type Bucket } from "./buckets.js";
+export {
+  BUCKETS,
+  BUCKET_META,
+  displayNameFor,
+  type Bucket,
+  type BucketMeta,
+  type BucketScope,
+} from "./buckets.js";
+
+export type {
+  ActivityEntry,
+  ActivityKind,
+  BucketDetail,
+  BucketFreshness,
+  BucketRule,
+  BucketSummary,
+  Change,
+  Connection,
+  ConnectionStatus,
+  ConnectOutcome,
+  ConnectPermission,
+  ConnectResult,
+  Direction,
+  Holding,
+  InstrumentDetail,
+  MonthlyContribution,
+  Pence,
+  Percent,
+  PortfolioSummary,
+  PriceFreshness,
+  PriceRange,
+  ProviderId,
+  RuleKind,
+  RulesView,
+  SeriesPoint,
+} from "./api.js";
