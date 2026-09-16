@@ -418,7 +418,11 @@ function RuleSlider({
   if (bucket === "Base") return null;
   const isCap = bucket === "Degen";
   const value = isCap ? settings.sideBetCap : settings.handpickedTarget;
-  const max = isCap
+  // Each slider keeps its own fixed range, so moving one never shifts the other's
+  // thumb. The shape can't go past 100: the slider being moved stops where the
+  // other number leaves room.
+  const max = isCap ? SIDE_BET_CAP_MAX : 100;
+  const room = isCap
     ? Math.min(SIDE_BET_CAP_MAX, 100 - settings.handpickedTarget)
     : 100 - settings.sideBetCap;
   const name = `${displayNameFor(bucket)}'s ${isCap ? "cap" : "target"}`;
@@ -435,7 +439,7 @@ function RuleSlider({
         aria-label={name}
         aria-valuetext={`${value}%`}
         onChange={(event) => {
-          const next = Number(event.target.value);
+          const next = Math.min(Number(event.target.value), room);
           onChange(
             isCap ? { ...settings, sideBetCap: next } : { ...settings, handpickedTarget: next },
           );

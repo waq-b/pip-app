@@ -260,16 +260,30 @@ describe("changing your rules", () => {
     expect(screen.queryByRole("slider", { name: /Foundation/ })).not.toBeInTheDocument();
   });
 
-  it("lets the cap slider go no higher than 20%, and never past what Handpicked leaves", async () => {
-    withSaving(editable({ settings: { handpickedTarget: 25, sideBetCap: 20 } }), () => ({}));
-    expect(await screen.findByRole("slider", { name: "Side Bet's cap" })).toHaveAttribute(
-      "max",
-      "20",
-    );
-    expect(screen.getByRole("slider", { name: "Handpicked's target" })).toHaveAttribute(
-      "max",
-      "80",
-    );
+  it("gives each slider a fixed range, so moving one never shifts the other", async () => {
+    withSaving(editable(), () => ({}));
+    const target = await screen.findByRole("slider", { name: "Handpicked's target" });
+    const cap = screen.getByRole("slider", { name: "Side Bet's cap" });
+    expect(target).toHaveAttribute("max", "100");
+    expect(cap).toHaveAttribute("max", "20");
+
+    fireEvent.change(target, { target: { value: "60" } });
+    expect(cap).toHaveAttribute("max", "20");
+    expect(cap).toHaveValue("5");
+    fireEvent.change(cap, { target: { value: "15" } });
+    expect(target).toHaveAttribute("max", "100");
+    expect(target).toHaveValue("60");
+  });
+
+  it("stops the slider being moved where the other number leaves room", async () => {
+    withSaving(editable({ settings: { handpickedTarget: 90, sideBetCap: 5 } }), () => ({}));
+    const cap = await screen.findByRole("slider", { name: "Side Bet's cap" });
+    fireEvent.change(cap, { target: { value: "18" } });
+    // 90 + 18 would pass 100, so the cap stops at 10.
+    expect(cap).toHaveValue("10");
+    const target = screen.getByRole("slider", { name: "Handpicked's target" });
+    fireEvent.change(target, { target: { value: "95" } });
+    expect(target).toHaveValue("90");
   });
 
   it("notes the FCA restricted-investor assumption above a 10% cap, without blocking", async () => {
