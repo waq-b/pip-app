@@ -2,6 +2,8 @@ import { and, eq, inArray } from "drizzle-orm";
 import type { SecretBox } from "../crypto/secrets.js";
 import { holdings, providerCredentials } from "../db/schema.js";
 import type { Db } from "../db/user-scope.js";
+import { collectFacts } from "../facts/collect.js";
+import type { FactsAdapter } from "../facts/types.js";
 import { refreshDue, type PricedInstrument } from "../market/refresh.js";
 import type { withFallback } from "../market/sources/fallback.js";
 import { backfillHistory } from "../sync/backfill.js";
@@ -25,6 +27,8 @@ import {
  * 2. Rebuild history for one account still waiting for it.
  * 3. Refresh prices that are due, for everything anyone holds.
  * 4. Save today's pot values for everyone with a live account.
+ * 5. Collect facts — news and results dates — for what's held (Phase 5), from
+ *    whichever sources are due and within budget.
  */
 
 type Market = ReturnType<typeof withFallback>;
@@ -35,6 +39,8 @@ export interface RefreshJobDeps {
   clientFor: T212ClientFor;
   kraken?: { clientFor: KrakenClientFor; directory: CoinDirectory };
   marketFor: (instrument: PricedInstrument | null) => Market;
+  /** Facts sources (Phase 5). Without them, no facts are collected. */
+  facts?: FactsAdapter[];
   now?: () => Date;
 }
 
@@ -44,6 +50,8 @@ export interface RefreshJobSummary {
   pricesRefreshed: number;
   pricesFailed: number;
   snapshots: number;
+  /** Facts sources read, reports newly stored, results dates written. */
+  facts: { read: number; stored: number; events: number };
   errors: string[];
 }
 
@@ -61,6 +69,7 @@ export function createRefreshJob(deps: RefreshJobDeps) {
       pricesRefreshed: 0,
       pricesFailed: 0,
       snapshots: 0,
+      facts: { read: 0, stored: 0, events: 0 },
       errors: [],
     };
     const step = async (name: string, work: () => Promise<void>) => {
@@ -138,6 +147,12 @@ export function createRefreshJob(deps: RefreshJobDeps) {
         const result = await snapshotDailyValues(deps.db, userId, day);
         summary.snapshots += result.written.length;
       }
+    });
+
+    await step("facts", async () => {
+      if (!deps.facts?.length) return;
+      const result = await collectFacts({ db: deps.db, adapters: deps.facts, now: at });
+      summary.facts = { read: result.read, stored: result.stored, events: result.events };
     });
 
     return summary;

@@ -23,6 +23,29 @@ function today(now: Date): string {
 }
 
 /**
+ * Takes one call from today's budget for `counter`, atomically, so two callers
+ * can't both spend the last one. False when the budget is used. Market data
+ * and facts sources share this counter table (`source_usage`).
+ */
+export async function takeCall(
+  db: Db,
+  counter: string,
+  limit: number,
+  now: Date,
+): Promise<boolean> {
+  const rows = await db
+    .insert(sourceUsage)
+    .values({ source: counter, day: today(now), calls: 1 })
+    .onConflictDoUpdate({
+      target: [sourceUsage.source, sourceUsage.day],
+      set: { calls: sql`${sourceUsage.calls} + 1` },
+      setWhere: sql`${sourceUsage.calls} < ${limit}`,
+    })
+    .returning({ calls: sourceUsage.calls });
+  return rows.length > 0;
+}
+
+/**
  * Wraps a source so each call first takes one unit of today's budget —
  * atomically, so two refreshes can't both spend the last call. Over budget,
  * the call isn't made and the source reports itself blocked, which the
@@ -37,16 +60,7 @@ export function withBudget(
   const now = options.now ?? (() => new Date());
 
   async function take() {
-    const rows = await db
-      .insert(sourceUsage)
-      .values({ source: source.id, day: today(now()), calls: 1 })
-      .onConflictDoUpdate({
-        target: [sourceUsage.source, sourceUsage.day],
-        set: { calls: sql`${sourceUsage.calls} + 1` },
-        setWhere: sql`${sourceUsage.calls} < ${limit}`,
-      })
-      .returning({ calls: sourceUsage.calls });
-    if (rows.length === 0)
+    if (!(await takeCall(db, source.id, limit, now())))
       throw new PriceSourceError(source.id, "blocked", "daily call budget used");
   }
 

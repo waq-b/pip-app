@@ -9,6 +9,10 @@ import { createSecretBox } from "../crypto/secrets.js";
 import {
   cash,
   dailyValues,
+  factsEvents,
+  factsFetches,
+  factsNews,
+  factsNewsInstruments,
   holdings,
   instruments,
   marketSchedules,
@@ -30,6 +34,7 @@ import type {
 import { testAuth } from "../test-support/auth.js";
 import { testDatabase } from "../test-support/pglite.js";
 import { createRefreshJob } from "./refresh-job.js";
+import { stubEventsAdapter, stubNewsAdapter } from "../facts/stub.js";
 
 describe("the job door", () => {
   const secret = "job-secret-for-tests-0123456789";
@@ -117,6 +122,10 @@ describe("the scheduled refresh", () => {
 
   beforeEach(async () => {
     for (const table of [
+      factsNewsInstruments,
+      factsNews,
+      factsEvents,
+      factsFetches,
       dailyValues,
       trades,
       holdings,
@@ -173,6 +182,23 @@ describe("the scheduled refresh", () => {
     const second = await refresh.run();
     expect(second).toMatchObject({ polled: 0, backfilled: 0, pricesRefreshed: 0 });
     expect(client.positions).not.toHaveBeenCalled();
+  });
+
+  it("collects facts for what's held once prices are in, and a second run finds them fresh", async () => {
+    const withFacts = createRefreshJob({
+      db,
+      box,
+      clientFor: () => client,
+      marketFor: () => withFallback([{ source, symbolFor: (target) => target }]),
+      facts: [stubNewsAdapter(), stubEventsAdapter()],
+      now: () => NOW,
+    });
+    const first = await withFacts.run();
+    expect(first.errors).toEqual([]);
+    expect(first.facts).toEqual({ read: 5, stored: 4, events: 1 });
+    expect(await db.select().from(factsNews)).toHaveLength(4);
+    const second = await withFacts.run();
+    expect(second.facts).toEqual({ read: 0, stored: 0, events: 0 });
   });
 
   it("joins a run already in progress instead of starting another", async () => {

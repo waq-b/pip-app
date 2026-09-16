@@ -4,6 +4,7 @@ import { supabaseVerifierFromEnv } from "./auth/jwt.js";
 import { dbWaitlistStore } from "./auth/waitlist.js";
 import { loadConfig } from "./config.js";
 import { getDb } from "./db/client.js";
+import { liveFactsAdapters } from "./facts/live.js";
 import { createRefreshJob } from "./jobs/refresh-job.js";
 import { LOG_REDACT_PATHS } from "./logging.js";
 import { liveMarket } from "./market/live.js";
@@ -81,7 +82,17 @@ function realAccounts(): Partial<BuildAppOptions> {
         void backfillHistory(db, box, credential, clientFor, marketFor).catch(() => undefined);
       },
     }),
-    refreshJob: createRefreshJob({ db, box, clientFor, kraken, marketFor }),
+    refreshJob: createRefreshJob({
+      db,
+      box,
+      clientFor,
+      kraken,
+      marketFor,
+      facts: liveFactsAdapters({
+        alphaVantageKey: config.alphaVantageKey,
+        marketauxKey: config.marketauxKey,
+      }),
+    }),
   };
 }
 

@@ -14,6 +14,8 @@ export interface ServerConfig {
   alphaVantageKey?: string;
   /** CoinGecko Demo key — crypto prices (Phase 3). Without it, Kraken's public prices only. */
   coinGeckoKey?: string;
+  /** Marketaux free key — news for Phase 5 facts. Without it, the other news sources only. */
+  marketauxKey?: string;
   /** Present whenever real provider keys can be stored or used. */
   secretBox?: SecretBox;
 }
@@ -56,5 +58,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     jobSecret: env.JOB_SECRET || undefined,
     alphaVantageKey: env.AV_ACCESS_KEY || undefined,
     coinGeckoKey: env.COINGECKO_KEY || undefined,
+    marketauxKey: env.MARKETAUX_API || undefined,
   };
 }
