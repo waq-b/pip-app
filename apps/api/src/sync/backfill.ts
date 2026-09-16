@@ -260,7 +260,7 @@ async function matchesHoldings(
 }
 
 /** Latest close on or before `day` — markets don't close at weekends, prices carry. */
-function closeOn(
+export function closeOn(
   list: { day: string; close: number }[] | undefined,
   day: string,
 ): number | undefined {
@@ -273,7 +273,7 @@ function closeOn(
   return found;
 }
 
-function* daysBetween(first: string, last: string): Generator<string> {
+export function* daysBetween(first: string, last: string): Generator<string> {
   const cursor = new Date(`${first}T12:00:00Z`);
   const end = new Date(`${last}T12:00:00Z`);
   while (cursor <= end) {
@@ -282,7 +282,7 @@ function* daysBetween(first: string, last: string): Generator<string> {
   }
 }
 
-async function setBackfill(
+export async function setBackfill(
   db: Db,
   credentialId: string,
   status: string,
@@ -294,7 +294,7 @@ async function setBackfill(
     .where(eq(providerCredentials.id, credentialId));
 }
 
-async function finish(
+export async function finish(
   db: Db,
   credentialId: string,
   outcome: BackfillOutcome,

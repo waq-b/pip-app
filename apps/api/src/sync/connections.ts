@@ -336,8 +336,7 @@ async function store(
     status: "live",
     accountCurrency,
     lastVerifiedAt: at,
-    // Kraken's history rebuild arrives with Phase 3 task 6; until then it has nothing to wait for.
-    backfillStatus: provider === "kraken" ? "done" : "pending",
+    backfillStatus: "pending",
     historyStartsOn: null,
   };
   const [row] = await options.db

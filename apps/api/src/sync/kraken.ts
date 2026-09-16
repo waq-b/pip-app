@@ -19,6 +19,7 @@ import {
   type KrakenLedgerEntry,
 } from "../providers/kraken/client.js";
 import { checkKrakenPermissions, type PermissionCheck } from "../providers/kraken/permissions.js";
+import { applyKrakenCosts } from "./kraken-history.js";
 import type { Credential } from "./poll.js";
 
 /**
@@ -52,9 +53,9 @@ export type KrakenPollOutcome =
   | { outcome: "unavailable" };
 
 /** Cash Pip can count in pounds. Other currencies are left out rather than guessed. */
-const FIAT = new Set(["GBP", "USD", "EUR"]);
+export const FIAT = new Set(["GBP", "USD", "EUR"]);
 /** Below this a balance is dust from rounding, not a holding. */
-const DUST = 1e-10;
+export const DUST = 1e-10;
 
 export const krakenInstrumentId = (altname: string) => `kraken:${altname}`;
 
@@ -121,7 +122,7 @@ export async function pollKraken(
       quantity: String(amounts.total),
       stakedQuantity: amounts.staked > 0 ? String(amounts.staked) : null,
       averagePricePaid: null,
-      // Known once history is rebuilt from the ledger.
+      // Set from the ledger just below, once the new entries are stored.
       totalCostPence: null,
       polledAt: now,
     }));
@@ -158,6 +159,7 @@ export async function pollKraken(
         .set({ status: "live", lastVerifiedAt: now, lastPolledAt: now })
         .where(eq(providerCredentials.id, credential.id));
     });
+    await applyKrakenCosts(db, credential.id, altnames, now);
     return {
       outcome: "polled",
       holdings: holdingRows.length,
@@ -206,7 +208,7 @@ function group(balances: KrakenBalance[], altnames: Map<string, string>) {
 }
 
 /** New coins become instruments, with names and price symbols from public market data. */
-async function ensureCoins(db: Db, directory: CoinDirectory, altnames: string[], now: Date) {
+export async function ensureCoins(db: Db, directory: CoinDirectory, altnames: string[], now: Date) {
   if (altnames.length === 0) return 0;
   const ids = altnames.map(krakenInstrumentId);
   const existing = await db

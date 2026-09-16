@@ -5,6 +5,7 @@ import type { Db } from "../db/user-scope.js";
 import { refreshDue, type PricedInstrument } from "../market/refresh.js";
 import type { withFallback } from "../market/sources/fallback.js";
 import { backfillHistory } from "../sync/backfill.js";
+import { backfillKrakenHistory } from "../sync/kraken-history.js";
 import { pollKraken, type CoinDirectory, type KrakenClientFor } from "../sync/kraken.js";
 import {
   credentialsDue,
@@ -96,20 +97,22 @@ export function createRefreshJob(deps: RefreshJobDeps) {
         .where(
           and(
             eq(providerCredentials.status, "live"),
-            eq(providerCredentials.provider, "trading212"),
             eq(providerCredentials.backfillStatus, "pending"),
           ),
         )
         .limit(1);
       if (!waiting) return;
-      const outcome = await backfillHistory(
-        deps.db,
-        deps.box,
-        waiting,
-        deps.clientFor,
-        deps.marketFor,
-        at,
-      );
+      if (waiting.provider === "kraken" && !deps.kraken) return;
+      const outcome =
+        waiting.provider === "kraken"
+          ? await backfillKrakenHistory(
+              deps.db,
+              waiting,
+              deps.kraken!.directory,
+              deps.marketFor,
+              at,
+            )
+          : await backfillHistory(deps.db, deps.box, waiting, deps.clientFor, deps.marketFor, at);
       if (outcome.outcome !== "failed") summary.backfilled += 1;
     });
 

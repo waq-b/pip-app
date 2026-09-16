@@ -17,6 +17,7 @@ import { createT212Client } from "./providers/t212/client.js";
 import type { CoinDirectory } from "./sync/kraken.js";
 import { liveReadModel } from "./read/live.js";
 import { backfillHistory } from "./sync/backfill.js";
+import { backfillKrakenHistory } from "./sync/kraken-history.js";
 import { liveConnectionService } from "./sync/connections.js";
 
 const config = loadConfig();
@@ -68,7 +69,12 @@ function realAccounts(): Partial<BuildAppOptions> {
       kraken,
       // Rebuild history in the background; the scheduled job retries anything left pending.
       onConnected: (credential) => {
-        if (credential.provider !== "trading212") return;
+        if (credential.provider === "kraken") {
+          if (directory) {
+            void backfillKrakenHistory(db, credential, directory, marketFor).catch(() => undefined);
+          }
+          return;
+        }
         void backfillHistory(db, box, credential, clientFor, marketFor).catch(() => undefined);
       },
     }),
