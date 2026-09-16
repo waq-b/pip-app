@@ -43,6 +43,20 @@
       "when": 1789571865418,
       "tag": "0005_market_schedules",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789572835058,
+      "tag": "0006_scheduled_refresh",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789572869556,
+      "tag": "0007_pg_net_extensions_schema",
+      "breakpoints": true
     }
   ]
 }

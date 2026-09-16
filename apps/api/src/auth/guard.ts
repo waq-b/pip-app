@@ -1,3 +1,4 @@
+import { createHash, timingSafeEqual } from "node:crypto";
 import type { FastifyInstance, FastifyReply } from "fastify";
 import type { AllowedUser, AllowlistStore } from "./allowlist.js";
 import type { TokenVerifier, VerifiedUser } from "./jwt.js";
@@ -20,6 +21,13 @@ export const PUBLIC_PATHS = ["/health"];
  */
 export const SIGNED_IN_ONLY_PATHS = ["/me", "/waitlist"];
 
+/**
+ * Machine callers: the scheduler, not a person. Authenticated by a shared job
+ * secret in `x-job-secret` instead of a user token — still authenticated, so
+ * hard line 4 holds. Without a configured secret these refuse everyone.
+ */
+export const JOB_PATHS = ["/jobs/refresh"];
+
 export function isPublicPath(path: string): boolean {
   return PUBLIC_PATHS.includes(path);
 }
@@ -27,6 +35,8 @@ export function isPublicPath(path: string): boolean {
 export interface AuthGuardOptions {
   verifier: TokenVerifier;
   allowlist: AllowlistStore;
+  /** From `JOB_SECRET`. Absent means job routes refuse every caller. */
+  jobSecret?: string;
 }
 
 /**
@@ -41,6 +51,11 @@ export function registerAuthGuard(app: FastifyInstance, options: AuthGuardOption
   app.addHook("onRequest", async (request, reply) => {
     const path = request.url.split("?")[0] ?? request.url;
     if (isPublicPath(path)) return;
+    if (JOB_PATHS.includes(path)) {
+      return jobSecretMatches(options.jobSecret, request.headers["x-job-secret"])
+        ? undefined
+        : refuse(reply, 401, "unauthenticated");
+    }
 
     const token = bearerToken(request.headers.authorization);
     if (!token) return refuse(reply, 401, "unauthenticated");
@@ -62,6 +77,16 @@ export function registerAuthGuard(app: FastifyInstance, options: AuthGuardOption
     }
     request.allowedUser = allowed;
   });
+}
+
+/** Constant-time comparison of hashes, so neither timing nor length leaks the secret. */
+export function jobSecretMatches(
+  expected: string | undefined,
+  given: string | string[] | undefined,
+): boolean {
+  if (!expected || typeof given !== "string" || !given) return false;
+  const digest = (value: string) => createHash("sha256").update(value).digest();
+  return timingSafeEqual(digest(expected), digest(given));
 }
 
 export function bearerToken(header: string | undefined): string | undefined {
