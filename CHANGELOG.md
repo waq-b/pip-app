@@ -45,6 +45,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added: `POST` / `DELETE /connections/:provider` — the full connect flow against a handler that inspects the key and stores nothing, ready for Phase 2 to swap in real validation behind the same responses (#3226677039)
 - Added: outright refusal of any key carrying a trade or withdraw scope, enforced in the API rather than the UI (#3226677039)
 - Changed: `docs/ARCHITECTURE.md` freshened — header, docs tree, and the `app.ts` description were still describing Phase 0 (#3226677039)
+- Removed: `docker-compose.yml`. Postgres is hosted in every environment (Neon or Supabase, with its own development database), so there is no local server and no Docker — one `DATABASE_URL` is the whole story (#3226691746)
+- Added: web foundation — every DESIGN.md token as Tailwind v4 theme variables (light, dark, the three pot scopes, amber), self-hosted fonts, router, query client and a same-origin API client (#3226691561)
+- Added: appearance that follows the device until someone chooses, stored per device and wrapped so a browser that refuses storage still themes correctly (#3226691561)
+- Added: Vite dev proxy for the API's paths, so the session cookie stays same-origin instead of being dropped as cross-site (#3226691561)
 
 ### Phase 0 — Scaffold
 

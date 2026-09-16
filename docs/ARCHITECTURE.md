@@ -170,7 +170,7 @@ Being on the waiting list grants nothing. Access still comes from the allowlist,
 
 Postgres via Drizzle ORM. Single `DATABASE_URL` env var — works against local Docker Postgres, Neon, or Supabase, nothing host-specific (see CLAUDE.md section 3; never Render's free Postgres, it expires after 30 days).
 
-- `docker-compose.yml` — local Postgres 17 for development, serving exactly the `DATABASE_URL` in `.env.example`. Dev only: nothing in the test suite or CI ever talks to it.
+- **The database is hosted in every environment** — Neon or Supabase, with a separate database for development. There is no local Postgres and no Docker: one `DATABASE_URL` is the whole story, which is also what keeps the app portable (CLAUDE.md s3). Nothing in the test suite or CI ever talks to it.
 - `apps/api/drizzle.config.ts` — drizzle-kit config, points at `DATABASE_URL`
 - `apps/api/drizzle/` — generated migration SQL, committed. `pnpm --filter api db:generate` writes a new one from the schema; `db:migrate` applies it.
 - `apps/api/src/db/schema.ts` — current tables:
@@ -180,7 +180,9 @@ Postgres via Drizzle ORM. Single `DATABASE_URL` env var — works against local 
   - `accounts`, `sessions`, `verification_tokens` — Auth.js tables. Column names are dictated by `@auth/drizzle-adapter`, which queries them by name, so they don't follow house style.
 - `apps/api/src/db/client.ts` — `getDb()` is a lazy singleton. No socket opens until a caller actually queries. Nothing in the test suite or CI imports/calls it, so tests never touch a real database (hard line: no real network calls in tests).
 
-The first migration is generated and committed, but has not been applied anywhere yet: this machine has no Docker and no Postgres, so the schema is verified by type-checking and by drizzle-kit's own generation step. Running it needs either Docker Desktop (`docker compose up -d postgres`, then `pnpm --filter api db:migrate`) or a cloud `DATABASE_URL`. Auth (task 6) is the first thing that needs a live database to exercise locally; the tests around it use an injected in-memory session store instead, so CI stays databaseless.
+The migrations are generated and committed but have not been applied anywhere yet — that waits on a hosted `DATABASE_URL`. Until then the schema is verified by type-checking and by drizzle-kit's own generation step. To apply them: put the connection string in `apps/api/.env` (gitignored) and run `pnpm --filter api db:migrate`.
+
+Auth is the first thing that needs a live database to exercise by hand; its tests use an injected in-memory session store instead, so CI stays databaseless whatever happens to the hosting.
 
 ## Env flags
 
