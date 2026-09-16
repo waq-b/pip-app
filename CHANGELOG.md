@@ -49,6 +49,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added: web foundation — every DESIGN.md token as Tailwind v4 theme variables (light, dark, the three pot scopes, amber), self-hosted fonts, router, query client and a same-origin API client (#3226691561)
 - Added: appearance that follows the device until someone chooses, stored per device and wrapped so a browser that refuses storage still themes correctly (#3226691561)
 - Added: Vite dev proxy for the API's paths, so the session cookie stays same-origin instead of being dropped as cross-site (#3226691561)
+- Added: responsive app shell — bottom tab bar under 768, a 76px icon rail from 768 with content capped at 640, a 232px labelled sidebar from 1120 with content capped at 1080 (#3227556742)
+- Added: the red alert dot on Rules at every width, and the "Read-only access" badge in the desktop sidebar (#3227556742)
+- Added: `PipMark` component that picks the small cut below 48px, which the rail and sidebar need (#3227556742)
+- Added: `pointerWords()` so screens say tap on a phone and click elsewhere, and phone/computer to match (#3227556742)
+- Added: a `matchMedia` stub in the web test setup, since jsdom has none (#3227556742)
+- Fixed: Pots went dark on pot and instrument detail — `NavLink` overwrote the `aria-current` it was given with its own route match; active state now comes from each destination's `matches` at every width (#3227556742)
 
 ### Phase 0 — Scaffold
 

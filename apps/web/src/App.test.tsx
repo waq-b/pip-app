@@ -16,30 +16,39 @@ function renderAt(path: string) {
 describe("routing", () => {
   it("opens on the pots screen", async () => {
     renderAt("/");
-    expect(await screen.findByText("Pots")).toBeInTheDocument();
+
+    // By role, not text: the nav also says "Pots".
+    expect(await screen.findByRole("heading", { name: "Pots" })).toBeInTheDocument();
   });
 
-  it("has a route for every screen the design describes", async () => {
-    const paths = routes.map((route) => route.path);
+  it("puts the signed-in screens inside the shell", () => {
+    const shell = routes[0]!;
 
-    expect(paths).toEqual([
-      "/",
-      "/pots/:bucket",
-      "/instruments/:id",
-      "/rules",
-      "/setup",
-      "/sign-in",
-      "/not-on-the-list",
+    expect(shell.path).toBe("/");
+    expect(shell.children?.map((child) => child.path ?? "index")).toEqual([
+      "index",
+      "pots/:bucket",
+      "instruments/:id",
+      "rules",
+      "setup",
     ]);
+  });
+
+  it("keeps sign-in and the refusal screen outside the shell, as the design has them", async () => {
+    expect(routes.map((route) => route.path)).toEqual(["/", "/sign-in", "/not-on-the-list"]);
+
+    renderAt("/sign-in");
+    expect(await screen.findByRole("heading", { name: "Sign in" })).toBeInTheDocument();
+    expect(screen.queryByRole("navigation", { name: "Sections" })).not.toBeInTheDocument();
   });
 
   it("renders a named pot", async () => {
     renderAt("/pots/Medium");
-    expect(await screen.findByText("Pot")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Pot" })).toBeInTheDocument();
   });
 
   it("renders the screen a refused sign-in lands on", async () => {
     renderAt("/not-on-the-list");
-    expect(await screen.findByText("Not on the list")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Not on the list" })).toBeInTheDocument();
   });
 });

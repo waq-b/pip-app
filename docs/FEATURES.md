@@ -45,4 +45,15 @@ All of it from fixtures, all of it behind sign-in. No screen renders it yet.
 
 The sample data has one correction from the design: the prototype showed ISA money buying Rolls-Royce, which lives in the Invest pot. Money never crosses pots here.
 
-Still to come in Phase 1: every screen, and the staleness ladder that turns freshness into green, amber and red. Nothing here touches real money or a real broker.
+## The app so far: the frame, not the pictures
+
+The web app has its colours, fonts and layout, but every screen is still a placeholder.
+
+- **Three places to go**, the same at every size: **Pots**, **Rules** and **Setup**. On a phone they sit along the bottom; on a tablet they become a narrow rail of icons down the left; on a computer that rail widens into a sidebar with labels, the Pip mark, and a permanent "Read-only access" badge.
+- **You always know where you are.** The current section is lit — and Pots stays lit while you're inside a pot or looking at a single holding, because those live under it.
+- **A red dot on Rules** appears when a cap has been broken. It is the only red in the app's chrome, and only Side Bet can cause it. (It isn't wired to real data yet.)
+- **Wide screens don't get stretched.** Content stops at a comfortable width and the rest is plain background — no widgets, no ticker, no filler.
+- **Light or dark follows your device**, until you choose otherwise.
+- **Sign-in stands alone**, with no navigation around it, because there's nowhere to go until you're in.
+
+Still to come in Phase 1: the screens themselves, and the staleness ladder that turns freshness into green, amber and red. Nothing here touches real money or a real broker.

@@ -75,6 +75,46 @@ Both apps import this — nothing hardcodes bucket names elsewhere. Each bucket 
 - **Every `Change` carries both** an amount and a percent, which is what makes "pounds before percent" (DESIGN.md §4.1) impossible to break by accident.
 - **`PriceFreshness`** carries the market-data source, the last successful read, whether the last fetch failed, and whether markets are closed. It names a market-data source, never a trading API (hard line 8). Deriving the green/amber/red state from it belongs to the staleness ladder task, not to these types.
 
+## Web app
+
+`apps/web` is a Vite + React 19 PWA. Structure so far:
+
+```
+apps/web/src/
+├── index.css            ← every DESIGN.md token, as CSS variables + Tailwind v4 theme
+├── App.tsx              ← query client, router, appearance
+├── routes.tsx           ← the route table
+├── lib/
+│   ├── api.ts           ← the only way to reach the API; same-origin, 401 is its own error
+│   ├── theme.ts         ← appearance: follow the device, or a stored choice
+│   └── use-appearance.ts
+├── shell/
+│   ├── app-shell.tsx    ← chrome around every signed-in screen
+│   ├── nav.ts           ← the three destinations, and what lights each one
+│   ├── use-breakpoint.ts
+│   ├── pointer-words.ts ← tap/click, phone/computer
+│   └── pip-mark.tsx     ← the mark, choosing its own cut by size
+└── screens/             ← one per screen, arriving in tasks 15–20
+```
+
+**Tokens.** `index.css` declares every colour as a `--pip-*` variable for light, overrides them for dark, and maps them into Tailwind with `@theme inline` — so `bg-card` resolves to the live variable and dark mode is a variable swap, never a second set of classes. Pot scopes (`.pot-fnd`, `.pot-pick`, `.pot-bet`) override only the accent trio, so anything inside one paints itself in that pot's colour without knowing which pot it is. No component carries a hex value.
+
+**Appearance.** Follows the device until someone chooses in Setup. The `data-theme` attribute is written only for an explicit choice; leaving it off for "system" keeps the media query in charge, so the app follows the device live rather than at load. Storage access is wrapped, because private browsing throws rather than returning null.
+
+**The shell.** Signed-in screens render inside `AppShell`; sign-in and the not-on-the-list screen deliberately don't, because neither has a sidebar or a hero number. Three layouts, one set of destinations:
+
+| Width     | Navigation                                       | Content cap |
+| --------- | ------------------------------------------------ | ----------- |
+| under 768 | tab bar along the bottom                         | —           |
+| 768+      | 76px icon rail                                   | 640         |
+| 1120+     | 232px labelled sidebar, with the read-only badge | 1080        |
+
+**Active state comes from `nav.ts`, not from the router.** Each destination has its own `matches(pathname)`, and every layout uses it. This isn't a style choice: React Router's `NavLink` computes `aria-current` from its own path matching and overwrites the prop you pass, so with `end` on the Pots link it went dark the moment you opened a pot. Pot detail and instrument detail live under Pots, so Pots has to stay lit there.
+
+**The mark** is a component rather than an imported SVG so it can pick its cut: below 48px it draws the small cut (DESIGN.md §3), which the rail and sidebar need at 26–27px. The SVG files remain the source for favicons and app icons.
+
+**Testing.** jsdom has no `matchMedia`, so `src/test/setup.ts` installs a stub that answers `min-width`/`max-width` queries against a width the test sets with `setViewportWidth()`, and notifies listeners when it changes. Shell tests run at 390, 834 and 1280.
+
 ## Data flow (current — stub only)
 
 ```
