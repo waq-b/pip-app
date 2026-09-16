@@ -4,6 +4,26 @@ import type { MarketData } from "../market.js";
 /** What the provenance line says while Phase 1 runs on fixtures (DESIGN.md §5). */
 export const STUB_SOURCE = "Sample prices · stub data";
 
+/**
+ * Current prices, in pence. These live here rather than with the holdings
+ * because prices are the market layer's job — the trading layer only knows what
+ * is held and what it is worth (CLAUDE.md hard line 8). Phase 2 replaces this
+ * table with a real source behind the same interface.
+ */
+const PRICES: Record<string, Pence> = {
+  "vanguard-ftse-global-all-cap": 218,
+  "vanguard-sp-500": 9_430,
+  "cash-waiting": 100,
+  nvidia: 14_280,
+  apple: 18_340,
+  asml: 61_200,
+  greggs: 2_460,
+  "rolls-royce": 594,
+  bitcoin: 4_890_000,
+  ethereum: 214_000,
+  solana: 11_820,
+};
+
 /** How many points each range draws, and how far apart they sit. */
 const SHAPE: Record<PriceRange, { points: number; stepMs: number }> = {
   day: { points: 24, stepMs: 60 * 60 * 1000 },
@@ -43,8 +63,7 @@ export function createStubMarketData(options: StubMarketDataOptions = {}): Marke
     source: STUB_SOURCE,
 
     async getPrice(instrumentId) {
-      const series = await this.getSeries(instrumentId, "day");
-      return series[series.length - 1]!.value;
+      return priceFor(instrumentId);
     },
 
     async getSeries(instrumentId, range) {
@@ -65,29 +84,37 @@ export function createStubMarketData(options: StubMarketDataOptions = {}): Marke
   };
 }
 
+/** A known instrument gets its real fixture price; anything else gets a seeded one. */
+export function priceFor(instrumentId: string): Pence {
+  const known = PRICES[instrumentId];
+  if (known !== undefined) return known;
+  return 50_00 + (seedFrom(instrumentId) % 450_00);
+}
+
 export function buildSeries(instrumentId: string, range: PriceRange, now: Date): SeriesPoint[] {
   const { points, stepMs } = SHAPE[range];
   let state = seedFrom(instrumentId);
 
-  // The starting price is seeded too, so a holding worth £4 never renders as
-  // one worth £40,000 just because the range changed.
-  const base = 50_00 + (state % 450_00);
-
-  const values: Pence[] = [];
-  let value = base;
+  const values: number[] = [];
+  let value = 1_000;
   for (let i = 0; i < points; i++) {
     state = nextState(state);
     // A drift of ±2.5% per step: enough to look alive, never enough to look
     // like a crash.
     const drift = ((state % 5001) - 2500) / 100_000;
-    value = Math.max(1, Math.round(value * (1 + drift)));
+    value = Math.max(1, value * (1 + drift));
     values.push(value);
   }
+
+  // Anchor the walk so it ends at the instrument's actual price. The shape is
+  // invented; where it finishes is not.
+  const target = priceFor(instrumentId);
+  const scale = target / values[values.length - 1]!;
 
   const oldest = now.getTime() - (points - 1) * stepMs;
   return values.map((point, index) => ({
     at: new Date(oldest + index * stepMs).toISOString(),
-    value: point,
+    value: Math.max(1, Math.round(point * scale)),
   }));
 }
 

@@ -36,6 +36,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Changed: `/waitlist` joins `/health` and `/auth/*` as a session-free path, gated by its own signed token; the route is not registered at all when no `AUTH_SECRET` is configured (#3226682602)
 - Added: `market/market.ts` — the market-data interface (price, series, per-pot freshness), kept separate from trading providers so no price ever comes from a trading API (#3226691678)
 - Added: `market/stub` — deterministic prices seeded by instrument id, so fixtures, tests and screenshots agree, with per-pot staleness overrides (age, outright failure, markets closed) to exercise the amber/red ladder (#3226691678)
+- Added: read routes — `/portfolio`, `/buckets/:id`, `/instruments/:id`, `/rules`, `/activity`, `/connections`, composing what is held (trading layer) with what it's worth (market layer) (#3226676894)
+- Added: the design's sample data as fixtures, with the hard-line corrections applied at source — no copy implies Pip moves money, and no entry crosses pots (#3226676894)
+- Changed: trading provider fixtures rebuilt with the real holding set, and provider money moved from floating-point pounds to integer pence to match the API types (#3226676894)
+- Changed: current prices now come from the market layer rather than the trading fixtures, with each generated series anchored to end at that price, so hard line 8 holds structurally and not just by convention (#3226676894)
+- Fixed: `Timeframe` was defined in the shared API types but missing from the package's exports (#3226676894)
+- Fixed: stub provider threw at import — `HISTORY` was built from `MONTHS` before that const was initialised (#3226676894)
 
 ### Phase 0 — Scaffold
 

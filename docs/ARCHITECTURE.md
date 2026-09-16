@@ -24,12 +24,14 @@ finance-app-personal/
 │           ├── db/
 │           │   ├── client.ts   ← lazy Drizzle/Postgres client (getDb())
 │           │   └── schema.ts   ← users, allowlist, waitlist, Auth.js tables
+│           ├── fixtures/   ← the design's sample words and numbers
 │           ├── market/     ← MARKET DATA: what it's worth, what it's done
 │           │   ├── market.ts   ← common market-data interface
 │           │   └── stub/       ← deterministic fake prices
-│           └── providers/  ← TRADING: what is held, how much cash
-│               ├── provider.ts ← common trading-provider interface
-│               └── stub/       ← fake data, used in tests and Phase 0/1
+│           ├── providers/  ← TRADING: what is held, how much cash
+│           │   ├── provider.ts ← common trading-provider interface
+│           │   └── stub/       ← fake holdings, used in tests and Phase 0/1
+│           └── routes/     ← read routes composing the two layers
 └── packages/
     └── shared/              ← types shared between web and api
         └── src/
@@ -74,10 +76,25 @@ Both apps import this — nothing hardcodes bucket names elsewhere. Each bucket 
 ## Data flow (current — stub only)
 
 ```
-apps/web  →  apps/api (/health today; bucket routes arrive in Phase 1)  →  providers/stub
+apps/web  →  apps/api/routes  →  providers/stub   (what is held)
+                              →  market/stub      (what it's worth, what it's done)
+                              →  fixtures/        (the words around the numbers)
 ```
 
 The frontend never talks to a provider directly and never knows which provider backs a bucket — it only ever calls our own API. That indirection is the point: Phase 2+ swaps `stub` for `t212`/`kraken` behind the same `Provider` interface with zero frontend changes.
+
+**The read routes** (`routes/read.ts`), all behind the session guard:
+
+| Route                                              | Returns                                                                                                                            |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /portfolio?tf=day\|month\|all`                | The hero total, its change, the verdict line, all three pots, and freshness per pot                                                |
+| `GET /buckets/:id?tf=`                             | One pot: value, chart with its caption, money-in bars, and its holdings. `:id` is the internal id (`Base`), never the display name |
+| `GET /instruments/:id?range=day\|month\|year\|all` | One holding: price, value, today, since-you-bought, the plain-English note, its series                                             |
+| `GET /rules`                                       | Targets and the cap, what each pot actually sits at, and how far over Side Bet is — in pounds as well as percent                   |
+| `GET /activity`                                    | The last week, in plain English                                                                                                    |
+| `GET /connections`                                 | Which providers feed which pots                                                                                                    |
+
+An unknown pot or holding is a 404; an unrecognised timeframe or range is a 400 rather than a silent fallback. Composition is deliberately one-way: routes ask the trading layer what is held and the market layer what it is worth, and never the reverse.
 
 ## Provider interface
 

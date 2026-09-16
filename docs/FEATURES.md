@@ -30,4 +30,18 @@ What does work, all of it server-side:
 - **No promises are made.** No queue position, no countdown, no "we'll email you" — there is no email system. Waqar grants access by hand.
 - **Access is granted by hand**, with `pnpm --filter api allowlist add <email>`. There is no self-service sign-up, by design.
 
-Still to come in Phase 1: every screen, the three-pot data on stub providers, and the staleness ladder. Nothing here touches real money or a real broker.
+## What the API can already tell you
+
+All of it from fixtures, all of it behind sign-in. No screen renders it yet.
+
+- **Everything you own**, as one total, with what it did today, this month, or since you started — and the money alongside every percentage, never a bare percent.
+- **A verdict line** that says "nothing needs you" only when that's true. Side Bet is over its cap in the sample data, so the line names it instead.
+- **Each pot**: what it's worth, how it's gone with a sentence explaining the chart, six months of money in, and what's inside it.
+- **Each holding**: its price, what it's worth to you, today and since you bought, and a plain-English note on what the company actually does.
+- **Your rules**: the 70/25/5 targets, where each pot actually sits, and how far over the line Side Bet is — £208, not just 1.8%.
+- **What changed** last week, and **which account feeds which pot**.
+- **How current the prices are**, per pot, which is what the amber and red states will read.
+
+The sample data has one correction from the design: the prototype showed ISA money buying Rolls-Royce, which lives in the Invest pot. Money never crosses pots here.
+
+Still to come in Phase 1: every screen, and the staleness ladder that turns freshness into green, amber and red. Nothing here touches real money or a real broker.

@@ -33,4 +33,5 @@ export type {
   RuleKind,
   RulesView,
   SeriesPoint,
+  Timeframe,
 } from "./api.js";

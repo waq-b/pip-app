@@ -5,6 +5,9 @@ import { authPlugin } from "./auth/plugin.js";
 import { dbSessionStore, type SessionStore } from "./auth/session.js";
 import { registerWaitlistRoute } from "./auth/waitlist-route.js";
 import { dbWaitlistStore, type WaitlistStore } from "./auth/waitlist.js";
+import type { MarketData } from "./market/market.js";
+import { createStubMarketData } from "./market/stub/index.js";
+import { registerReadRoutes } from "./routes/read.js";
 
 export interface BuildAppOptions {
   /**
@@ -21,6 +24,8 @@ export interface BuildAppOptions {
    * exist.
    */
   authSecret?: string;
+  /** Prices, history and freshness. Phase 1 has only the stub. */
+  marketData?: MarketData;
   useSecureCookies?: boolean;
 }
 
@@ -38,6 +43,8 @@ export function buildApp(options: BuildAppOptions = {}) {
   // One of the three exemptions; the others are the login flow and the
   // token-gated waitlist below.
   app.get("/health", async () => ({ status: "ok" }));
+
+  registerReadRoutes(app, { market: options.marketData ?? createStubMarketData() });
 
   if (options.authSecret) {
     registerWaitlistRoute(app, {
