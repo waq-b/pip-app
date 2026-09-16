@@ -249,7 +249,7 @@ function Card({ title, aside, children }: { title: string; aside?: string; child
 }
 
 /**
- * No account feeds this pot yet. Side Bet waits for Kraken (Phase 4); the
+ * No account feeds this pot yet. Side Bet waits for Kraken (Phase 3); the
  * others point to Setup. Never shows sample money in its place.
  */
 function PotNotConnected({ bucket }: { bucket: Bucket }) {

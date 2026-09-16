@@ -38,10 +38,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     );
   }
 
-  // Hard line 3: practice before live. Live arrives, read-only, in Phase 3.
+  // Hard line 3: practice before live. Live arrives, read-only, in Phase 7.
   const t212Env = env.T212_ENV ?? "demo";
   if (mode === "t212" && t212Env !== "demo") {
-    throw new ConfigError(`T212_ENV must be "demo" until Phase 3, not "${t212Env}"`);
+    throw new ConfigError(`T212_ENV must be "demo" until Phase 7, not "${t212Env}"`);
   }
   if (env.JOB_SECRET !== undefined && env.JOB_SECRET.length > 0 && env.JOB_SECRET.length < 32) {
     throw new ConfigError("JOB_SECRET must be at least 32 characters");

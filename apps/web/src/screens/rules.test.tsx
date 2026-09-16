@@ -82,7 +82,7 @@ describe("the rules screen", () => {
     expect(within(banner).getByText(/information, not advice/i)).toBeInTheDocument();
   });
 
-  it("offers no way to change anything or act on it — that's Phase 5, and the broker's job", async () => {
+  it("offers no way to change anything or act on it — that's Phase 4, and the broker's job", async () => {
     renderRoute("/rules", { session: WAQAR, api: api() });
     await screen.findByRole("alert");
 

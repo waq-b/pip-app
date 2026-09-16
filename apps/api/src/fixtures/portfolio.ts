@@ -134,7 +134,7 @@ export interface InstrumentFixture {
   sinceBought: Change;
   shareOfBucket: Percent;
   /**
-   * Hand-written in Phase 1 and shown under the not-advice label. The Phase 6
+   * Hand-written in Phase 1 and shown under the not-advice label. The Phase 5
    * research module owns this text later, and keeps it generic for anyone other
    * than Waqar (CLAUDE.md hard line 12).
    */

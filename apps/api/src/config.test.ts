@@ -17,10 +17,10 @@ describe("server config", () => {
     expect(config.secretBox).toBeDefined();
   });
 
-  it("refuses the live Trading 212 environment until Phase 3", () => {
+  it("refuses the live Trading 212 environment until Phase 7", () => {
     expect(() =>
       loadConfig({ PROVIDER_MODE: "t212", MASTER_KEY: generateMasterKey(), T212_ENV: "live" }),
-    ).toThrow(/until Phase 3/);
+    ).toThrow(/until Phase 7/);
   });
 
   it("refuses a short job secret", () => {

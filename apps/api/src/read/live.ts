@@ -53,8 +53,8 @@ import type { ReadModel, ReadUser } from "./model.js";
  * carries on in the background and the staleness ladder tells the truth.
  *
  * What isn't built from real data yet says so rather than showing samples:
- * Side Bet (Kraken, Phase 4), "What changed" and "Money in" (decision 4), the
- * plain-English notes (Phase 6).
+ * Side Bet (Kraken, Phase 3), "What changed" and "Money in" (decision 4), the
+ * plain-English notes (Phase 5).
  */
 
 type Market = ReturnType<typeof withFallback>;

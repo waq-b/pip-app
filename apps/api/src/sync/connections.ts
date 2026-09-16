@@ -17,7 +17,7 @@ import { pollCredential, type Credential, type T212ClientFor } from "./poll.js";
 
 /**
  * Connecting for real (Phase 2): Trading 212 accounts, validated against the
- * practice API, sealed at rest, polled straight away. Kraken arrives in Phase 4.
+ * practice API, sealed at rest, polled straight away. Kraken arrives in Phase 3.
  *
  * Nothing is stored unless the key works and can see what Pip needs. Writes go
  * through the privileged connection after the guard has verified the user;

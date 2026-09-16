@@ -25,7 +25,7 @@ export interface MarketData {
   /**
    * How current this pot's prices are. Per pot rather than global because the
    * staleness ladder names the affected pot ("Side Bet is 2 hours old"), and
-   * because pots will be fed by different sources from Phase 4 onwards.
+   * because pots will be fed by different sources from Phase 3 onwards.
    */
   getFreshness(bucket: Bucket): Promise<PriceFreshness>;
 }

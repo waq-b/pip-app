@@ -28,7 +28,7 @@ import { useBreakpoint } from "../shell/use-breakpoint";
  * provider lets Pip check, a key that can trade is refused (CLAUDE.md s13);
  * where it can't (Trading 212), Setup says so plainly and Pip has no order code
  * to misuse (Phase 2 decision 2). "Nudge me" is left out until notifications
- * exist (Phase 7); currency is fixed to pounds.
+ * exist (Phase 6); currency is fixed to pounds.
  */
 export function SetupScreen() {
   const breakpoint = useBreakpoint();

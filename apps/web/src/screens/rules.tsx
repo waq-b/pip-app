@@ -11,7 +11,7 @@ import { useBreakpoint } from "../shell/use-breakpoint";
 /**
  * The shape you set, and where each pot actually sits against it
  * (DESIGN.md §7). **Display only in Phase 1**: no steppers, no "raise the cap",
- * no "show me how to fix it". Rule editing arrives with the Phase 5 engine, and
+ * no "show me how to fix it". Rule editing arrives with the Phase 4 engine, and
  * nothing on this screen may suggest Pip will move money (CLAUDE.md hard line 1).
  */
 export function RulesScreen() {
@@ -102,7 +102,7 @@ function RulesLoaded({ view, isDesktop }: { view: RulesView; isDesktop: boolean 
 
 /**
  * States the breach and stops. No buttons: fixing it happens at the broker, and
- * changing the cap is Phase 5. Pounds lead, because a percentage alone means
+ * changing the cap is Phase 4. Pounds lead, because a percentage alone means
  * nothing (DESIGN.md §4.1).
  */
 function OverCapBanner({ rule, isDesktop }: { rule: BucketRule; isDesktop: boolean }) {

@@ -5,6 +5,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Roadmap
+
+- Changed: phases reordered (Waqar) — Kraken 3, rules 4, research 5, notifications 6, T212 live 7; the drafted live plan moved to `docs/phases/phase-7.md`, and phase numbers in docs, code comments and tests follow (#3226664941)
+
 ## [0.2.0] — 2026-09-16
 
 ### Phase 2 — T212 paper + market data

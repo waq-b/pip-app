@@ -151,7 +151,7 @@ export interface InstrumentDetail {
   sinceBought: Change;
   /**
    * The "in plain English" note. Hand-written stub text in Phase 1, under the
-   * not-advice label; the Phase 6 research module owns it later.
+   * not-advice label; the Phase 5 research module owns it later.
    */
   note: string;
   range: PriceRange;
@@ -230,7 +230,7 @@ export interface Connection {
   holdingsSeen?: number;
   /** ISO timestamp of the last successful read. */
   lastReadAt?: string;
-  /** False when Pip can't connect this provider yet (Kraken until Phase 4). */
+  /** False when Pip can't connect this provider yet (Kraken until Phase 3). */
   available: boolean;
   /**
    * Whether Pip can confirm a key is read-only. Kraken can; Trading 212 has no

@@ -170,12 +170,12 @@ Two pots stale is still one line. Three pots stale becomes "All prices are 2 hou
 **Build these corrections, not the prototype.** The second handover adopted two earlier corrections (the "Where your new money goes" card and the Side Bet empty state now describe the user's own setup). These five still stand, and were re-checked against the new file:
 
 1. **Prices never come from the trading APIs.** The prototype still reads "Prices from Trading 212 & Kraken", on the phone, on every new desktop screen and in the amber examples. It must name the market-data source — in Phase 1, "Sample prices · stub data". Hard line 8.
-2. **Rules is display-only in Phase 1.** The desktop Rules screen still shows +/− steppers and the banner still carries "Show me how to fix it" and "Raise the cap". Phase 1 renders the banner with neither button and no steppers; both arrive in Phase 5. Hard line 1.
+2. **Rules is display-only in Phase 1.** The desktop Rules screen still shows +/− steppers and the banner still carries "Show me how to fix it" and "Raise the cap". Phase 1 renders the banner with neither button and no steppers; both arrive in Phase 4. Hard line 1.
 3. **Nothing says Pip moves money.** Any remaining copy implying Pip routes money is rewritten as a statement about the user's own setup at their broker. Hard line 1.
 4. **Fixtures never cross pots.** The feed still says "£60 of your ISA bought Rolls-Royce", but Rolls-Royce is Handpicked (Invest), not the ISA. Hard line 11.
-5. **"Nudge me" is omitted** (notifications are Phase 7) — it reappears in the desktop Setup screen. Currency shows as fixed GBP.
+5. **"Nudge me" is omitted** (notifications are Phase 6) — it reappears in the desktop Setup screen. Currency shows as fixed GBP.
 
-Instrument explainers are hand-written stub text in Phase 1 under the not-advice label. Their real source is the Phase 6 research module, and they stay generic for users other than Waqar. Hard line 12.
+Instrument explainers are hand-written stub text in Phase 1 under the not-advice label. Their real source is the Phase 5 research module, and they stay generic for users other than Waqar. Hard line 12.
 
 ---
 
