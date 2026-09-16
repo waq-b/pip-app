@@ -1,53 +1,110 @@
-import type { ConnectPermission, ConnectResult, ProviderId } from "@finance-app/shared";
+import type {
+  AccountKind,
+  Connection,
+  ConnectRequest,
+  ConnectResult,
+  ProviderId,
+} from "@finance-app/shared";
 import type { FastifyInstance } from "fastify";
-
-const PROVIDERS: Record<ProviderId, string> = {
-  trading212: "Trading 212",
-  kraken: "Kraken",
-};
-
-/** Shortest key either provider issues; anything below this is a typo. */
-const MINIMUM_KEY_LENGTH = 16;
+import type { AllowedUser } from "../auth/allowlist.js";
+import type { VerifiedUser } from "../auth/jwt.js";
+import { connectionsAt } from "../fixtures/portfolio.js";
 
 /**
- * Connecting an account, Phase 1 shape: every screen and state is real, and
- * **nothing is stored**. Phase 2 swaps the body of these handlers for real
- * validation against the provider and encrypted per-user storage; the responses
- * the frontend sees do not change.
- *
- * A key that can trade or withdraw is refused outright rather than warned
- * about (CLAUDE.md s13). That is a hard requirement, not a preference, so it
- * lives here rather than in the UI.
+ * Connecting an account. The routes only parse and hand over; what connecting
+ * means depends on the mode — stub mode inspects the key's shape and stores
+ * nothing (Phase 1), Trading 212 mode validates against the provider and seals
+ * the key (`sync/connections.ts`). Keys arrive in the body and never leave it:
+ * Fastify doesn't log bodies, the logger redacts key-shaped fields, and no
+ * response ever echoes one.
  */
-export function registerConnectionRoutes(app: FastifyInstance): void {
-  app.post<{ Params: { provider: string }; Body?: { key?: string } }>(
+
+export interface ConnectionUser {
+  /** Allowlist row id. */
+  userId: string;
+  /** Verified Supabase id, for reading as the user (RLS). */
+  authUserId: string;
+}
+
+export interface ConnectionService {
+  list(user: ConnectionUser): Promise<Connection[]>;
+  connect(
+    user: ConnectionUser,
+    provider: ProviderId,
+    request: ConnectRequest,
+  ): Promise<ConnectResult>;
+  disconnect(user: ConnectionUser, provider: ProviderId, accountKind?: AccountKind): Promise<void>;
+}
+
+const PROVIDERS: Record<ProviderId, string> = { trading212: "Trading 212", kraken: "Kraken" };
+const ACCOUNT_KINDS: AccountKind[] = ["isa", "invest"];
+
+export function registerConnectionRoutes(
+  app: FastifyInstance,
+  options: { service: ConnectionService },
+): void {
+  const userOf = (request: {
+    authUser?: VerifiedUser;
+    allowedUser?: AllowedUser;
+  }): ConnectionUser => ({
+    userId: request.allowedUser!.id,
+    authUserId: request.authUser!.authUserId,
+  });
+
+  app.get("/connections", async (request) => options.service.list(userOf(request)));
+
+  app.post<{ Params: { provider: string }; Body?: Partial<ConnectRequest> }>(
     "/connections/:provider",
     async (request, reply) => {
       const provider = parseProvider(request.params.provider);
       if (!provider) return reply.status(404).send({ error: "unknown_provider" });
 
-      const result = inspectKey(provider, request.body?.key ?? "");
-
-      // 200 for every outcome: "that key can do too much" is a considered
-      // answer about the key, not a malformed request.
+      const body = request.body ?? {};
+      const accountKind = parseAccountKind(body.accountKind);
+      if (provider === "trading212" && !accountKind) {
+        return reply.status(400).send({ error: "account_kind_required" });
+      }
+      const result = await options.service.connect(userOf(request), provider, {
+        accountKind,
+        key: typeof body.key === "string" ? body.key.trim() : "",
+        secret: typeof body.secret === "string" ? body.secret.trim() : undefined,
+      });
+      // 200 for every outcome: "that key can do too much" is an answer about the key.
       return reply.status(200).send(result);
     },
   );
 
-  app.delete<{ Params: { provider: string } }>("/connections/:provider", async (request, reply) => {
-    const provider = parseProvider(request.params.provider);
-    if (!provider) return reply.status(404).send({ error: "unknown_provider" });
-
-    // Nothing was ever stored, so there is nothing to remove. The route
-    // exists so the frontend's Disconnect button has somewhere to go.
-    return reply.status(200).send({ status: "disconnected", provider });
-  });
+  app.delete<{ Params: { provider: string }; Querystring: { accountKind?: string } }>(
+    "/connections/:provider",
+    async (request, reply) => {
+      const provider = parseProvider(request.params.provider);
+      if (!provider) return reply.status(404).send({ error: "unknown_provider" });
+      const accountKind = parseAccountKind(request.query.accountKind);
+      if (provider === "trading212" && !accountKind) {
+        return reply.status(400).send({ error: "account_kind_required" });
+      }
+      await options.service.disconnect(userOf(request), provider, accountKind);
+      return reply.status(200).send({ status: "disconnected", provider, accountKind });
+    },
+  );
 }
 
-/**
- * The stub's judgement, from the key's shape alone: too short to be real, or
- * carrying scopes Pip refuses, or acceptable.
- */
+/** Phase 1 behaviour, kept for stub mode: judge the key's shape, store nothing. */
+export const stubConnectionService: ConnectionService = {
+  async list() {
+    return connectionsAt(new Date());
+  },
+  async connect(_user, provider, request) {
+    return { ...inspectKey(provider, request.key), accountKind: request.accountKind };
+  },
+  async disconnect() {
+    // Nothing was ever stored.
+  },
+};
+
+/** Shortest key either provider issues; anything below this is a typo. */
+const MINIMUM_KEY_LENGTH = 16;
+
 export function inspectKey(provider: ProviderId, rawKey: string): ConnectResult {
   const name = PROVIDERS[provider];
   const key = rawKey.trim();
@@ -65,7 +122,11 @@ export function inspectKey(provider: ProviderId, rawKey: string): ConnectResult 
       outcome: "too_much_access",
       provider,
       message: `That key can do too much. It can trade and withdraw. Pip only ever accepts keys that can look, so it won't store this one.`,
-      permissions: permissionsFor(),
+      permissions: [
+        { name: "Query funds", granted: true, required: true },
+        { name: "Create & cancel orders", granted: true, required: false },
+        { name: "Withdraw funds", granted: true, required: false },
+      ],
     };
   }
 
@@ -76,14 +137,10 @@ export function inspectKey(provider: ProviderId, rawKey: string): ConnectResult 
   };
 }
 
-function permissionsFor(): ConnectPermission[] {
-  return [
-    { name: "Query funds", granted: true, required: true },
-    { name: "Create & cancel orders", granted: true, required: false },
-    { name: "Withdraw funds", granted: true, required: false },
-  ];
-}
-
 function parseProvider(value: string): ProviderId | undefined {
   return (Object.keys(PROVIDERS) as ProviderId[]).find((provider) => provider === value);
+}
+
+function parseAccountKind(value: unknown): AccountKind | undefined {
+  return ACCOUNT_KINDS.find((kind) => kind === value);
 }

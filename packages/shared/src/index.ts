@@ -8,6 +8,7 @@ export {
 } from "./buckets.js";
 
 export type {
+  AccountKind,
   ActivityEntry,
   ActivityKind,
   BucketDetail,
@@ -18,6 +19,7 @@ export type {
   Connection,
   ConnectionStatus,
   ConnectOutcome,
+  ConnectRequest,
   ConnectPermission,
   ConnectResult,
   Direction,

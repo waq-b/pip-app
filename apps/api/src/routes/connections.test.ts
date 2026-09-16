@@ -133,3 +133,32 @@ describe("DELETE /connections/:provider", () => {
     expect(response.statusCode).toBe(404);
   });
 });
+
+describe("which account a Trading 212 key is for", () => {
+  it("is required, because Trading 212 can't tell ISA from Invest", async () => {
+    const response = await appForTests().inject({
+      method: "POST",
+      url: "/connections/trading212",
+      headers: SIGNED_IN,
+      payload: { key: "read-only-key-0123456789", secret: "secret" },
+    });
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toEqual({ error: "account_kind_required" });
+  });
+
+  it("is passed through and echoed back, never the key", async () => {
+    const response = await appForTests().inject({
+      method: "POST",
+      url: "/connections/trading212",
+      headers: SIGNED_IN,
+      payload: {
+        accountKind: "invest",
+        key: "read-only-key-0123456789",
+        secret: "secret-0123456789",
+      },
+    });
+    expect(response.json()).toMatchObject({ outcome: "connected", accountKind: "invest" });
+    expect(response.body).not.toContain("read-only-key-0123456789");
+    expect(response.body).not.toContain("secret-0123456789");
+  });
+});

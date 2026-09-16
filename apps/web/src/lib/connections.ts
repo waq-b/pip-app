@@ -1,39 +1,51 @@
-import type { Connection, ConnectResult, ProviderId } from "@finance-app/shared";
+import type { Connection, ConnectRequest, ConnectResult, ProviderId } from "@finance-app/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiDelete, apiGet, apiPost } from "./api";
 
 const KEY = ["connections"] as const;
 
-/** The providers Pip supports, in the order Setup lists them. */
-export const PROVIDERS: { id: ProviderId; name: string; initial: string; steps: string }[] = [
-  {
-    id: "trading212",
-    name: "Trading 212",
+/** What Setup says about connecting each provider. The list of accounts comes from the API. */
+export const PROVIDER_INFO: Record<
+  ProviderId,
+  { initial: string; steps: string[]; needsSecret: boolean; permissionNote?: string }
+> = {
+  trading212: {
     initial: "T",
-    steps: "Open Trading 212 → Settings → API",
+    steps: [
+      "Open Trading 212 → Settings → API (Beta)",
+      "Make a key with only Account data, Portfolio, Metadata and History ticked",
+      "Paste the key and the secret below",
+    ],
+    needsSecret: true,
+    permissionNote:
+      "Pip can't check a Trading 212 key's permissions, and it has no code that can place an order either way.",
   },
-  { id: "kraken", name: "Kraken", initial: "K", steps: "Open Kraken → Settings → API" },
-];
-
-export function providerInfo(id: ProviderId) {
-  return PROVIDERS.find((provider) => provider.id === id)!;
-}
+  kraken: {
+    initial: "K",
+    steps: [
+      "Open Kraken → Settings → API",
+      "Generate a key with read-only ticked, nothing else",
+      "Paste it below",
+    ],
+    needsSecret: false,
+  },
+};
 
 export function useConnections() {
   return useQuery({ queryKey: KEY, queryFn: () => apiGet<Connection[]>("/connections") });
 }
 
 /**
- * Phase 1 stores nothing server-side, so a refetch would undo what the person
- * just did. The outcome is written into the cache instead; Phase 2's real
- * storage makes the server's answer agree.
+ * The outcome is written into the cache straight away, so Setup doesn't flash
+ * the old state. In stub mode that's the only record (nothing is stored); with
+ * a real account the numbers everywhere else are refetched too.
  */
 function useSetStatus() {
   const client = useQueryClient();
-  return (provider: ProviderId, status: Connection["status"]) =>
+  return (id: string, status: Connection["status"]) => {
     client.setQueryData<Connection[]>(KEY, (current) =>
       current?.map((connection) =>
-        connection.provider === provider
+        connection.id === id
           ? {
               ...connection,
               status,
@@ -42,23 +54,30 @@ function useSetStatus() {
           : connection,
       ),
     );
+    void client.invalidateQueries({ predicate: (query) => query.queryKey[0] !== KEY[0] });
+  };
 }
 
-export function useConnect(provider: ProviderId) {
+export function useConnect(connection: Connection) {
   const setStatus = useSetStatus();
   return useMutation({
-    mutationFn: (key: string) => apiPost<ConnectResult>(`/connections/${provider}`, { key }),
+    mutationFn: (input: Omit<ConnectRequest, "accountKind">) =>
+      apiPost<ConnectResult>(`/connections/${connection.provider}`, {
+        ...input,
+        accountKind: connection.accountKind,
+      }),
     onSuccess: (result) => {
-      if (result.outcome === "connected") setStatus(provider, "live");
+      if (result.outcome === "connected") setStatus(connection.id, "live");
     },
   });
 }
 
-export function useDisconnect(provider: ProviderId) {
+export function useDisconnect(connection: Connection) {
   const setStatus = useSetStatus();
+  const query = connection.accountKind ? `?accountKind=${connection.accountKind}` : "";
   return useMutation({
-    mutationFn: () => apiDelete<unknown>(`/connections/${provider}`),
-    onSuccess: () => setStatus(provider, "not_connected"),
+    mutationFn: () => apiDelete<unknown>(`/connections/${connection.provider}${query}`),
+    onSuccess: () => setStatus(connection.id, "not_connected"),
   });
 }
 

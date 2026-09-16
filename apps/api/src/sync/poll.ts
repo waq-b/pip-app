@@ -12,7 +12,13 @@ import {
 } from "../db/schema.js";
 import type { Db } from "../db/user-scope.js";
 import { fxKey, fxQuoteFor } from "../market/refresh.js";
-import { T212AuthError, T212PermissionError, type T212Client } from "../providers/t212/client.js";
+import {
+  T212AuthError,
+  T212PermissionError,
+  type T212AccountSummary,
+  type T212Client,
+  type T212Position,
+} from "../providers/t212/client.js";
 import { cashRow, holdingRows, instrumentRow, NotInPoundsError } from "../providers/t212/rows.js";
 import { bucketForAccountKind, MissingPriceError, toPencePounds } from "../valuation/value.js";
 
@@ -41,14 +47,16 @@ export async function pollCredential(
   credential: Credential,
   clientFor: T212ClientFor,
   now: Date = new Date(),
+  /** Already read while validating a key on connect — saves waiting out T212's 1-per-5s limit. */
+  prefetched?: { summary: T212AccountSummary; positions: T212Position[] },
 ): Promise<PollOutcome> {
   const key = box.open(credential.sealedKey, credentialContext(credential, "key"));
   const secret = box.open(credential.sealedSecret, credentialContext(credential, "secret"));
   const t212 = clientFor(key, secret);
 
   try {
-    const summary = await t212.accountSummary();
-    const positions = await t212.positions();
+    const summary = prefetched?.summary ?? (await t212.accountSummary());
+    const positions = prefetched?.positions ?? (await t212.positions());
     const context = { credentialId: credential.id, userId: credential.userId, polledAt: now };
     const holdingValues = holdingRows(positions, context);
     const cashValues = cashRow(summary, context);

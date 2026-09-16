@@ -15,7 +15,6 @@ import type { FastifyInstance } from "fastify";
 import {
   ACTIVITY,
   BUCKET_FIXTURES,
-  connectionsAt,
   DEGEN_OVER_BY,
   INSTRUMENT_FIXTURES,
   MONTHLY_SPLIT,
@@ -189,8 +188,6 @@ export function registerReadRoutes(app: FastifyInstance, options: ReadRoutesOpti
   });
 
   app.get("/activity", async () => ACTIVITY);
-
-  app.get("/connections", async () => connectionsAt(new Date()));
 }
 
 /** Side Bet is the only pot with a hard cap, and the only one that can go over. */

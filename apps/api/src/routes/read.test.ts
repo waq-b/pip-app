@@ -209,9 +209,14 @@ describe("GET /activity and /connections", () => {
   });
 
   it("lists only the providers this phase supports", async () => {
-    const connections = await get<{ provider: string }[]>("/connections");
+    const connections = await get<{ id: string; feeds: string[] }[]>("/connections");
 
-    expect(connections.map((c) => c.provider).sort()).toEqual(["kraken", "trading212"]);
+    // One row per account: Trading 212 can't tell ISA from Invest, so each is connected on its own.
+    expect(connections.map((c) => [c.id, c.feeds])).toEqual([
+      ["trading212:isa", ["Base"]],
+      ["trading212:invest", ["Medium"]],
+      ["kraken", ["Degen"]],
+    ]);
   });
 });
 

@@ -188,10 +188,17 @@ export interface MeResponse {
 
 export type ProviderId = "trading212" | "kraken";
 
-export type ConnectionStatus = "not_connected" | "live" | "expired" | "error";
+/** Trading 212 accounts are connected one at a time: the API can't tell them apart. */
+export type AccountKind = "isa" | "invest";
+
+/** `invalid`: the provider rejected the stored key. `error`: the last read failed or a permission is missing. */
+export type ConnectionStatus = "not_connected" | "live" | "expired" | "invalid" | "error";
 
 export interface Connection {
+  /** `trading212:isa`, `trading212:invest`, `kraken`. */
+  id: string;
   provider: ProviderId;
+  accountKind?: AccountKind;
   displayName: string;
   status: ConnectionStatus;
   /** Which pots this connection feeds. */
@@ -199,14 +206,35 @@ export interface Connection {
   holdingsSeen?: number;
   /** ISO timestamp of the last successful read. */
   lastReadAt?: string;
+  /** False when Pip can't connect this provider yet (Kraken until Phase 4). */
+  available: boolean;
+  /**
+   * Whether Pip can confirm a key is read-only. Kraken can; Trading 212 has no
+   * way to ask, so Setup says so instead of "Pip checked" (Phase 2 decision 2).
+   */
+  permissionsVerified: boolean;
+}
+
+export interface ConnectRequest {
+  /** Required for Trading 212. */
+  accountKind?: AccountKind;
+  key: string;
+  /** Trading 212 keys come as a key and a secret. */
+  secret?: string;
 }
 
 /**
- * The result of pasting a key. Phase 1 stores nothing; Phase 2 swaps in real
- * validation and encrypted storage. A key that can trade is refused outright
- * rather than warned about (CLAUDE.md s13).
+ * The result of pasting a key. A key that can trade is refused outright where
+ * Pip can tell (CLAUDE.md s13); where it can't, Setup says so plainly.
  */
-export type ConnectOutcome = "connected" | "invalid_key" | "too_much_access";
+export type ConnectOutcome =
+  | "connected"
+  | "invalid_key"
+  | "too_much_access"
+  | "missing_permission"
+  | "not_pounds"
+  | "unavailable"
+  | "not_available_yet";
 
 export interface ConnectPermission {
   name: string;
@@ -218,8 +246,11 @@ export interface ConnectPermission {
 export interface ConnectResult {
   outcome: ConnectOutcome;
   provider: ProviderId;
-  /** Plain-English explanation shown on the card. */
+  accountKind?: AccountKind;
+  /** Plain-English explanation shown on the card: first sentence is the heading. */
   message: string;
   /** Present when the outcome is `too_much_access`. */
   permissions?: ConnectPermission[];
+  /** Present when the outcome is `missing_permission`: the permission to tick. */
+  missingPermission?: string;
 }

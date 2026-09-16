@@ -10,34 +10,58 @@ import { DESKTOP_WIDTH, PHONE_WIDTH, setViewportWidth } from "../test/setup";
 
 const MINUTES_AGO = (n: number) => new Date(Date.now() - n * 60_000).toISOString();
 
-function connections(
-  overrides: Partial<Record<Connection["provider"], Partial<Connection>>> = {},
-): Connection[] {
+function connections(overrides: Record<string, Partial<Connection>> = {}): Connection[] {
   return [
     {
+      id: "trading212:isa",
       provider: "trading212",
-      displayName: "Trading 212",
+      accountKind: "isa",
+      displayName: "Trading 212 ISA",
       status: "live",
-      feeds: ["Base", "Medium"],
-      holdingsSeen: 8,
+      feeds: ["Base"],
+      holdingsSeen: 3,
       lastReadAt: MINUTES_AGO(4),
-      ...overrides.trading212,
+      available: true,
+      permissionsVerified: false,
+      ...overrides["trading212:isa"],
     },
     {
+      id: "trading212:invest",
+      provider: "trading212",
+      accountKind: "invest",
+      displayName: "Trading 212 Invest",
+      status: "live",
+      feeds: ["Medium"],
+      holdingsSeen: 5,
+      lastReadAt: MINUTES_AGO(4),
+      available: true,
+      permissionsVerified: false,
+      ...overrides["trading212:invest"],
+    },
+    {
+      id: "kraken",
       provider: "kraken",
       displayName: "Kraken",
       status: "live",
       feeds: ["Degen"],
       holdingsSeen: 3,
       lastReadAt: MINUTES_AGO(11),
+      available: true,
+      permissionsVerified: true,
       ...overrides.kraken,
     },
   ];
 }
 
+const disconnected = {
+  status: "not_connected" as const,
+  lastReadAt: undefined,
+  holdingsSeen: undefined,
+};
 const NOTHING = connections({
-  trading212: { status: "not_connected", lastReadAt: undefined },
-  kraken: { status: "not_connected", lastReadAt: undefined },
+  "trading212:isa": disconnected,
+  "trading212:invest": disconnected,
+  kraken: disconnected,
 });
 
 function api(
@@ -63,9 +87,12 @@ describe("the setup screen", () => {
     renderRoute("/setup", { session: WAQAR, api: api() });
 
     expect(await screen.findByRole("heading", { name: "Setup", level: 1 })).toBeInTheDocument();
-    const t212 = await screen.findByRole("button", { name: /Trading 212/ });
-    expect(t212).toHaveTextContent("Foundation + Handpicked · synced 4 min ago");
-    expect(t212).toHaveTextContent("Live");
+    const isa = await screen.findByRole("button", { name: /Trading 212 ISA/ });
+    expect(isa).toHaveTextContent("Foundation · synced 4 min ago");
+    expect(isa).toHaveTextContent("Live");
+    expect(screen.getByRole("button", { name: /Trading 212 Invest/ })).toHaveTextContent(
+      "Handpicked · synced 4 min ago",
+    );
     expect(screen.getByRole("button", { name: /Kraken/ })).toHaveTextContent(
       "Side Bet · synced 11 min ago",
     );
@@ -99,15 +126,16 @@ describe("the setup screen", () => {
     expect(
       await screen.findByRole("heading", { name: "Nothing plugged in yet" }),
     ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Trading 212" }));
-    expect(screen.getByText("Open Trading 212 → Settings → API")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Connect Trading 212" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Trading 212 ISA" }));
+    expect(screen.getByText("Open Trading 212 → Settings → API (Beta)")).toBeInTheDocument();
+    expect(screen.getByLabelText("API secret")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Connect Trading 212 ISA" })).toBeDisabled();
   });
 
   it("goes straight to the one account left when only one isn't connected", async () => {
     renderRoute("/setup", {
       session: WAQAR,
-      api: api({}, connections({ kraken: { status: "not_connected", lastReadAt: undefined } })),
+      api: api({}, connections({ kraken: disconnected })),
     });
 
     fireEvent.click(await screen.findByRole("button", { name: "Connect another account" }));
@@ -139,7 +167,7 @@ describe("the setup screen", () => {
       expect(container.querySelector('[aria-busy="true"] [data-skeleton]')).toBeInTheDocument(),
     );
     fireEvent.click(await screen.findByRole("button", { name: "Try again" }));
-    expect(await screen.findByRole("button", { name: /Trading 212/ })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /Trading 212 ISA/ })).toBeInTheDocument();
   });
 
   it("puts connections and preferences side by side on desktop, with laptop wording", async () => {
@@ -150,7 +178,7 @@ describe("the setup screen", () => {
     expect(connectionsSection.parentElement).toHaveClass("grid-cols-2");
     expect(
       screen.getByText(
-        "Pip uses read-only keys. Even if someone took your laptop, they couldn't trade.",
+        "Pip only reads your accounts. Even if someone took your laptop, they couldn't trade.",
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("Blur totals until you click")).toBeInTheDocument();
@@ -254,6 +282,124 @@ describe("connecting an account", () => {
       await screen.findByRole("heading", { name: "Couldn't reach Pip just now" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Nothing is connected, and nothing was changed.")).toBeInTheDocument();
+  });
+});
+
+describe("connecting a Trading 212 account", () => {
+  function connectT212(result: ConnectResult) {
+    const bodies: unknown[] = [];
+    renderRoute("/setup", {
+      session: WAQAR,
+      api: api(
+        {
+          "/connections/trading212": (init) => {
+            bodies.push(JSON.parse(String(init?.body)));
+            return { body: result };
+          },
+        },
+        NOTHING,
+      ),
+    });
+    return bodies;
+  }
+
+  async function paste() {
+    fireEvent.click(await screen.findByRole("button", { name: "Trading 212 Invest" }));
+    fireEvent.change(screen.getByLabelText("API key"), {
+      target: { value: "t212-key-0123456789" },
+    });
+    fireEvent.change(screen.getByLabelText("API secret"), { target: { value: "t212-secret-000" } });
+    fireEvent.click(screen.getByRole("button", { name: "Connect Trading 212 Invest" }));
+  }
+
+  it("asks for the key and secret, says Pip can't check permissions, and sends which account", async () => {
+    const bodies = connectT212({
+      outcome: "connected",
+      provider: "trading212",
+      accountKind: "invest",
+      message: "Connected. Pip is reading your Trading 212 Invest account.",
+    });
+    fireEvent.click(await screen.findByRole("button", { name: "Trading 212 Invest" }));
+    expect(
+      screen.getByText(
+        "Pip can't check a Trading 212 key's permissions, and it has no code that can place an order either way.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("API secret")).toHaveAttribute("type", "password");
+    fireEvent.change(screen.getByLabelText("API key"), {
+      target: { value: "t212-key-0123456789" },
+    });
+    expect(screen.getByRole("button", { name: "Connect Trading 212 Invest" })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("API secret"), { target: { value: "t212-secret-000" } });
+    fireEvent.click(screen.getByRole("button", { name: "Connect Trading 212 Invest" }));
+
+    expect(
+      await screen.findByText(
+        "Pip only reads this account. It can't check a Trading 212 key's permissions, and it has no code that places orders.",
+      ),
+    ).toBeInTheDocument();
+    expect(bodies).toEqual([
+      { key: "t212-key-0123456789", secret: "t212-secret-000", accountKind: "invest" },
+    ]);
+    expect(
+      screen.queryByText("This key cannot place orders. Pip checked."),
+    ).not.toBeInTheDocument();
+  });
+
+  it("names a missing permission and offers to start again with a new key", async () => {
+    connectT212({
+      outcome: "missing_permission",
+      provider: "trading212",
+      accountKind: "invest",
+      missingPermission: "Account data",
+      message:
+        "That key can't see your Account data. Make a new key with Account data, Portfolio, Metadata and History ticked. Nothing is connected.",
+    });
+    await paste();
+
+    expect(
+      await screen.findByRole("heading", { name: "That key can't see your Account data" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Needs a different key")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Make a new key" }));
+    expect(screen.getByLabelText("API secret")).toHaveValue("");
+  });
+
+  it.each([
+    [
+      "not_pounds",
+      "That account isn't in pounds. Pip only works in pounds for now.",
+      "Try a different account",
+    ],
+    [
+      "unavailable",
+      "Trading 212 isn't answering right now. Nothing is connected.",
+      "Try that again",
+    ],
+  ] as const)("explains %s", async (outcome, message, action) => {
+    connectT212({ outcome, provider: "trading212", accountKind: "invest", message });
+    await paste();
+    expect(await screen.findByRole("alert")).toHaveTextContent(message.split(". ")[0]!);
+    expect(screen.getByRole("button", { name: action })).toBeInTheDocument();
+  });
+
+  it("shows Kraken as coming soon when Pip can't connect it yet", async () => {
+    renderRoute("/setup", {
+      session: WAQAR,
+      api: api(
+        {},
+        connections({
+          "trading212:invest": disconnected,
+          kraken: { ...disconnected, available: false },
+        }),
+      ),
+    });
+
+    fireEvent.click(await screen.findByRole("button", { name: "Connect another account" }));
+    expect(screen.getByRole("button", { name: "Trading 212 Invest" })).toBeEnabled();
+    const kraken = screen.getByRole("button", { name: /Kraken/ });
+    expect(kraken).toBeDisabled();
+    expect(kraken).toHaveTextContent("Coming soon");
   });
 });
 

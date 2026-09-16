@@ -8,7 +8,11 @@ import { dbWaitlistStore, type WaitlistStore } from "./auth/waitlist.js";
 import type { MarketData } from "./market/market.js";
 import { stubSeriesAnchors } from "./market/stub/anchors.js";
 import { createStubMarketData } from "./market/stub/index.js";
-import { registerConnectionRoutes } from "./routes/connections.js";
+import {
+  registerConnectionRoutes,
+  stubConnectionService,
+  type ConnectionService,
+} from "./routes/connections.js";
 import { registerReadRoutes } from "./routes/read.js";
 
 export interface BuildAppOptions {
@@ -22,6 +26,8 @@ export interface BuildAppOptions {
   waitlistStore?: WaitlistStore;
   /** Prices, history and freshness. Phase 1 has only the stub. */
   marketData?: MarketData;
+  /** Stub mode stores nothing; Trading 212 mode seals keys (`sync/connections.ts`). */
+  connections?: ConnectionService;
   /** Off in tests; `server.ts` passes the redacted production logger. */
   logger?: FastifyServerOptions["logger"];
 }
@@ -43,7 +49,7 @@ export function buildApp(options: BuildAppOptions = {}) {
   registerReadRoutes(app, {
     market: options.marketData ?? createStubMarketData({ anchors: stubSeriesAnchors() }),
   });
-  registerConnectionRoutes(app);
+  registerConnectionRoutes(app, { service: options.connections ?? stubConnectionService });
 
   return app;
 }

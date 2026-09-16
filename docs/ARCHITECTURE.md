@@ -191,14 +191,13 @@ The frontend never talks to a provider directly and never knows which provider b
 
 An unknown pot or holding is a 404; an unrecognised timeframe or range is a 400 rather than a silent fallback. Composition is deliberately one-way: routes ask the trading layer what is held and the market layer what it is worth, and never the reverse.
 
-**Connecting an account** (`routes/connections.ts`) — `POST /connections/:provider` and `DELETE /connections/:provider`, both behind the guard:
+**Connecting an account** (`routes/connections.ts`) — `GET /connections`, `POST /connections/:provider` (body `{ accountKind?, key, secret? }`) and `DELETE /connections/:provider?accountKind=`, all behind the guard. The routes parse and hand over to a `ConnectionService`; which one depends on the mode.
 
-- **Nothing is stored.** Phase 1 builds every screen and state of the connect flow against a handler that inspects the key and forgets it. Phase 2 replaces the body of these handlers with real validation and encrypted per-user storage; the responses the frontend sees don't change.
-- **A key that can trade or withdraw is refused outright**, not warned about (CLAUDE.md s13). That rule lives in the API rather than the UI, because a frontend check is cosmetic.
-- **Every verdict is a 200.** "That key can do too much" is a considered answer about the key, not a malformed request. The outcome is in the body: `connected`, `invalid_key` or `too_much_access`.
-- An unsupported provider is a 404 — Phase 1 supports Trading 212 and Kraken only.
-
-The stub reaches its verdict from the key's shape alone: too short to be real, or carrying a `trade`/`withdraw` scope, or acceptable.
+- **One row per account.** `Connection` has an `id` (`trading212:isa`, `trading212:invest`, `kraken`), `accountKind`, `available` (false for Kraken until Phase 4) and `permissionsVerified` (Kraken true; Trading 212 false, because T212 can't report a key's permissions). A Trading 212 request without `accountKind` is a 400.
+- **Every verdict is a 200**, with the outcome in the body: `connected`, `invalid_key`, `too_much_access`, `missing_permission` (+ `missingPermission`), `not_pounds`, `unavailable`, `not_available_yet`. The message's first sentence is the card heading. No response echoes a key.
+- **Stub mode** (`stubConnectionService`) keeps Phase 1's behaviour: it judges the key's shape (too short, or carrying `trade`/`withdraw`) and stores nothing; listing returns the design's three accounts.
+- **Trading 212 mode** (`sync/connections.ts`, `liveConnectionService`): validates the key and secret against the practice API (account summary + positions) **before storing anything**; seals both halves (bound to user, provider, account kind and field); upserts one credential per user + provider + account kind, so reconnecting replaces the key; runs the first poll with the data it already read (no second wait on T212's 1-per-5s limit); and calls `onConnected` (history backfill, task 10). Listing reads as the user, so RLS applies. Disconnecting deletes the credential — cascading to its holdings, cash and trades — and that pot's `daily_values`, since that history came from the account. Kraken answers `not_available_yet`.
+- Checked end to end against the practice ISA and the dev database: sealed, 4 holdings, instruments and schedules learned, listed as the user.
 
 ## Provider interface
 

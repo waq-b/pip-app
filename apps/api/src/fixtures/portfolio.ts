@@ -283,20 +283,39 @@ export function connectionsAt(now: Date): Connection[] {
   const minutesAgo = (minutes: number) => new Date(now.getTime() - minutes * 60_000).toISOString();
   return [
     {
+      id: "trading212:isa",
       provider: "trading212",
-      displayName: "Trading 212",
+      accountKind: "isa",
+      displayName: "Trading 212 ISA",
       status: "live",
-      feeds: ["Base", "Medium"],
-      holdingsSeen: 8,
+      feeds: ["Base"],
+      holdingsSeen: 3,
       lastReadAt: minutesAgo(4),
+      available: true,
+      permissionsVerified: false,
     },
     {
+      id: "trading212:invest",
+      provider: "trading212",
+      accountKind: "invest",
+      displayName: "Trading 212 Invest",
+      status: "live",
+      feeds: ["Medium"],
+      holdingsSeen: 5,
+      lastReadAt: minutesAgo(4),
+      available: true,
+      permissionsVerified: false,
+    },
+    {
+      id: "kraken",
       provider: "kraken",
       displayName: "Kraken",
       status: "live",
       feeds: ["Degen"],
       holdingsSeen: 3,
       lastReadAt: minutesAgo(11),
+      available: true,
+      permissionsVerified: true,
     },
   ];
 }
