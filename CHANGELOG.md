@@ -11,6 +11,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added: design assets — `docs/design/Pip.dc.html` reference, logo mark SVGs in `apps/web/src/assets/brand/`, favicon and PWA/apple-touch icons, self-hosted Caprasimo + Figtree via `@fontsource`, `lucide-react` (#3226676914)
 - Changed: `index.html` and the PWA manifest now carry the Pip name, description and cream/dark theme colours (#3226676914)
 - Removed: unreferenced `apps/web/public/icons.svg` left over from the Phase 0 scaffold (#3226676914)
+- Added: `docs/DESIGN.md` — product voice, pot identities, brand tokens (light/dark/per-pot), type scale, copy rules, the seven data blocks, screen inventory with every state, and the hard-line corrections to the prototype (#3226691677)
+- Changed: `.prettierignore` now covers `docs/design/`, so the design handover is never reformatted
 
 ### Phase 0 — Scaffold
 
