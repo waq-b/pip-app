@@ -81,8 +81,9 @@ const COPY: Record<Bucket, { blurb: string; plain: string }> = {
       "The companies and funds you picked yourself, read from your Trading 212 Invest account.",
   },
   Degen: {
-    blurb: "Side Bet arrives in a later update",
-    plain: "Side Bet will read from Kraken. Until then nothing is counted here.",
+    blurb: "Your Kraken account",
+    plain:
+      "The small, capped pot for crypto, read from your Kraken account with a key that can't trade or withdraw.",
   },
 };
 
@@ -94,6 +95,8 @@ interface HeldInstrument {
   currency: string;
   workingScheduleId: number | null;
   quantity: number;
+  /** Staked or earning part of `quantity` (Kraken). */
+  stakedQuantity: number | null;
   /** Null until known (Kraken, before its history is rebuilt). */
   totalCostPence: number | null;
   price?: typeof prices.$inferSelect;
@@ -233,7 +236,7 @@ export function liveReadModel(options: LiveReadOptions): ReadModel {
         holdingRows.push({
           id: held.instrumentId,
           name: held.name,
-          subtitle: held.shortName,
+          subtitle: subtitleFor(held),
           bucket,
           value: heldValue,
           today: toChange(heldValue - previous, previous),
@@ -301,7 +304,7 @@ export function liveReadModel(options: LiveReadOptions): ReadModel {
         name: held.name,
         ticker: held.shortName,
         bucket,
-        quantity: formatQuantity(held.quantity, held.type),
+        quantity: formatQuantity(held.quantity, held.type, held.shortName),
         price: held.unitPence === undefined ? 0 : Math.round(held.unitPence),
         value,
         today: toChange(value - previous, previous),
@@ -339,7 +342,7 @@ export function liveReadModel(options: LiveReadOptions): ReadModel {
           plain: available
             ? `${displayNameFor(bucket)} is ${formatPercentPlain(actual)} of your money, against the ${TARGETS[bucket]}% you set.`
             : bucket === "Degen"
-              ? "Side Bet arrives in a later update. Nothing is counted here yet."
+              ? "Connect your Kraken account in Setup to see where Side Bet sits against its cap."
               : `Connect your Trading 212 ${bucket === "Base" ? "ISA" : "Invest"} account in Setup to see where it sits.`,
         };
       });
@@ -370,6 +373,7 @@ async function loadAsUser(tx: UserTx, at: Date): Promise<Snapshot> {
       credentialId: holdings.credentialId,
       instrumentId: holdings.instrumentId,
       quantity: holdings.quantity,
+      stakedQuantity: holdings.stakedQuantity,
       totalCostPence: holdings.totalCostPence,
       name: instruments.name,
       shortName: instruments.shortName,
@@ -465,6 +469,7 @@ async function loadAsUser(tx: UserTx, at: Date): Promise<Snapshot> {
         currency: row.currency,
         workingScheduleId: row.workingScheduleId,
         quantity: Number(row.quantity),
+        stakedQuantity: row.stakedQuantity === null ? null : Number(row.stakedQuantity),
         totalCostPence: row.totalCostPence,
         price: priceByKey.get(row.instrumentId),
       };
@@ -654,12 +659,17 @@ function freshnessFor(pot: Pot, schedules: Map<number, ScheduleEvent[]>, at: Dat
     );
   // A closing price for a market that's shut isn't stale — it's the price. Only
   // listings still trading (or with no known schedule) count towards the age.
+  // Crypto has no schedule and never closes, so it always counts.
   const trading = priced.filter((held) => !closedNow(held));
   const asOf = trading.length
     ? new Date(Math.min(...trading.map((held) => held.price!.asOf.getTime())))
     : at;
   return {
-    source: sources.length ? sources.join(" · ") : "Yahoo Finance",
+    source: sources.length
+      ? sources.join(" · ")
+      : pot.bucket === "Degen"
+        ? "CoinGecko"
+        : "Yahoo Finance",
     asOf: asOf.toISOString(),
     failed: pot.held.length > 0 && failed,
     marketsClosed: pot.held.length > 0 && pot.held.every(closedNow),
@@ -730,10 +740,28 @@ function monthYear(iso: string): string {
   return `${MONTHS[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
 }
 
-function formatQuantity(quantity: number, type: string): string {
+function formatQuantity(quantity: number, type: string, shortName: string): string {
+  if (type === "CRYPTO") {
+    const shown = Number(quantity.toPrecision(6)).toLocaleString("en-GB", {
+      maximumFractionDigits: 8,
+    });
+    return `${shown} ${shortName}`;
+  }
   const unit = type === "ETF" ? "units" : "shares";
   const shown = Number(quantity.toFixed(4)).toLocaleString("en-GB", { maximumFractionDigits: 4 });
   return `${shown} ${quantity === 1 ? unit.replace(/s$/, "") : unit}`;
+}
+
+/** The sub-line under a holding: its ticker, what's staked, or that it can't be priced yet. */
+function subtitleFor(held: HeldInstrument): string {
+  if (held.unitPence === undefined) return "No price yet";
+  if (held.type === "CRYPTO" && held.stakedQuantity) {
+    const staked = Number(held.stakedQuantity.toPrecision(6)).toLocaleString("en-GB", {
+      maximumFractionDigits: 8,
+    });
+    return `${held.shortName} · incl. ${staked} staked`;
+  }
+  return held.shortName;
 }
 
 function formatPercentPlain(value: number): string {

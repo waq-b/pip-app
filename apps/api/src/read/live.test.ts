@@ -366,3 +366,142 @@ describe("live rules", () => {
     expect(view.monthlySplit.comingSoon).toBe(true);
   });
 });
+
+describe("a live Side Bet (Kraken)", () => {
+  // Alice also connects Kraken: 0.01 BTC (cost £400) and 15 DOT, 13 of them staked
+  // (cost not known yet), plus £10 cash.
+  beforeEach(async () => {
+    await db.insert(instruments).values([
+      {
+        id: "kraken:XBT",
+        isin: "",
+        name: "Bitcoin",
+        shortName: "BTC",
+        currency: "GBP",
+        type: "CRYPTO",
+        coingeckoId: "bitcoin",
+        krakenPair: "XBTGBP",
+      },
+      {
+        id: "kraken:DOT",
+        isin: "",
+        name: "Polkadot",
+        shortName: "DOT",
+        currency: "GBP",
+        type: "CRYPTO",
+        coingeckoId: "polkadot",
+      },
+    ]);
+    const hourAgo = {
+      source: "CoinGecko",
+      asOf: new Date(NOW.getTime() - 5 * 60_000),
+      fetchedAt: NOW,
+    };
+    await db.insert(prices).values([
+      { key: "kraken:XBT", price: "50000", previousClose: "49000", currency: "GBP", ...hourAgo },
+      { key: "kraken:DOT", price: "4", previousClose: "4", currency: "GBP", ...hourAgo },
+    ]);
+    const [kraken] = await db
+      .insert(providerCredentials)
+      .values({
+        userId: ALICE.userId,
+        provider: "kraken",
+        accountKind: "spot",
+        sealedKey: "pip:1:x:y:z",
+        sealedSecret: "pip:1:x:y:z",
+        keyVersion: 1,
+        status: "live",
+        accountCurrency: "GBP",
+        lastPolledAt: NOW,
+        backfillStatus: "done",
+      })
+      .returning();
+    await db.insert(holdings).values([
+      {
+        credentialId: kraken!.id,
+        userId: ALICE.userId,
+        instrumentId: "kraken:XBT",
+        quantity: "0.01",
+        totalCostPence: 40_000,
+        polledAt: NOW,
+      },
+      {
+        credentialId: kraken!.id,
+        userId: ALICE.userId,
+        instrumentId: "kraken:DOT",
+        quantity: "15",
+        stakedQuantity: "13",
+        polledAt: NOW,
+      },
+    ]);
+    await db.insert(cash).values({
+      credentialId: kraken!.id,
+      userId: ALICE.userId,
+      availablePence: 1_000,
+      reservedPence: 0,
+      inPiesPence: 0,
+      polledAt: NOW,
+    });
+  });
+
+  it("counts Side Bet in the total and the split", async () => {
+    const summary = await model().portfolio(ALICE, "day");
+    const sideBet = summary.buckets.find((b) => b.bucket === "Degen")!;
+    expect(sideBet).toMatchObject({ status: "live", value: 57_000, blurb: "Your Kraken account" });
+    expect(summary.total).toBe(99_500 + 57_000);
+    expect(sideBet.shareOfTotal).toBeCloseTo((57_000 / 156_500) * 100, 2);
+    expect(summary.freshness.map((f) => f.bucket)).toContain("Degen");
+  });
+
+  it("can't state all time while a coin's cost is unknown", async () => {
+    const summary = await model().portfolio(ALICE, "all");
+    expect(summary.buckets.find((b) => b.bucket === "Degen")!.changeUnavailable).toBe(true);
+    expect(summary.changeUnavailable).toBe(true);
+  });
+
+  it("lists coins with what's staked, and says when cost isn't known yet", async () => {
+    const pot = await model().bucket(ALICE, "Degen", "day");
+    const bitcoin = pot.holdings.find((h) => h.id === "kraken:XBT")!;
+    const polkadot = pot.holdings.find((h) => h.id === "kraken:DOT")!;
+    expect(bitcoin).toMatchObject({
+      value: 50_000,
+      subtitle: "BTC",
+      sinceBought: { amount: 10_000 },
+    });
+    expect(bitcoin.sinceBoughtUnavailable).toBeUndefined();
+    expect(polkadot).toMatchObject({
+      value: 6_000,
+      subtitle: "DOT · incl. 13 staked",
+      sinceBoughtUnavailable: true,
+      sinceBought: { amount: 0, direction: "flat" },
+    });
+    expect(pot.freshness).toMatchObject({ source: "CoinGecko", marketsClosed: false });
+  });
+
+  it("never calls crypto 'markets closed', even when the stock markets are", async () => {
+    const midnight = new Date("2026-09-16T23:30:00Z");
+    const late = liveReadModel({
+      db,
+      marketFor: () => withFallback([{ source, symbolFor: (target) => target }]),
+      now: () => midnight,
+      refreshWaitMs: 50,
+    });
+    const pot = await late.bucket(ALICE, "Degen", "day");
+    expect(pot.freshness.marketsClosed).toBe(false);
+  });
+
+  it("shows a coin's quantity in coins", async () => {
+    const detail = await model().instrument(ALICE, "kraken:XBT", "day");
+    expect(detail).toMatchObject({ quantity: "0.01 BTC", price: 5_000_000, ticker: "BTC" });
+  });
+
+  it("states Side Bet's share against its cap", async () => {
+    const view = await model().rules(ALICE);
+    expect(view.rules.find((r) => r.bucket === "Degen")).toMatchObject({
+      kind: "cap",
+      available: true,
+      targetPercent: 5,
+      actualPercent: Math.round((57_000 / 156_500) * 10_000) / 100,
+    });
+  });
+});

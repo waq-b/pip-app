@@ -71,6 +71,13 @@
       "when": 1789593829165,
       "tag": "0009_kraken_accounts",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789594600157,
+      "tag": "0010_crypto_refresh_schedule",
+      "breakpoints": true
     }
   ]
 }
