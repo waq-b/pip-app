@@ -59,8 +59,8 @@ export function PotCard({
           >
             {formatPounds(pot.value, { whole: true })}
           </div>
-          <div className={`mt-0.5 text-[13.5px] font-bold ${changeTone(pot.change)}`}>
-            {formatSignedPounds(pot.change.amount)} · {when}
+          <div className={`mt-0.5 text-[13.5px] font-bold ${potLineTone(pot)}`}>
+            {potLine(pot, when)}
           </div>
           <div className="mt-1.5 flex justify-end">
             <Sparkline series={pot.series} />
@@ -107,11 +107,28 @@ export function PotRow({
       <span className={`font-heading text-[21px] ${dimmed ? "opacity-60" : ""}`}>
         {formatPounds(pot.value, { whole: true })}
       </span>
-      <span
-        className={`min-w-[110px] text-right text-[12.5px] font-bold ${changeTone(pot.change)}`}
-      >
-        {formatSignedPounds(pot.change.amount)} · {when}
+      <span className={`min-w-[110px] text-right text-[12.5px] font-bold ${potLineTone(pot)}`}>
+        {potLine(pot, when)}
       </span>
     </Link>
   );
+}
+
+/**
+ * The line under a pot's value. Real accounts can't always state a change:
+ * a pot with no source yet, one still reading its account, or one without the
+ * history for the timeframe asked. Each says so rather than showing £0.
+ */
+function potLine(pot: BucketSummary, when: string): string {
+  if (pot.status === "not_connected") return "Not connected yet";
+  if (pot.status === "syncing") return "Reading your account…";
+  if (pot.changeUnavailable) return "Not enough history yet";
+  return `${formatSignedPounds(pot.change.amount)} · ${when}`;
+}
+
+function potLineTone(pot: BucketSummary): string {
+  if (pot.status === "not_connected" || pot.status === "syncing" || pot.changeUnavailable) {
+    return "text-ink3";
+  }
+  return changeTone(pot.change);
 }

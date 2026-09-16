@@ -61,31 +61,40 @@ function RulesLoaded({ view, isDesktop }: { view: RulesView; isDesktop: boolean 
 
       <section className="bg-card rounded-[26px] px-[19px] py-[18px]">
         <h2 className="font-heading m-0 mb-1 text-[19px] font-normal">Where your new money goes</h2>
-        <p className="text-ink2 m-0 mb-3.5 text-[13px] leading-normal">
-          The {formatPounds(view.monthlySplit.total, { whole: true })} a month you pay in, as you've
-          set it up at your broker. Pip reads the split — it doesn't make it.
-        </p>
-        <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
-          {view.monthlySplit.perBucket.map((part) => (
-            <li key={part.bucket} className="flex items-center gap-3">
-              <span className="w-[96px] flex-none text-[13.5px] font-semibold">
-                {displayNameFor(part.bucket)}
-              </span>
-              <span className="bg-sunk relative h-2 flex-1 rounded-full" aria-hidden>
-                <span
-                  className="absolute inset-y-0 left-0 rounded-full"
-                  style={{
-                    width: `${part.percent}%`,
-                    backgroundColor: `var(--pip-seed-${BUCKET_META[part.bucket].scope})`,
-                  }}
-                />
-              </span>
-              <span className="w-[46px] flex-none text-right text-[13.5px] font-bold">
-                {formatPounds(part.amount, { whole: true })}
-              </span>
-            </li>
-          ))}
-        </ul>
+        {view.monthlySplit.comingSoon ? (
+          <p className="text-ink2 m-0 text-[13px] leading-normal font-medium">
+            Coming soon. Pip will read the monthly split you've set up at your broker — it doesn't
+            make it.
+          </p>
+        ) : (
+          <>
+            <p className="text-ink2 m-0 mb-3.5 text-[13px] leading-normal">
+              The {formatPounds(view.monthlySplit.total, { whole: true })} a month you pay in, as
+              you've set it up at your broker. Pip reads the split — it doesn't make it.
+            </p>
+            <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
+              {view.monthlySplit.perBucket.map((part) => (
+                <li key={part.bucket} className="flex items-center gap-3">
+                  <span className="w-[96px] flex-none text-[13.5px] font-semibold">
+                    {displayNameFor(part.bucket)}
+                  </span>
+                  <span className="bg-sunk relative h-2 flex-1 rounded-full" aria-hidden>
+                    <span
+                      className="absolute inset-y-0 left-0 rounded-full"
+                      style={{
+                        width: `${part.percent}%`,
+                        backgroundColor: `var(--pip-seed-${BUCKET_META[part.bucket].scope})`,
+                      }}
+                    />
+                  </span>
+                  <span className="w-[46px] flex-none text-right text-[13.5px] font-bold">
+                    {formatPounds(part.amount, { whole: true })}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </section>
     </div>
   );
@@ -149,15 +158,19 @@ function RuleCard({ rule }: { rule: BucketRule }) {
         {formatPercent(rule.targetPercent)}
       </div>
 
-      <ProgressCapBar
-        label="Where it sits"
-        actualPercent={rule.actualPercent}
-        targetPercent={rule.targetPercent}
-        kind={rule.kind}
-        // A 5% cap would be an invisible sliver on a 0–100 track.
-        scaleMax={rule.kind === "cap" ? rule.targetPercent * 2 : 100}
-        overByAmount={rule.overBy?.amount}
-      />
+      {rule.available === false ? (
+        <p className="text-ink3 m-0 text-[12.5px] font-semibold">Not connected yet</p>
+      ) : (
+        <ProgressCapBar
+          label="Where it sits"
+          actualPercent={rule.actualPercent}
+          targetPercent={rule.targetPercent}
+          kind={rule.kind}
+          // A 5% cap would be an invisible sliver on a 0–100 track.
+          scaleMax={rule.kind === "cap" ? rule.targetPercent * 2 : 100}
+          overByAmount={rule.overBy?.amount}
+        />
+      )}
 
       <p className="text-ink2 m-0 mt-2.5 text-[12.5px] leading-normal font-medium">{rule.plain}</p>
     </section>

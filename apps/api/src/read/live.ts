@@ -126,7 +126,7 @@ interface Snapshot {
 
 export function liveReadModel(options: LiveReadOptions): ReadModel {
   const now = options.now ?? (() => new Date());
-  const waitMs = options.refreshWaitMs ?? 3_500;
+  const waitMs = options.refreshWaitMs ?? 2_000;
 
   async function refreshFirst(user: ReadUser) {
     const held = await asUser(options.db, user.authUserId, (tx) =>
@@ -332,7 +332,7 @@ export function liveReadModel(options: LiveReadOptions): ReadModel {
             ? `${displayNameFor(bucket)} is ${formatPercentPlain(actual)} of your money, against the ${TARGETS[bucket]}% you set.`
             : bucket === "Degen"
               ? "Side Bet arrives in a later update. Nothing is counted here yet."
-              : `${displayNameFor(bucket)} isn't connected yet.`,
+              : `Connect your Trading 212 ${bucket === "Base" ? "ISA" : "Invest"} account in Setup to see where it sits.`,
         };
       });
 

@@ -1,6 +1,6 @@
 import type { Change, Holding } from "@finance-app/shared";
 import { ChevronRight } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { changeTone, formatPercent, formatPounds, formatSignedPounds } from "../lib/format";
 import { ICON_STROKE } from "../shell/nav";
@@ -73,8 +73,8 @@ export function HoldingsTable({
       <ul className="m-0 list-none p-0">
         {sorted.map((holding) => (
           <li key={holding.id} className="border-line border-t">
-            <Link
-              to={`/instruments/${holding.id}`}
+            <HoldingRow
+              holding={holding}
               className={`text-ink grid items-center gap-3.5 py-3 no-underline ${
                 isDesktop ? "grid-cols-[1fr_92px_120px_170px]" : "grid-cols-[1fr_auto_auto]"
               }`}
@@ -121,16 +121,20 @@ export function HoldingsTable({
                         <ChangeText change={holding.sinceBought} />
                       </div>
                     </div>
-                    <ChevronRight
-                      size={15}
-                      strokeWidth={ICON_STROKE}
-                      className="text-ink3 flex-none"
-                      aria-hidden
-                    />
+                    {holding.linkable === false ? (
+                      <span aria-hidden className="w-[15px] flex-none" />
+                    ) : (
+                      <ChevronRight
+                        size={15}
+                        strokeWidth={ICON_STROKE}
+                        className="text-ink3 flex-none"
+                        aria-hidden
+                      />
+                    )}
                   </div>
                 </>
               )}
-            </Link>
+            </HoldingRow>
           </li>
         ))}
       </ul>
@@ -195,4 +199,25 @@ function comparator({ key, ascending }: SortState) {
     if (key === "value") return (a.value - b.value) * direction;
     return (a.sinceBought.amount - b.sinceBought.amount) * direction;
   };
+}
+
+/**
+ * A row opens its holding — except rows with no page of their own, like cash
+ * in a real account, which render the same without a link.
+ */
+function HoldingRow({
+  holding,
+  className,
+  children,
+}: {
+  holding: Holding;
+  className: string;
+  children: ReactNode;
+}) {
+  if (holding.linkable === false) return <div className={className}>{children}</div>;
+  return (
+    <Link to={`/instruments/${holding.id}`} className={className}>
+      {children}
+    </Link>
+  );
 }

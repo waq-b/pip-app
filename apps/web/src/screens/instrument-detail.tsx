@@ -124,7 +124,7 @@ function InstrumentLoaded({
         <Movement label="Since you bought" change={instrument.sinceBought} />
       </div>
 
-      {isDesktop ? (
+      {isDesktop && instrument.note ? (
         <>
           <div className="bg-line my-4 h-px" />
           <Explainer note={instrument.note} />
@@ -223,9 +223,11 @@ function InstrumentLoaded({
         <div className="flex flex-col gap-[11px]">
           {info}
           {chart}
-          <section className="bg-card rounded-[26px] p-[18px]">
-            <Explainer note={instrument.note} />
-          </section>
+          {instrument.note ? (
+            <section className="bg-card rounded-[26px] p-[18px]">
+              <Explainer note={instrument.note} />
+            </section>
+          ) : null}
         </div>
       )}
 

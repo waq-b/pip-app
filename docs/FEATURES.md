@@ -33,6 +33,20 @@ All of it from sample data, all of it behind sign-in, all of it on the screens b
 
 The sample data has one correction from the design: the prototype showed ISA money buying Rolls-Royce, which lives in the Invest pot. Money never crosses pots here. The sample figures agree with themselves — a holding's percentages match its pounds, and its "All" chart starts at the price paid — and a test keeps it that way.
 
+## Real accounts (Phase 2, Trading 212 practice)
+
+With `PROVIDER_MODE=t212`, Pip shows your own Trading 212 practice account instead of sample data. Everything above still applies; these are the differences.
+
+- **Your numbers come from your account and the market.** What you hold and what you paid come from Trading 212; what it's worth comes from market prices (Yahoo Finance, or Alpha Vantage if Yahoo is unavailable), converted to pounds. Trading 212's own prices are never shown.
+- **Today** is measured from yesterday's close — or, for something you first bought today, from what you paid, because the rise before you bought wasn't yours. **All time** is what your investments are worth against what you paid for them (fees excluded, as Trading 212 counts it). **This month** needs a month of history; until there is one, Pip says "Not enough history yet to say how you did this month" instead of inventing a number.
+- **History** is rebuilt from your order history when you connect, valued at each day's closing price, and a value is saved at every close from then on. If your order history doesn't add up to what you hold (shares transferred in, say), Pip doesn't guess: history starts on the day you connect. A pot with no past days says "History starts today — come back tomorrow."
+- **Cash** in the account counts in the pot's value and appears as its own "Cash — Not invested yet" row, which doesn't open a page. Charts show investments only.
+- **Side Bet** says "Not connected yet": it arrives with Kraken in a later update, and nothing is counted there meanwhile — not in the total, the split or your rules. A Trading 212 account you haven't connected says the same, with a button to connect it.
+- **Syncing.** Right after connecting, a pot says "Reading your account…" until Pip has read it and rebuilt its history.
+- **Coming soon**, rather than sample data: "What changed" on Pots, "Money in" on a pot, and "Where your new money goes" on Rules. A holding's "In plain English" note isn't shown until there's one to show.
+- **Rules** state where each connected pot sits ("Foundation is 100% of your money, against the 70% you set."); a pot that isn't connected says what to connect. There's no alert logic yet, so nothing is flagged.
+- **Prices stay fresh on their own**: every 30 minutes on weekdays while markets are open, and whenever you open Pip, without making you wait more than a couple of seconds. Their age is shown the same way as always.
+
 ## Getting around
 
 - **Three places to go**, the same at every size: **Pots**, **Rules** and **Setup**. On a phone they sit along the bottom; on a tablet they become a narrow rail of icons down the left; on a computer that rail widens into a sidebar with labels, the Pip mark, and a permanent "Read-only access" badge.

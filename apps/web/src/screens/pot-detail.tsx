@@ -91,7 +91,8 @@ function PotLoaded({
   const isSideBet = scope === "bet";
   const isEmpty = detail.value === 0 && detail.holdings.length === 0;
 
-  if (isEmpty) return <PotEmpty bucket={detail.bucket} />;
+  if (detail.status === "not_connected") return <PotNotConnected bucket={detail.bucket} />;
+  if (isEmpty) return <PotEmpty bucket={detail.bucket} syncing={detail.status === "syncing"} />;
 
   const stale = ladder([{ bucket: detail.bucket, freshness: detail.freshness }], {
     single: "Prices",
@@ -132,10 +133,15 @@ function PotLoaded({
           <BigNumber
             label="What it's worth"
             value={detail.value}
-            change={detail.change}
+            change={detail.changeUnavailable ? undefined : detail.change}
             when="today"
             size={isDesktop ? "desktop" : "phone"}
           />
+          {detail.changeUnavailable ? (
+            <div className="text-ink2 mt-1.5 text-[12.5px] font-semibold">
+              Not enough history yet to say how this pot did.
+            </div>
+          ) : null}
         </div>
       </div>
       {isDesktop ? (
@@ -154,16 +160,25 @@ function PotLoaded({
   );
 
   const hasHistory = detail.chart.series.length >= 2;
+  // Stub sample data has no status; real accounts always do.
+  const isRealAccount = detail.status !== undefined;
   const chart = (
-    <Card title="How it's gone" aside={`Since ${detail.chart.from}`}>
+    <Card
+      title="How it's gone"
+      aside={detail.chart.from ? `Since ${detail.chart.from}` : undefined}
+    >
       <LineChart
         series={detail.chart.series}
         from={detail.chart.from}
         height={isDesktop ? 150 : 120}
+        // A real account with no past days yet isn't a failure: history starts now.
+        emptyMessage={isRealAccount ? "History starts today — come back tomorrow" : undefined}
         caption={
           hasHistory
             ? detail.chart.caption
-            : "The value above is correct — it's only the history that's missing. Nothing's wrong with your money."
+            : isRealAccount
+              ? "Pip saves this pot's value at every close, and rebuilds earlier days from your order history where it can."
+              : "The value above is correct — it's only the history that's missing. Nothing's wrong with your money."
         }
         footer={isDesktop ? undefined : provenance}
       />
@@ -171,8 +186,15 @@ function PotLoaded({
   );
 
   const moneyIn = (
-    <Card title="Money in" aside="Last 6 months">
-      <BarChart bars={detail.moneyIn.months} caption={detail.moneyIn.caption} />
+    <Card title="Money in" aside={detail.moneyIn.comingSoon ? undefined : "Last 6 months"}>
+      {detail.moneyIn.comingSoon ? (
+        <p className="text-ink2 m-0 text-[13px] leading-normal font-medium">
+          Coming soon. Once Pip reads your account history, what you paid in each month will show up
+          here.
+        </p>
+      ) : (
+        <BarChart bars={detail.moneyIn.months} caption={detail.moneyIn.caption} />
+      )}
     </Card>
   );
 
@@ -226,7 +248,43 @@ function Card({ title, aside, children }: { title: string; aside?: string; child
   );
 }
 
-function PotEmpty({ bucket }: { bucket: Bucket }) {
+/**
+ * No account feeds this pot yet. Side Bet waits for Kraken (Phase 4); the
+ * others point to Setup. Never shows sample money in its place.
+ */
+function PotNotConnected({ bucket }: { bucket: Bucket }) {
+  const { scope, provider } = BUCKET_META[bucket];
+  const isSideBet = scope === "bet";
+
+  return (
+    <section
+      className={`pot-${scope} bg-card rounded-[24px] border-[1.5px] px-[18px] py-[22px] ${
+        isSideBet ? "border-acc hatch" : "border-transparent"
+      }`}
+    >
+      <div className="mb-3.5 flex items-center gap-2.5">
+        <span aria-hidden className="bg-acc h-3 w-3 rounded-full" />
+        <h1 className="font-heading m-0 text-[22px] font-normal">{displayNameFor(bucket)}</h1>
+      </div>
+      <p className="font-heading m-0 text-[21px] leading-tight">Not connected yet</p>
+      <p className="text-ink2 m-0 mt-2.5 text-[13.5px] leading-normal font-medium">
+        {isSideBet
+          ? "Side Bet arrives in a later update. When Kraken is connected, it'll show here — capped and fenced off like always. Nothing is counted in the meantime."
+          : `Connect your ${provider} account and Pip will fill this pot in.`}
+      </p>
+      {isSideBet ? null : (
+        <Link
+          to="/setup"
+          className="bg-solid text-solid-ink mt-4 inline-block rounded-full px-[18px] py-[11px] text-[13.5px] font-bold no-underline"
+        >
+          Connect {provider}
+        </Link>
+      )}
+    </section>
+  );
+}
+
+function PotEmpty({ bucket, syncing = false }: { bucket: Bucket; syncing?: boolean }) {
   const { scope, provider } = BUCKET_META[bucket];
   const isSideBet = scope === "bet";
 
@@ -242,9 +300,11 @@ function PotEmpty({ bucket }: { bucket: Bucket }) {
       </div>
       <div className="font-heading text-[40px] leading-none tracking-[-0.025em]">£0</div>
       <p className="text-ink2 m-0 mt-3 text-[13.5px] leading-normal font-medium">
-        {isSideBet
-          ? "Nothing in here, which is a perfectly good place to leave it. If you do want a flutter, you've set yourself a cap, and Pip will tell you the day it creeps over."
-          : "Nothing in here yet. Connect the account that feeds this pot and Pip will fill it in."}
+        {syncing
+          ? "Pip is reading your account for the first time. Your holdings will appear here in a moment."
+          : isSideBet
+            ? "Nothing in here, which is a perfectly good place to leave it. If you do want a flutter, you've set yourself a cap, and Pip will tell you the day it creeps over."
+            : "Nothing in here yet. Connect the account that feeds this pot and Pip will fill it in."}
       </p>
       <Link
         to="/setup"

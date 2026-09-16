@@ -96,6 +96,11 @@ function PotsLoaded({
     dimmed: stale.dimmed.includes(bucket),
   });
   const totalClass = everyPotDimmed ? "opacity-60" : undefined;
+  const noHistory = portfolio.changeUnavailable ? (
+    <div className="text-ink2 mt-1.5 text-[12.5px] font-semibold">
+      Not enough history yet to say how you did {words}.
+    </div>
+  ) : null;
   const foundation = portfolio.buckets.find((bucket) => bucket.bucket === "Base");
 
   const ring = (
@@ -138,12 +143,13 @@ function PotsLoaded({
               <BigNumber
                 label="Everything you own"
                 value={portfolio.total}
-                change={portfolio.change}
+                change={portfolio.changeUnavailable ? undefined : portfolio.change}
                 when={words}
                 size="desktop"
               />
             </div>
             {roughly}
+            {noHistory}
             <div className="mt-4">{provenance}</div>
           </div>
           <div className="border-line border-l pl-9">{ring}</div>
@@ -162,7 +168,7 @@ function PotsLoaded({
         </div>
 
         <div className="grid grid-cols-[1.55fr_1fr] items-start gap-3.5">
-          <WhatChanged />
+          <WhatChanged comingSoon={portfolio.activityComingSoon} />
           <section className="bg-card rounded-[26px] px-[22px] py-5">
             <h2 className="font-heading m-0 text-xl font-normal">The shape you asked for</h2>
             <p className="text-ink2 mt-1 mb-4 text-[12.5px] font-medium">
@@ -203,11 +209,12 @@ function PotsLoaded({
           <BigNumber
             label="Everything you own"
             value={portfolio.total}
-            change={portfolio.change}
+            change={portfolio.changeUnavailable ? undefined : portfolio.change}
             when={words}
           />
         </div>
         {roughly}
+        {noHistory}
       </section>
 
       <div className="mx-0.5 mt-3">{provenance}</div>
@@ -232,13 +239,13 @@ function PotsLoaded({
       </section>
 
       <div className="mt-6">
-        <WhatChanged />
+        <WhatChanged comingSoon={portfolio.activityComingSoon} />
       </div>
     </div>
   );
 }
 
-function WhatChanged() {
+function WhatChanged({ comingSoon = false }: { comingSoon?: boolean }) {
   const activity = useActivity();
 
   return (
@@ -247,7 +254,12 @@ function WhatChanged() {
         <h2 className="font-heading m-0 text-[19px] font-normal">What changed</h2>
         <span className="text-ink2 text-xs font-medium">Last 7 days</span>
       </div>
-      {activity.isPending ? (
+      {comingSoon ? (
+        <p className="bg-card text-ink2 m-0 rounded-[26px] px-5 py-4 text-[13px] leading-normal font-medium">
+          Coming soon. Once Pip reads your account history, the week's buys, sells and money in will
+          show up here.
+        </p>
+      ) : activity.isPending ? (
         <Skeleton height={180} rounded="rounded-[26px]" />
       ) : activity.isError ? (
         <p className="bg-card text-ink2 m-0 rounded-[26px] px-5 py-4 text-[13px] font-medium">
