@@ -66,7 +66,7 @@ describe("the sign-in screen", () => {
     ask("test@example.com");
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Pip has sent too many sign-in emails just now. Wait a few minutes and try again.",
+      "Pip has sent too many sign-in emails for now. Try again in an hour, and use the newest link you have.",
     );
   });
 

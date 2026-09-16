@@ -39,7 +39,7 @@ export function SignInScreen() {
         kind: "failed",
         message:
           error instanceof TooManyEmailsError
-            ? "Pip has sent too many sign-in emails just now. Wait a few minutes and try again."
+            ? "Pip has sent too many sign-in emails for now. Try again in an hour, and use the newest link you have."
             : "Pip couldn't send the link. Give it a moment and try again.",
       });
     }
