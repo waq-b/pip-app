@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Cryptocurrency News</title>
+    <link>https://www.investing.com</link>
+    <item>
+      <enclosure url="https://content-media.investing.com/news/LYNXNPEF1P12L_M.jpg" length="48482" type="image/jpeg"/>
+      <title>Bitcoin turns slightly higher as traders digest Clarity Act failure, Fed rate hike</title>
+      <pubDate>2026-09-16 21:54:07</pubDate>
+      <author>Investing.com</author>
+      <link>https://www.investing.com/news/cryptocurrency-news/bitcoin-falls-below-76k-as-clarity-vote-fails-fed-rate-hike-in-focus-4902981</link>
+    </item>
+    <item>
+      <enclosure url="https://content-media.investing.com/news/Bitcoin_800x533_L_1637104937.jpg" length="54594" type="image/jpeg"/>
+      <title>Bitcoin bounces at $75,791 below Ichimoku cloud: Live levels</title>
+      <pubDate>2026-09-16 19:18:24</pubDate>
+      <author>Investing.com</author>
+      <link>https://www.investing.com/news/cryptocurrency-news/bitcoin-trapped-in-76k81k-rectangle-live-breakout-levels-93CH-4898873</link>
+    </item>
+    <item>
+      <enclosure url="https://content-media.investing.com/news/LYNXNPEE1J1IK_M.jpg" length="40304" type="image/jpeg"/>
+      <title>Phoenix Enables SOL as Collateral for Perpetual Futures Trading</title>
+      <pubDate>2026-09-16 17:30:36</pubDate>
+      <author>Chainwire</author>
+      <link>https://www.investing.com/news/cryptocurrency-news/phoenix-enables-sol-as-collateral-for-perpetual-futures-trading-4904222</link>
+    </item>
+    <item>
+      <enclosure url="https://content-media.investing.com/news/CoinbaseGlobalIncthebiggestUScryptocurrencyexchange_800x533_L_1621446837.jpg" length="70383" type="image/jpeg"/>
+      <title>SEC chief vows action on crypto rules after Senate bill fails</title>
+      <pubDate>2026-09-16 16:20:11</pubDate>
+      <author>Investing.com</author>
+      <link>https://www.investing.com/news/cryptocurrency-news/sec-chief-vows-action-on-crypto-rules-after-senate-bill-fails-93CH-4904160</link>
+    </item>
+    <item>
+      <enclosure url="https://content-media.investing.com/news/SP500StandardandPoors500Index_800x533_L_1657544297.jpg" length="34722" type="image/jpeg"/>
+      <title>Coinbase cuts trading fees for active users on Advanced platform</title>
+      <pubDate>2026-09-16 14:56:02</pubDate>
+      <author>Investing.com</author>
+      <link>https://www.investing.com/news/cryptocurrency-news/coinbase-cuts-trading-fees-for-active-users-on-advanced-platform-432SI-4904040</link>
+    </item>
+    
+  </channel>
+</rss>

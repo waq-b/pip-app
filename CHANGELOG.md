@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Phase 5 — Research agent + digest
+
+- Added: news sources verified with real calls — Google News RSS, Alpha Vantage `NEWS_SENTIMENT` and `EARNINGS_CALENDAR`, Marketaux, RSS (BBC Business, Investing.com, CoinDesk, CoinTelegraph, Nvidia IR) — coverage per practice holding, and Groq `gpt-oss-120b`/`-20b` strict JSON on prompt v1; trimmed recordings in `apps/api/fixtures/recorded/{rss,google-news,marketaux,alpha-vantage,groq}`, facts in CLAUDE.md s13 (#3229132855)
+- Changed: Phase 5 sources — Finnhub, CryptoPanic and CryptoCompare dropped, Google News RSS added; LLM is Groq only, no Ollama (CLAUDE.md s3) (#3229132855)
+
 ## [0.4.0] — 2026-09-16
 
 ### Phase 4 — Rules engine

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?><rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:media="http://search.yahoo.com/mrss/">
+    <channel>
+        <title><![CDATA[BBC News]]></title>
+        <description><![CDATA[BBC News - Business]]></description>
+        <link>https://www.bbc.co.uk/news/business</link>
+        <image>
+            <url>https://news.bbcimg.co.uk/nol/shared/img/bbc_news_120x60.gif</url>
+            <title>BBC News</title>
+            <link>https://www.bbc.co.uk/news/business</link>
+        </image>
+        <generator>RSS for Node</generator>
+        <lastBuildDate>Wed, 16 Sep 2026 23:09:03 GMT</lastBuildDate>
+        <atom:link href="https://feeds.bbci.co.uk/news/business/rss.xml" rel="self" type="application/rss+xml"/>
+        <copyright><![CDATA[Copyright: (C) British Broadcasting Corporation, see https://www.bbc.co.uk/usingthebbc/terms-of-use/#15metadataandrssfeeds for terms and conditions of reuse.]]></copyright>
+        <language><![CDATA[en-gb]]></language>
+        <ttl>15</ttl>
+        <item>
+            <title><![CDATA[US interest rates raised for first time in three years]]></title>
+            <description><![CDATA[Rates were hiked in a unanimous decision despite fierce opposition from President Donald Trump, who had called for a cut.]]></description>
+            <link>https://www.bbc.co.uk/news/articles/cw4gmlyvj422o?at_medium=RSS&amp;at_campaign=rss</link>
+            <guid isPermaLink="false">https://www.bbc.co.uk/news/articles/cw4gmlyvj422o#0</guid>
+            <pubDate>Wed, 16 Sep 2026 22:16:51 GMT</pubDate>
+            <media:thumbnail width="240" height="135" url="https://ichef.bbci.co.uk/ace/standard/240/cpsprodpb/4317/live/97f51f30-b214-11f1-95f2-19e1a2e8eef2.jpg"/>
+        </item>
+        <item>
+            <title><![CDATA[Petrol and diesel price rises push UK inflation higher ]]></title>
+            <description><![CDATA[Summer holidays and disruption to global oil supplies by the Middle East conflict stoked price growth.   ]]></description>
+            <link>https://www.bbc.co.uk/news/articles/cv2dw7lw4rkpo?at_medium=RSS&amp;at_campaign=rss</link>
+            <guid isPermaLink="false">https://www.bbc.co.uk/news/articles/cv2dw7lw4rkpo#0</guid>
+            <pubDate>Wed, 16 Sep 2026 14:30:51 GMT</pubDate>
+            <media:thumbnail width="240" height="135" url="https://ichef.bbci.co.uk/ace/standard/240/cpsprodpb/d847/live/6dc55eb0-b1be-11f1-b1d1-571ed4d7ff2c.jpg"/>
+        </item>
+        <item>
+            <title><![CDATA[Henry Zeffman: Andy Burnham and his chancellor have a battle on their hands as the Budget approaches]]></title>
+            <description><![CDATA[The Budget is only six weeks away and the economy is undoubtedly the biggest challenge facing the prime minister.]]></description>
+            <link>https://www.bbc.co.uk/news/articles/cwp93jp4p7xpo?at_medium=RSS&amp;at_campaign=rss</link>
+            <guid isPermaLink="false">https://www.bbc.co.uk/news/articles/cwp93jp4p7xpo#0</guid>
+            <pubDate>Wed, 16 Sep 2026 14:52:38 GMT</pubDate>
+            <media:thumbnail width="240" height="134" url="https://ichef.bbci.co.uk/ace/standard/240/cpsprodpb/a48e/live/4c8ed8e0-b1d0-11f1-8493-1910d79d53eb.png"/>
+        </item>
+        <item>
+            <title><![CDATA[OpenAI boss says world 'right to be afraid' but should trust AI firms]]></title>
+            <description><![CDATA[Sam Altman and other tech CEOs say there are incentives to limit advancements in AI, as fears grow over the threats it poses to humanity.]]></description>
+            <link>https://www.bbc.co.uk/news/articles/cqx2zpj4y525o?at_medium=RSS&amp;at_campaign=rss</link>
+            <guid isPermaLink="false">https://www.bbc.co.uk/news/articles/cqx2zpj4y525o#0</guid>
+            <pubDate>Wed, 16 Sep 2026 10:02:05 GMT</pubDate>
+            <media:thumbnail width="240" height="135" url="https://ichef.bbci.co.uk/ace/standard/240/cpsprodpb/b490/live/dc850210-b1b4-11f1-b1d1-571ed4d7ff2c.jpg"/>
+        </item>
+        <item>
+            <title><![CDATA[We managed to get jobs after uni - here's how we're keeping them]]></title>
+            <description><![CDATA[Four recent job starters share their tips on what helped them have a smooth transition and survive their first few days.]]></description>
+            <link>https://www.bbc.co.uk/news/articles/cm2qn163053o?at_medium=RSS&amp;at_campaign=rss</link>
+            <guid isPermaLink="false">https://www.bbc.co.uk/news/articles/cm2qn163053o#0</guid>
+            <pubDate>Wed, 16 Sep 2026 08:36:37 GMT</pubDate>
+            <media:thumbnail width="240" height="135" url="https://ichef.bbci.co.uk/ace/standard/240/cpsprodpb/f50f/live/a014dc20-b1b3-11f1-b1d1-571ed4d7ff2c.jpg"/>
+        </item>
+        
+    </channel>
+</rss>

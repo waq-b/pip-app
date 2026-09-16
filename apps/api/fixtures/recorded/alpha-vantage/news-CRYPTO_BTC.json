@@ -1,0 +1,235 @@
+{
+ "items": "50",
+ "sentiment_score_definition": "x <= -0.35: Bearish; -0.35 < x <= -0.15: Somewhat-Bearish; -0.15 < x < 0.15: Neutral; 0.15 <= x < 0.35: Somewhat_Bullish; x >= 0.35: Bullish",
+ "relevance_score_definition": "0 < x <= 1, with a higher score indicating higher relevance.",
+ "feed": [
+  {
+   "title": "Fed Chair Implies Trump Is Only Half Right on the Economy Following Rate Hike",
+   "url": "https://decrypt.co/378433/fed-hikes-rates-warsh-implies-trump-only-half-right",
+   "time_published": "20260916T194324",
+   "authors": [
+    "Jose Antonio Lanz"
+   ],
+   "summary": "Chair Kevin Warsh credited Trump's economy, then ignored his rate-cut wishes entirely.",
+   "banner_image": "https://img.decrypt.co/insecure/rs:fit:3840:0:0:0/plain/https://cdn.decrypt.co/wp-content/uploads/2026/09/myriad-gold-9-16.png@webp",
+   "source": "Decrypt.co",
+   "category_within_source": "n/a",
+   "source_domain": "decrypt.co",
+   "topics": [
+    {
+     "topic": "Economy - Monetary",
+     "relevance_score": "0.576289"
+    },
+    {
+     "topic": "Financial Markets",
+     "relevance_score": "0.684621"
+    }
+   ],
+   "overall_sentiment_score": 0.051323,
+   "overall_sentiment_label": "Neutral",
+   "ticker_sentiment": [
+    {
+     "ticker": "CRYPTO:BTC",
+     "relevance_score": "0.28442",
+     "ticker_sentiment_score": "-0.056779",
+     "ticker_sentiment_label": "Neutral"
+    }
+   ]
+  },
+  {
+   "title": "Ethereum's Vitalik Buterin Isn't Worried About AI Breaking Crypto. Here's Why That's Fantastic News For Crypto Investors.",
+   "url": "https://www.fool.com/investing/2026/09/16/ethereums-vitalik-buterin-isnt-worried-about-ai-br/",
+   "time_published": "20260916T191000",
+   "authors": [
+    "Leo Sun"
+   ],
+   "summary": "Ethereum's co-founder says he'd take a big bet against that gloomy outlook.",
+   "banner_image": "https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Feditorial%2Fimages%2F887076%2Fbitcoin-wall-street.jpg&w=3840&op=resize",
+   "source": "Motley Fool",
+   "category_within_source": "n/a",
+   "source_domain": "www.fool.com",
+   "topics": [
+    {
+     "topic": "Economy - Monetary",
+     "relevance_score": "0.310843"
+    },
+    {
+     "topic": "Blockchain",
+     "relevance_score": "0.310843"
+    },
+    {
+     "topic": "Financial Markets",
+     "relevance_score": "0.108179"
+    }
+   ],
+   "overall_sentiment_score": -0.031955,
+   "overall_sentiment_label": "Neutral",
+   "ticker_sentiment": [
+    {
+     "ticker": "ASCCF",
+     "relevance_score": "0.091162",
+     "ticker_sentiment_score": "0.080463",
+     "ticker_sentiment_label": "Neutral"
+    },
+    {
+     "ticker": "CRYPTO:BTC",
+     "relevance_score": "0.507932",
+     "ticker_sentiment_score": "-0.072801",
+     "ticker_sentiment_label": "Neutral"
+    },
+    {
+     "ticker": "CRYPTO:ETH",
+     "relevance_score": "0.353059",
+     "ticker_sentiment_score": "0.04337",
+     "ticker_sentiment_label": "Neutral"
+    }
+   ]
+  },
+  {
+   "title": "Bitcoin Core Software Update Aims for Speed and Security Patches",
+   "url": "https://decrypt.co/378430/bitcoin-core-software-october-update",
+   "time_published": "20260916T185348",
+   "authors": [
+    "Jason Nelson"
+   ],
+   "summary": "Bitcoin Core 32.0 has entered final testing, bringing faster block checks and changes to how wallets prepare payments.",
+   "banner_image": "https://img.decrypt.co/insecure/rs:fit:3840:0:0:0/plain/https://cdn.decrypt.co/wp-content/uploads/2026/09/myriad-bitcoin-9-16.png@webp",
+   "source": "Decrypt.co",
+   "category_within_source": "n/a",
+   "source_domain": "decrypt.co",
+   "topics": [],
+   "overall_sentiment_score": -0.164343,
+   "overall_sentiment_label": "Somewhat-Bearish",
+   "ticker_sentiment": [
+    {
+     "ticker": "CRYPTO:BTC",
+     "relevance_score": "0.726435",
+     "ticker_sentiment_score": "-0.319543",
+     "ticker_sentiment_label": "Somewhat-Bearish"
+    }
+   ]
+  },
+  {
+   "title": "Fed Hikes Rates for the First Time Since 2023, Bitcoin Spikes",
+   "url": "https://decrypt.co/378417/fed-hikes-rates-first-time-since-2023-bitcoin",
+   "time_published": "20260916T181538",
+   "authors": [
+    "Jose Antonio Lanz"
+   ],
+   "summary": "The Federal Reserve delivered the hike Wall Street had almost unanimously priced in.",
+   "banner_image": "https://img.decrypt.co/insecure/rs:fit:3840:0:0:0/plain/https://cdn.decrypt.co/wp-content/uploads/2026/09/myriad-bitcoin-9-16.png@webp",
+   "source": "Decrypt.co",
+   "category_within_source": "n/a",
+   "source_domain": "decrypt.co",
+   "topics": [
+    {
+     "topic": "Economy - Monetary",
+     "relevance_score": "0.890401"
+    },
+    {
+     "topic": "Finance",
+     "relevance_score": "1.0"
+    },
+    {
+     "topic": "Financial Markets",
+     "relevance_score": "0.495866"
+    }
+   ],
+   "overall_sentiment_score": -0.050395,
+   "overall_sentiment_label": "Neutral",
+   "ticker_sentiment": [
+    {
+     "ticker": "WBD",
+     "relevance_score": "0.047749",
+     "ticker_sentiment_score": "-0.122667",
+     "ticker_sentiment_label": "Neutral"
+    },
+    {
+     "ticker": "BCS",
+     "relevance_score": "0.047749",
+     "ticker_sentiment_score": "0.0",
+     "ticker_sentiment_label": "Neutral"
+    },
+    {
+     "ticker": "C",
+     "relevance_score": "0.047749",
+     "ticker_sentiment_score": "0.0",
+     "ticker_sentiment_label": "Neutral"
+    },
+    {
+     "ticker": "BAC",
+     "relevance_score": "0.047749",
+     "ticker_sentiment_score": "0.0",
+     "ticker_sentiment_label": "Neutral"
+    },
+    {
+     "ticker": "GS",
+     "relevance_score": "0.047749",
+     "ticker_sentiment_score": "-0.16272",
+     "ticker_sentiment_label": "Somewhat-Bearish"
+    },
+    {
+     "ticker": "MS",
+     "relevance_score": "0.047749",
+     "ticker_sentiment_score": "0.0",
+     "ticker_sentiment_label": "Neutral"
+    },
+    {
+     "ticker": "CRYPTO:BTC",
+     "relevance_score": "0.142565",
+     "ticker_sentiment_score": "-0.117666",
+     "ticker_sentiment_label": "Neutral"
+    }
+   ]
+  },
+  {
+   "title": "Strategy Is Buying Bitcoin Again. Here's What That Means for the Price of Bitcoin.",
+   "url": "https://www.fool.com/investing/2026/09/16/strategy-is-buying-bitcoin-again/",
+   "time_published": "20260916T164700",
+   "authors": [
+    "Anders Bylund"
+   ],
+   "summary": "Strategy is back to buying Bitcoin after a summer of sales. The headlines matter more than the coins.",
+   "banner_image": "https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Feditorial%2Fimages%2F886076%2Fmstr-and-btc-logos.png&w=3840&op=resize",
+   "source": "Motley Fool",
+   "category_within_source": "n/a",
+   "source_domain": "www.fool.com",
+   "topics": [
+    {
+     "topic": "Technology",
+     "relevance_score": "0.5"
+    },
+    {
+     "topic": "Retail & Wholesale",
+     "relevance_score": "0.5"
+    },
+    {
+     "topic": "Blockchain",
+     "relevance_score": "0.158519"
+    }
+   ],
+   "overall_sentiment_score": -0.07993,
+   "overall_sentiment_label": "Neutral",
+   "ticker_sentiment": [
+    {
+     "ticker": "MSTR",
+     "relevance_score": "0.503424",
+     "ticker_sentiment_score": "-0.13226",
+     "ticker_sentiment_label": "Neutral"
+    },
+    {
+     "ticker": "HNST",
+     "relevance_score": "0.067727",
+     "ticker_sentiment_score": "-0.116753",
+     "ticker_sentiment_label": "Neutral"
+    },
+    {
+     "ticker": "CRYPTO:BTC",
+     "relevance_score": "0.692191",
+     "ticker_sentiment_score": "-0.189061",
+     "ticker_sentiment_label": "Somewhat-Bearish"
+    }
+   ]
+  }
+ ]
+}

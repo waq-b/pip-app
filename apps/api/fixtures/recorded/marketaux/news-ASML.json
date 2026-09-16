@@ -1,0 +1,439 @@
+{
+ "meta": {
+  "found": 5,
+  "returned": 3,
+  "limit": 3,
+  "page": 1
+ },
+ "data": [
+  {
+   "uuid": "2c9cd7f5-5f8b-43f6-9793-7bbf93b9e0d4",
+   "title": "ASML Eyes 110+ EUV Tools in 2028 as AI Chip Demand Accelerates",
+   "description": "ASML Holding N.V. (NASDAQ:ASML) is examining ways to produce more than 110 EUV lithography systems in 2028, according to JPMorgan analysts following a meeting with CFO Roger Dassen. The company is already nearly sold out for 2027 and expects to produce at least 80 EUV systems that year, meaning output above 110 in 2028 would [\u2026]",
+   "keywords": "ASML Holding, EUV lithography, JPMorgan",
+   "snippet": "ASML Holding N.V. (NASDAQ:ASML) is examining ways to produce more than 110 EUV lithography systems in 2028, according to JPMorgan analysts following a meeting w...",
+   "url": "https://finance.yahoo.com/technology/ai/articles/asml-eyes-110-euv-tools-143406050.html",
+   "image_url": "https://s.yimg.com/lo/mysterio/api/987638b03a06cf46325e20ceed6b91648259b913fed3f438c4c09b64a275b951/lightyear_networkapi/resizefill_w1200%3Bquality_80%3Bformat_webp/https%3A%2F%2Fmedia.zenfs.com%2Fen%2Finsidermonkey.com%2Fb36da0caf4f59d829430a8a0f203a758.jpg",
+   "language": "en",
+   "published_at": "2026-09-15T14:34:06.000000Z",
+   "source": "finance.yahoo.com",
+   "relevance_score": null,
+   "entities": [
+    {
+     "symbol": "ASML",
+     "name": "ASML Holding N.V.",
+     "exchange": null,
+     "exchange_long": null,
+     "country": "us",
+     "type": "equity",
+     "industry": "Technology",
+     "match_score": 69.228775,
+     "sentiment_score": 0.444033,
+     "highlights": [
+      {
+       "highlight": "<em>ASML</em> <em>Holding</em> <em>N.V</[+177 characters]",
+       "sentiment": 0,
+       "highlighted_in": "main_text"
+      },
+      {
+       "highlight": "ASML Eyes 110+ EUV Tools in 2028 as AI C[+321 characters]",
+       "sentiment": 0.6352,
+       "highlighted_in": "main_text"
+      },
+      {
+       "highlight": "The longer-term competitive position is [+325 characters]",
+       "sentiment": 0.6969,
+       "highlighted_in": "main_text"
+      }
+     ]
+    }
+   ],
+   "similar": [
+    {
+     "uuid": "251d1840-4501-4e2d-9332-eef175e0e9fb",
+     "title": "ASML Eyes 110+ EUV Tools in 2028 as AI Chip Demand Accelerates",
+     "description": "ASML Holding N.V. (NASDAQ:ASML) is examining ways to produce more than 110 EUV lithography systems in 2028, according to JPMorgan analysts following a meeting with CFO Roger Dassen.",
+     "keywords": "",
+     "snippet": "ASML Holding N.V. (NASDAQ:ASML) is examining ways to produce more than 110 EUV lithography systems in 2028, according to JPMorgan analysts following a meeting w...",
+     "url": "https://www.insidermonkey.com/blog/asml-eyes-110-euv-tools-in-2028-as-ai-chip-demand-accelerates-1837814/",
+     "image_url": "https://d2gr5kl7dt2z3t.cloudfront.net/blog/wp-content/uploads/2023/09/23093851/ASML-insidermonkey-1695476329445.jpg",
+     "language": "en",
+     "published_at": "2026-09-15T14:34:06.000000Z",
+     "source": "insidermonkey.com",
+     "relevance_score": null,
+     "entities": [
+      {
+       "symbol": "ASML",
+       "name": "ASML Holding N.V.",
+       "exchange": null,
+       "exchange_long": null,
+       "country": "us",
+       "type": "equity",
+       "industry": "Technology",
+       "match_score": 63.044724,
+       "sentiment_score": 0.290283,
+       "highlights": [
+        {
+         "highlight": "<em>ASML</em> <em>Holding</em> <em>N.V</[+177 characters]",
+         "sentiment": 0,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "Higher EUV Output Could Accelerate ASML?[+236 characters]",
+         "sentiment": 0.6893,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "The longer-term competitive position is [+302 characters]",
+         "sentiment": 0.6969,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "ASML\u2019s Growth Ambitions Face Geopoliti[+185 characters]",
+         "sentiment": -0.4215,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "<em>ASML</em> <em>Holding</em> <em>N.V</[+151 characters]",
+         "sentiment": 0.3182,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "Conclusion\n\n<em>ASML</em> <em>Holding</e[+324 characters]",
+         "sentiment": 0.4588,
+         "highlighted_in": "main_text"
+        }
+       ]
+      },
+      {
+       "symbol": "ASML.MI",
+       "name": "ASML Holding N.V.",
+       "exchange": null,
+       "exchange_long": null,
+       "country": "it",
+       "type": "equity",
+       "industry": "Technology",
+       "match_score": 54.275066,
+       "sentiment_score": 0.290283,
+       "highlights": [
+        {
+         "highlight": "<em>ASML</em> <em>Holding</em> <em>N.V</[+168 characters]",
+         "sentiment": 0,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "Higher EUV Output Could Accelerate ASML?[+236 characters]",
+         "sentiment": 0.6893,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "The longer-term competitive position is [+302 characters]",
+         "sentiment": 0.6969,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "ASML\u2019s Growth Ambitions Face Geopoliti[+185 characters]",
+         "sentiment": -0.4215,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "<em>ASML</em> <em>Holding</em> <em>N.V</[+151 characters]",
+         "sentiment": 0.3182,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "Conclusion\n\n<em>ASML</em> <em>Holding</e[+324 characters]",
+         "sentiment": 0.4588,
+         "highlighted_in": "main_text"
+        }
+       ]
+      },
+      {
+       "symbol": "ASMLF",
+       "name": "ASML Holding N.V.",
+       "exchange": null,
+       "exchange_long": null,
+       "country": "us",
+       "type": "equity",
+       "industry": "Technology",
+       "match_score": 54.274223,
+       "sentiment_score": 0.290283,
+       "highlights": [
+        {
+         "highlight": "<em>ASML</em> <em>Holding</em> <em>N.V</[+168 characters]",
+         "sentiment": 0,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "Higher EUV Output Could Accelerate ASML?[+236 characters]",
+         "sentiment": 0.6893,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "The longer-term competitive position is [+302 characters]",
+         "sentiment": 0.6969,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "ASML\u2019s Growth Ambitions Face Geopoliti[+185 characters]",
+         "sentiment": -0.4215,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "<em>ASML</em> <em>Holding</em> <em>N.V</[+151 characters]",
+         "sentiment": 0.3182,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "Conclusion\n\n<em>ASML</em> <em>Holding</e[+324 characters]",
+         "sentiment": 0.4588,
+         "highlighted_in": "main_text"
+        }
+       ]
+      },
+      {
+       "symbol": "ASME.DE",
+       "name": "ASML Holding N.V.",
+       "exchange": null,
+       "exchange_long": null,
+       "country": "de",
+       "type": "equity",
+       "industry": "Technology",
+       "match_score": 54.273674,
+       "sentiment_score": 0.290283,
+       "highlights": [
+        {
+         "highlight": "<em>ASML</em> <em>Holding</em> <em>N.V</[+168 characters]",
+         "sentiment": 0,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "Higher EUV Output Could Accelerate ASML?[+236 characters]",
+         "sentiment": 0.6893,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "The longer-term competitive position is [+302 characters]",
+         "sentiment": 0.6969,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "ASML\u2019s Growth Ambitions Face Geopoliti[+185 characters]",
+         "sentiment": -0.4215,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "<em>ASML</em> <em>Holding</em> <em>N.V</[+151 characters]",
+         "sentiment": 0.3182,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "Conclusion\n\n<em>ASML</em> <em>Holding</e[+324 characters]",
+         "sentiment": 0.4588,
+         "highlighted_in": "main_text"
+        }
+       ]
+      },
+      {
+       "symbol": "ASMLN.MX",
+       "name": "ASML Holding N.V.",
+       "exchange": null,
+       "exchange_long": null,
+       "country": "mx",
+       "type": "equity",
+       "industry": "Technology",
+       "match_score": 54.273125,
+       "sentiment_score": 0.290283,
+       "highlights": [
+        {
+         "highlight": "<em>ASML</em> <em>Holding</em> <em>N.V</[+168 characters]",
+         "sentiment": 0,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "Higher EUV Output Could Accelerate ASML?[+236 characters]",
+         "sentiment": 0.6893,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "The longer-term competitive position is [+302 characters]",
+         "sentiment": 0.6969,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "ASML\u2019s Growth Ambitions Face Geopoliti[+185 characters]",
+         "sentiment": -0.4215,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "<em>ASML</em> <em>Holding</em> <em>N.V</[+151 characters]",
+         "sentiment": 0.3182,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "Conclusion\n\n<em>ASML</em> <em>Holding</e[+324 characters]",
+         "sentiment": 0.4588,
+         "highlighted_in": "main_text"
+        }
+       ]
+      },
+      {
+       "symbol": "ASML1N.MX",
+       "name": "ASML Holding N.V.",
+       "exchange": null,
+       "exchange_long": null,
+       "country": "mx",
+       "type": "equity",
+       "industry": "N/A",
+       "match_score": 54.2728,
+       "sentiment_score": 0.290283,
+       "highlights": [
+        {
+         "highlight": "<em>ASML</em> <em>Holding</em> <em>N.V</[+168 characters]",
+         "sentiment": 0,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "Higher EUV Output Could Accelerate ASML?[+236 characters]",
+         "sentiment": 0.6893,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "The longer-term competitive position is [+302 characters]",
+         "sentiment": 0.6969,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "ASML\u2019s Growth Ambitions Face Geopoliti[+185 characters]",
+         "sentiment": -0.4215,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "<em>ASML</em> <em>Holding</em> <em>N.V</[+151 characters]",
+         "sentiment": 0.3182,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "Conclusion\n\n<em>ASML</em> <em>Holding</e[+324 characters]",
+         "sentiment": 0.4588,
+         "highlighted_in": "main_text"
+        }
+       ]
+      },
+      {
+       "symbol": "ASML.AS",
+       "name": "ASML Holding N.V.",
+       "exchange": null,
+       "exchange_long": null,
+       "country": "nl",
+       "type": "equity",
+       "industry": "Technology",
+       "match_score": 54.270912,
+       "sentiment_score": 0.290283,
+       "highlights": [
+        {
+         "highlight": "<em>ASML</em> <em>Holding</em> <em>N.V</[+168 characters]",
+         "sentiment": 0,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "Higher EUV Output Could Accelerate ASML?[+236 characters]",
+         "sentiment": 0.6893,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "The longer-term competitive position is [+302 characters]",
+         "sentiment": 0.6969,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "ASML\u2019s Growth Ambitions Face Geopoliti[+185 characters]",
+         "sentiment": -0.4215,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "<em>ASML</em> <em>Holding</em> <em>N.V</[+151 characters]",
+         "sentiment": 0.3182,
+         "highlighted_in": "main_text"
+        },
+        {
+         "highlight": "Conclusion\n\n<em>ASML</em> <em>Holding</e[+324 characters]",
+         "sentiment": 0.4588,
+         "highlighted_in": "main_text"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "uuid": "f3a6baff-decd-4194-8332-70c59b39c6f7",
+   "title": "Stocks Slump on AI Slowdown Fears and Rising Bond Yields and Crude Prices",
+   "description": "The S&P 500 Index ($SPX ) (SPY ) is down by -0.83% today, the Dow Jones Industrial Average ($DOWI ) (DIA ) is down by -0.53%, and the Nasdaq 100 Index ($IUXX ) (QQQ ) is down by -1.39%. E-mini S&P futures (ESU26 ) are down -0.80%, and September E-mini...",
+   "keywords": "inflation expectations, Nasdaq futures, crude oil prices, software stocks, Saudi Arabia",
+   "snippet": "Oct WTI crude oil prices (CLV26) are up more than +3% today on concern that global oil supplies will get even tighter after Saudi Arabia closed a major pipeline...",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/stocks-slump-ai-slowdown-fears-151337488.html",
+   "image_url": "https://s.yimg.com/lo/mysterio/api/17410d175f0ff66ed7672960b8b39b943b6206f88936bb1484111cace13d1543/lightyear_networkapi/resizefill_w1200%3Bquality_80%3Bformat_webp/https%3A%2F%2Fmedia.zenfs.com%2Fen%2Fbarchart_com_477%2F41d29dada4ef69b1b608c5d19cfef5d7.jpg",
+   "language": "en",
+   "published_at": "2026-09-14T15:13:37.000000Z",
+   "source": "finance.yahoo.com",
+   "relevance_score": null,
+   "entities": [
+    {
+     "symbol": "ASML",
+     "name": "ASML Holding N.V.",
+     "exchange": null,
+     "exchange_long": null,
+     "country": "us",
+     "type": "equity",
+     "industry": "Technology",
+     "match_score": 15.252423,
+     "sentiment_score": 0.25,
+     "highlights": [
+      {
+       "highlight": "In addition, Applied Materials (AMAT), A[+243 characters]",
+       "sentiment": 0.25,
+       "highlighted_in": "main_text"
+      }
+     ]
+    }
+   ],
+   "similar": []
+  },
+  {
+   "uuid": "647124f6-e221-46d6-a09c-0c89e804c4c4",
+   "title": "Stocks Fall on AI Slowdown Fears and Rising Crude Oil Prices",
+   "description": "The S&P 500 Index ($SPX ) (SPY ) is down by -0.65% today, the Dow Jones Industrial Average ($DOWI ) (DIA ) is down by -0.20%, and the Nasdaq 100 Index ($IUXX ) (QQQ ) is down by -1.48%. E-mini S&P futures (ESU26 ) are down -0.58%, and September E-mini...",
+   "keywords": "inflation expectations, crude oil prices, Nasdaq futures, Nasdaq 100, software stocks, Saudi Arabia, Dow Jones Industrial",
+   "snippet": "Oct WTI crude oil prices (CLV26) are up more than +3% today on concern that global oil supplies will get even tighter after Saudi Arabia closed a major pipeline...",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/stocks-fall-ai-slowdown-fears-141007739.html",
+   "image_url": "https://s.yimg.com/lo/mysterio/api/ff456f70ceb155c3837a6ffc04c640e477cab3a9458bcb5a2bb23d2edcc5f528/lightyear_networkapi/resizefill_w1200%3Bquality_80%3Bformat_webp/https%3A%2F%2Fmedia.zenfs.com%2Fen%2Fbarchart_com_477%2Fd328f7db7fa019e809cef3d7281ab08b.jpg",
+   "language": "en",
+   "published_at": "2026-09-14T14:10:07.000000Z",
+   "source": "finance.yahoo.com",
+   "relevance_score": null,
+   "entities": [
+    {
+     "symbol": "ASML",
+     "name": "ASML Holding N.V.",
+     "exchange": null,
+     "exchange_long": null,
+     "country": "us",
+     "type": "equity",
+     "industry": "Technology",
+     "match_score": 15.252733,
+     "sentiment_score": -0.34,
+     "highlights": [
+      {
+       "highlight": "In addition, Advanced Micro Devices (AMD[+270 characters]",
+       "sentiment": -0.34,
+       "highlighted_in": "main_text"
+      }
+     ]
+    }
+   ],
+   "similar": []
+  }
+ ]
+}

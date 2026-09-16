@@ -12,3 +12,11 @@ Added 2026-09-16 (Phase 3 task 1):
 
 - `kraken/` — Kraken spot REST. Private calls (`GetApiKeyInfo`, `BalanceEx`, `Ledgers`) from a read-only key on an **empty** account, so balances and ledger are empty; key, key name and IBAN replaced with placeholders. `permission-denied.json` is a method the key lacks; `invalid-key.json` is an unknown key. Public `Ticker`, `Assets` (sample) and daily `OHLC` for XBT/GBP (trimmed to the last 40 candles).
 - `coingecko/` — Demo API: `simple/price` in GBP, `market_chart` for 1 day and 365 days daily, the error for asking beyond 365 days, and a 12-ticker sample of `exchanges/kraken/tickers` (Kraken base asset → CoinGecko coin id). The API key is not in any file.
+
+Added 2026-09-17 (Phase 5 task 1). Third-party headlines, trimmed to a handful of items per file so tests have real shapes without copying whole feeds:
+
+- `rss/` — BBC Business, Investing.com (stock market, crypto), CoinDesk, CoinTelegraph and Nvidia's investor-relations releases feed. First 5 items each; CoinDesk's `content:encoded` bodies replaced with `trimmed`.
+- `google-news/` — Google News RSS searches `<name> when:7d` (`hl=en-GB&gl=GB&ceid=GB:en`) for Greggs, ASML and "Vanguard FTSE All-World", first 8 items. Each item's publisher is in `<source url>`; titles end " - <Publisher>"; links are Google redirect URLs.
+- `alpha-vantage/news-*.json` — `NEWS_SENTIMENT` for NVDA, ASML and `CRYPTO:BTC` (feeds trimmed to 5) and the error for an LSE ticker (`GRG.LON`). `earnings-calendar-3month-sample.csv` — the CSV header, first rows and ASML's row.
+- `marketaux/` — `news/all` for NVDA, GRG.L, ASML, VWRL.L, CC:BTC and all five together (free plan: 3 articles a request, `published_after=2026-09-10`). The API token is not in any file.
+- `groq/` — chat completions with strict `json_schema` from `openai/gpt-oss-120b` and `openai/gpt-oss-20b` on prompt v1 with ASML facts (messages omitted; response and usage kept).

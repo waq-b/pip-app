@@ -1,0 +1,200 @@
+{
+ "items": "50",
+ "sentiment_score_definition": "x <= -0.35: Bearish; -0.35 < x <= -0.15: Somewhat-Bearish; -0.15 < x < 0.15: Neutral; 0.15 <= x < 0.35: Somewhat_Bullish; x >= 0.35: Bullish",
+ "relevance_score_definition": "0 < x <= 1, with a higher score indicating higher relevance.",
+ "feed": [
+  {
+   "title": "ASML Holding N.V. : Bernstein maintains a Buy rating",
+   "url": "https://www.marketscreener.com/news/asml-holding-n-v-bernstein-maintains-a-buy-rating-ce785bddd880f723",
+   "time_published": "20260915T070425",
+   "authors": [],
+   "summary": "Bernstein analyst David Dai has reiterated a Buy rating on ASML Holding N.V., maintaining a target price of EUR 2500. This news comes amidst a broader market context where semiconductor stocks are facing pressure, with US equity indexes lower and benchmark Treasury yields rising. ASML is a world leader in manufacturing lithography equipment for the semiconductor industry.",
+   "banner_image": null,
+   "source": "www.marketscreener.com",
+   "category_within_source": "General",
+   "source_domain": "www.marketscreener.com",
+   "topics": [
+    {
+     "topic": "financial_markets",
+     "relevance_score": "1.000000"
+    },
+    {
+     "topic": "technology",
+     "relevance_score": "0.848011"
+    },
+    {
+     "topic": "earnings",
+     "relevance_score": "0.743291"
+    }
+   ],
+   "overall_sentiment_score": 0.423048,
+   "overall_sentiment_label": "Bullish",
+   "ticker_sentiment": [
+    {
+     "ticker": "ASML",
+     "relevance_score": "1.000000",
+     "ticker_sentiment_score": "0.411930",
+     "ticker_sentiment_label": "Bullish"
+    }
+   ]
+  },
+  {
+   "title": "ASML Holding N.V. : Berenberg gives a Buy rating",
+   "url": "https://www.marketscreener.com/news/asml-holding-n-v-berenberg-gives-a-buy-rating-ce785bd9db81f020",
+   "time_published": "20260909T060157",
+   "authors": [
+    "dpa-AFX Analyser"
+   ],
+   "summary": "Berenberg has issued a \"Buy\" rating for ASML Holding N.V., maintaining an unchanged target price of EUR 2100. This positive outlook suggests confidence in the semiconductor equipment manufacturer's continued performance. The article also provides a brief overview of ASML's business, noting its leadership in lithography equipment and its sales breakdown by activity and geography.",
+   "banner_image": null,
+   "source": "www.marketscreener.com",
+   "category_within_source": "General",
+   "source_domain": "www.marketscreener.com",
+   "topics": [
+    {
+     "topic": "earnings",
+     "relevance_score": "0.906710"
+    },
+    {
+     "topic": "financial_markets",
+     "relevance_score": "0.808445"
+    },
+    {
+     "topic": "technology",
+     "relevance_score": "0.715303"
+    }
+   ],
+   "overall_sentiment_score": 0.468479,
+   "overall_sentiment_label": "Bullish",
+   "ticker_sentiment": [
+    {
+     "ticker": "ASML",
+     "relevance_score": "1.000000",
+     "ticker_sentiment_score": "0.469679",
+     "ticker_sentiment_label": "Bullish"
+    }
+   ]
+  },
+  {
+   "title": "ASML Holding N.V. : UBS reaffirms its Buy rating",
+   "url": "https://www.marketscreener.com/news/asml-holding-n-v-ubs-reaffirms-its-buy-rating-ce785bd8d881f424",
+   "time_published": "20260908T055222",
+   "authors": [
+    "dpa-AFX Analyser"
+   ],
+   "summary": "UBS analyst Francois-Xavier Bouvignies has reiterated a \"Buy\" rating for ASML Holding N.V., maintaining a target price of EUR 2350. This reaffirmation comes amidst recent news including ASML's collaboration with TSMC on developing larger-format photomasks and plans to expand its workforce in Japan. ASML, a leader in semiconductor lithography equipment, continues to show strong activity in the market.",
+   "banner_image": null,
+   "source": "www.marketscreener.com",
+   "category_within_source": "General",
+   "source_domain": "www.marketscreener.com",
+   "topics": [
+    {
+     "topic": "earnings",
+     "relevance_score": "0.922579"
+    },
+    {
+     "topic": "technology",
+     "relevance_score": "0.821657"
+    },
+    {
+     "topic": "financial_markets",
+     "relevance_score": "0.743415"
+    },
+    {
+     "topic": "finance",
+     "relevance_score": "0.647010"
+    },
+    {
+     "topic": "economy_macro",
+     "relevance_score": "0.605019"
+    }
+   ],
+   "overall_sentiment_score": 0.417253,
+   "overall_sentiment_label": "Bullish",
+   "ticker_sentiment": [
+    {
+     "ticker": "ASML",
+     "relevance_score": "1.000000",
+     "ticker_sentiment_score": "0.405012",
+     "ticker_sentiment_label": "Bullish"
+    }
+   ]
+  },
+  {
+   "title": "ASML Japan to Expand Workforce to 700 From 500 by 2030",
+   "url": "https://www.marketscreener.com/news/asml-japan-to-expand-workforce-to-700-from-500-by-2030-ce785bdad88cfe24",
+   "time_published": "20260903T161213",
+   "authors": [
+    "MT Newswires"
+   ],
+   "summary": "ASML Japan, a unit of ASML Holding N.V., plans to increase its domestic workforce from 500 to 700 employees by 2030, according to Nikkei Asia. This expansion reflects the company's growth and ongoing operations in the semiconductor equipment industry within Japan. The news was reported on September 3, 2026.",
+   "banner_image": null,
+   "source": "marketscreener.com",
+   "category_within_source": "General",
+   "source_domain": "marketscreener.com",
+   "topics": [
+    {
+     "topic": "manufacturing",
+     "relevance_score": "0.813550"
+    },
+    {
+     "topic": "technology",
+     "relevance_score": "0.710901"
+    },
+    {
+     "topic": "earnings",
+     "relevance_score": "0.633984"
+    }
+   ],
+   "overall_sentiment_score": 0.315315,
+   "overall_sentiment_label": "Somewhat-Bullish",
+   "ticker_sentiment": [
+    {
+     "ticker": "ASML",
+     "relevance_score": "1.000000",
+     "ticker_sentiment_score": "0.331635",
+     "ticker_sentiment_label": "Somewhat-Bullish"
+    }
+   ]
+  },
+  {
+   "title": "Fitch affirms ASML rating at \u2019A+\u2019 on lithography leadership By Investing.com",
+   "url": "https://in.investing.com/news/stock-market-news/fitch-affirms-asml-rating-at-a-on-lithography-leadership-93CH-5581779",
+   "time_published": "20260903T153513",
+   "authors": [
+    "Luke Juricic"
+   ],
+   "summary": "Fitch Ratings has affirmed ASML Holding N.V.'s Long-Term Issuer Default Rating at 'A+' with a Stable Outlook, citing the company's dominant position in lithography tools crucial for semiconductor manufacturing, particularly its exclusive production of extreme ultraviolet (EUV) tools. ASML anticipates increased tool capacity and revenue growth in the coming years, despite potential risks like geopolitical tensions and customer concentration. The rating also reflects expectations for sustained positive cash flow and healthy gross margins.",
+   "banner_image": "https://content-media.investing.com/news/LYNXNPEB6R0AQ_L.jpg",
+   "source": "Investing.com India",
+   "category_within_source": "General",
+   "source_domain": "Investing.com India",
+   "topics": [
+    {
+     "topic": "earnings",
+     "relevance_score": "0.947005"
+    },
+    {
+     "topic": "technology",
+     "relevance_score": "0.821158"
+    }
+   ],
+   "overall_sentiment_score": 0.347566,
+   "overall_sentiment_label": "Somewhat-Bullish",
+   "ticker_sentiment": [
+    {
+     "ticker": "ASML",
+     "relevance_score": "1.000000",
+     "ticker_sentiment_score": "0.429115",
+     "ticker_sentiment_label": "Bullish"
+    },
+    {
+     "ticker": "AMD",
+     "relevance_score": "0.641900",
+     "ticker_sentiment_score": "0.206421",
+     "ticker_sentiment_label": "Somewhat-Bullish"
+    }
+   ]
+  }
+ ]
+}

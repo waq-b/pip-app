@@ -1,0 +1,85 @@
+{
+ "request": {
+  "model": "openai/gpt-oss-120b",
+  "temperature": 0.2,
+  "reasoning_effort": "low",
+  "messages": "<omitted>",
+  "response_format": {
+   "type": "json_schema",
+   "json_schema": {
+    "name": "nudge",
+    "strict": true,
+    "schema": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "material",
+      "title",
+      "body",
+      "cited"
+     ],
+     "properties": {
+      "material": {
+       "type": "boolean"
+      },
+      "title": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "body": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "cited": {
+       "type": "array",
+       "items": {
+        "type": "integer"
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "response": {
+  "id": "chatcmpl-5de5925f-a257-47b0-8ce0-b9f600bc00ea",
+  "object": "chat.completion",
+  "created": 1789600463,
+  "model": "openai/gpt-oss-120b",
+  "choices": [
+   {
+    "index": 0,
+    "message": {
+     "role": "assistant",
+     "content": "{\n  \"material\": true,\n  \"title\": \"ASML plans to boost EUV tool production\",\n  \"body\": \"ASML is looking to increase its output to over 110 EUV machines by 2028, and customers are adopting its new High NA technology. More tools could support its growth and benefit a long\u2011term holder.\",\n  \"cited\": [1, 3]\n}",
+     "reasoning": "We need material facts. Fact1: ASML examining ways to make >110 EUV tools in 2028 \u2013 that's material (future capacity). Fact3: extends chipmaking dominance as customers embrace High NA \u2013 material. Fact4: reports transactions under share buyback program \u2013 that's financial but maybe material? Share buyback is material. Use ids 1,3,4. Provide title and body."
+    },
+    "logprobs": null,
+    "finish_reason": "stop"
+   }
+  ],
+  "usage": {
+   "queue_time": 0.338833482,
+   "prompt_tokens": 869,
+   "prompt_time": 0.041213189,
+   "completion_tokens": 179,
+   "completion_time": 0.37124622,
+   "total_tokens": 1048,
+   "total_time": 0.412459409,
+   "completion_tokens_details": {
+    "reasoning_tokens": 83
+   }
+  },
+  "usage_breakdown": null,
+  "system_fingerprint": "fp_bc9a6c9b5f",
+  "x_groq": {
+   "id": "req_01m2p7zy05er7bactpyyah4xa2",
+   "seed": 1048019689
+  },
+  "service_tier": "on_demand"
+ }
+}

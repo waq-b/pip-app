@@ -1,0 +1,142 @@
+{
+ "meta": {
+  "found": 345,
+  "returned": 3,
+  "limit": 3,
+  "page": 1
+ },
+ "data": [
+  {
+   "uuid": "5672889d-46c0-4cc9-b3ca-2ee73f417b13",
+   "title": "U.S. stocks slip after the Fed raises interest rates, hints more hikes may be on the way",
+   "description": "U.S. stocks slipped Wednesday after the Federal Reserve hiked its main interest rate for the first time in three years and suggested more may be ahead as it tries to get the nation\u2019s high inflation under control.",
+   "keywords": "",
+   "snippet": "Investors generally prefer lower interest rates because higher rates slow the economy's growth and undercut prices for stocks and other investments.\n\nThe S&P 50...",
+   "url": "https://www.pbs.org/newshour/economy/u-s-stocks-slip-after-the-fed-raises-interest-rate-hints-more-hikes-may-be-on-the-way",
+   "image_url": "https://d3i6fh83elv35t.cloudfront.net/static/2026/09/2026-09-15T160314Z_1037588103_RC2PJNAG8M65_RTRMADP_3_USA-STOCKS-1024x683.jpg",
+   "language": "en",
+   "published_at": "2026-09-16T21:32:36.000000Z",
+   "source": "pbs.org",
+   "relevance_score": null,
+   "entities": [
+    {
+     "symbol": "NVDA",
+     "name": "NVIDIA Corporation",
+     "exchange": null,
+     "exchange_long": null,
+     "country": "us",
+     "type": "equity",
+     "industry": "Technology",
+     "match_score": 9.512825,
+     "sentiment_score": 0.204,
+     "highlights": [
+      {
+       "highlight": "<em>Nvidia</em> rose 0.8%, and Advanced [+279 characters]",
+       "sentiment": 0.204,
+       "highlighted_in": "main_text"
+      }
+     ]
+    }
+   ],
+   "similar": []
+  },
+  {
+   "uuid": "5b58cb02-dd48-48aa-8e58-da7dc6b8b333",
+   "title": "Market Steady as Investors Await Federal Reserve Policy Shift; Tech and AI Sectors Lead Gains",
+   "description": "The U.S. stock market is navigating a day of cautious optimism and strategic positioning this Wednesday, September 16th, 2026. As the trading session",
+   "keywords": "",
+   "snippet": "The U.S. stock market is navigating a day of cautious optimism and strategic positioning this Wednesday, September 16th, 2026. As the trading session progresses...",
+   "url": "https://www2.stockmarketwatch.com/stock-market-news/market-steady-as-investors-await-federal-reserve-policy-shift-tech-and-ai-sectors-lead-gains/71873/",
+   "image_url": "https://www2.stockmarketwatch.com/stock-market-news/wp-content/uploads/2025/07/smw-icon-1000x700-logo.png",
+   "language": "en",
+   "published_at": "2026-09-16T21:07:13.000000Z",
+   "source": "thestockmarketwatch.com",
+   "relevance_score": null,
+   "entities": [
+    {
+     "symbol": "NVDA",
+     "name": "NVIDIA Corporation",
+     "exchange": null,
+     "exchange_long": null,
+     "country": "us",
+     "type": "equity",
+     "industry": "Technology",
+     "match_score": 9.378527,
+     "sentiment_score": 0.8658,
+     "highlights": [
+      {
+       "highlight": "<em>Nvidia</em> Corp (NVDA) continues to[+295 characters]",
+       "sentiment": 0.8658,
+       "highlighted_in": "main_text"
+      }
+     ]
+    }
+   ],
+   "similar": []
+  },
+  {
+   "uuid": "d8c9fd01-e2a1-466e-a381-03fcdf95db8b",
+   "title": "Celsius Sues BitMEX to Recover 6,360 BTC Lost in 2020 Crash",
+   "description": "Celsius' estate sues BitMEX to recover 6,360 BTC, alleging the exchange designed its liquidations to defraud customers in the March 2020 crash.",
+   "keywords": "",
+   "snippet": "Why Is Celsius Suing BitMEX Six Years Later?\n\nThe Celsius Network bankruptcy estate is seeking the return of more than 6,360 bitcoin from BitMEX, alleging that ...",
+   "url": "https://financefeeds.com/celsius-estate-sues-bitmex-over-495m-bitcoin-liquidation-claims/",
+   "image_url": "https://financefeeds.com/wp-content/uploads/2026/04/Celsius-Founder-Alex-Mashinsky-Resolves-FTC-Case.webp",
+   "language": "en",
+   "published_at": "2026-09-16T20:41:26.000000Z",
+   "source": "financefeeds.com",
+   "relevance_score": null,
+   "entities": [
+    {
+     "symbol": "CC:BTC",
+     "name": "Bitcoin",
+     "exchange": null,
+     "exchange_long": null,
+     "country": "global",
+     "type": "cryptocurrency",
+     "industry": "N/A",
+     "match_score": 46.037453,
+     "sentiment_score": -0.524729,
+     "highlights": [
+      {
+       "highlight": "The Celsius Network bankruptcy estate is[+200 characters]",
+       "sentiment": -0.765,
+       "highlighted_in": "main_text"
+      },
+      {
+       "highlight": "The disputed <em>bitcoin</em> is current[+236 characters]",
+       "sentiment": -0.5106,
+       "highlighted_in": "main_text"
+      },
+      {
+       "highlight": "It is also pursuing claims assigned by i[+284 characters]",
+       "sentiment": -0.6908,
+       "highlighted_in": "main_text"
+      },
+      {
+       "highlight": "For Celsius creditors, the value is obvi[+307 characters]",
+       "sentiment": -0.128,
+       "highlighted_in": "main_text"
+      },
+      {
+       "highlight": "The BitMEX lawsuit indicates that Celsiu[+257 characters]",
+       "sentiment": -0.7884,
+       "highlighted_in": "main_text"
+      },
+      {
+       "highlight": "At roughly $495 million at current <em>b[+113 characters]",
+       "sentiment": -0.1779,
+       "highlighted_in": "main_text"
+      },
+      {
+       "highlight": "Celsius Sues BitMEX to Recover 6,360 <em>BTC</em> Lost in 2020 Crash",
+       "sentiment": -0.6124,
+       "highlighted_in": "title"
+      }
+     ]
+    }
+   ],
+   "similar": []
+  }
+ ]
+}

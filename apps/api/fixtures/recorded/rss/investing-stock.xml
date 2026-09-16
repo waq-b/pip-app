@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Stock Market News</title>
+    <link>https://www.investing.com</link>
+    <item>
+      <enclosure url="https://content-media.investing.com/trkd-images/LYNXMPEM8F27R_L.jpg" length="86437" type="image/jpeg"/>
+      <title>Holtec Nuclear suspends planned US IPO, Bloomberg News reports</title>
+      <pubDate>2026-09-16 22:55:12</pubDate>
+      <author>Reuters</author>
+      <link>https://www.investing.com/news/stock-market-news/holtec-nuclear-suspends-planned-us-ipo-bloomberg-news-reports-4904657</link>
+    </item>
+    <item>
+      <enclosure url="https://content-media.investing.com/trkd-images/LYNXMPEM8F27A_L.jpg" length="33015" type="image/jpeg"/>
+      <title>OpenAI plans regular reports on unexpected AI behavior</title>
+      <pubDate>2026-09-16 22:49:01</pubDate>
+      <author>Reuters</author>
+      <link>https://www.investing.com/news/stock-market-news/openai-plans-regular-reports-on-unexpected-ai-behavior-4904658</link>
+    </item>
+    <item>
+      <enclosure url="https://content-media.investing.com/trkd-images/LYNXMPEM8F26C_L.jpg" length="129766" type="image/jpeg"/>
+      <title>Google should relax ad tech rules, appoint antitrust monitor, US judge finds</title>
+      <pubDate>2026-09-16 22:37:22</pubDate>
+      <author>Reuters</author>
+      <link>https://www.investing.com/news/stock-market-news/google-should-appoint-antitrust-compliance-officer-us-judge-says-in-ad-tech-case-4904639</link>
+    </item>
+    <item>
+      <enclosure url="https://content-media.investing.com/trkd-images/LYNXMPEM8F0WO_L.jpg" length="34532" type="image/jpeg"/>
+      <title>Exclusive-OpenAI’s rogue agents probed Hugging Face for weaknesses two months before major hack</title>
+      <pubDate>2026-09-16 22:32:08</pubDate>
+      <author>Reuters</author>
+      <link>https://www.investing.com/news/stock-market-news/exclusiveopenais-rogue-agentsprobed-hugging-face-for-weaknesses-two-months-before-major-hack-4903289</link>
+    </item>
+    <item>
+      <enclosure url="https://content-media.investing.com/news/LYNXNPEC0E0NI_M.jpg" length="18513" type="image/jpeg"/>
+      <title>Haymaker Acquisition Corp V prices $250M IPO on NYSE</title>
+      <pubDate>2026-09-16 22:27:01</pubDate>
+      <author>Investing.com</author>
+      <link>https://www.investing.com/news/stock-market-news/haymaker-acquisition-corp-v-prices-250m-ipo-on-nyse-432SI-4904647</link>
+    </item>
+    
+  </channel>
+</rss>

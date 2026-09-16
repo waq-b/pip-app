@@ -1,0 +1,85 @@
+{
+ "request": {
+  "model": "openai/gpt-oss-20b",
+  "temperature": 0.2,
+  "reasoning_effort": "low",
+  "messages": "<omitted>",
+  "response_format": {
+   "type": "json_schema",
+   "json_schema": {
+    "name": "nudge",
+    "strict": true,
+    "schema": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "material",
+      "title",
+      "body",
+      "cited"
+     ],
+     "properties": {
+      "material": {
+       "type": "boolean"
+      },
+      "title": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "body": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "cited": {
+       "type": "array",
+       "items": {
+        "type": "integer"
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "response": {
+  "id": "chatcmpl-3cbdbfd1-49b9-4097-994e-58f3ed2f206b",
+  "object": "chat.completion",
+  "created": 1789600463,
+  "model": "openai/gpt-oss-20b",
+  "choices": [
+   {
+    "index": 0,
+    "message": {
+     "role": "assistant",
+     "content": "{\"material\":true,\"title\":\"ASML plans to boost EUV tool output\",\"body\":\"ASML is looking to produce more than 110 EUV lithography tools by 2028, expanding its capacity to meet growing demand for advanced chips. This could support future growth for the company and its investors.\",\"cited\":[1,3]}",
+     "reasoning": "We need material? Fact 1: ASML examining ways to make >110 EUV tools in 2028. That's a production capacity plan, material. Use id 1. Also fact3: extends chipmaking dominance as customers embrace High NA. Also material. Use id3. Provide title, body."
+    },
+    "logprobs": null,
+    "finish_reason": "stop"
+   }
+  ],
+  "usage": {
+   "queue_time": 0.003260623,
+   "prompt_tokens": 869,
+   "prompt_time": 0.047639006,
+   "completion_tokens": 147,
+   "completion_time": 0.151640499,
+   "total_tokens": 1016,
+   "total_time": 0.199279505,
+   "completion_tokens_details": {
+    "reasoning_tokens": 64
+   }
+  },
+  "usage_breakdown": null,
+  "system_fingerprint": "fp_565badff47",
+  "x_groq": {
+   "id": "req_01m2p7zyster5bpwwngt1y5mp6",
+   "seed": 2142576052
+  },
+  "service_tier": "on_demand"
+ }
+}

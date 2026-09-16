@@ -1,0 +1,117 @@
+{
+ "meta": {
+  "found": 250,
+  "returned": 3,
+  "limit": 3,
+  "page": 1
+ },
+ "data": [
+  {
+   "uuid": "5672889d-46c0-4cc9-b3ca-2ee73f417b13",
+   "title": "U.S. stocks slip after the Fed raises interest rates, hints more hikes may be on the way",
+   "description": "U.S. stocks slipped Wednesday after the Federal Reserve hiked its main interest rate for the first time in three years and suggested more may be ahead as it tries to get the nation\u2019s high inflation under control.",
+   "keywords": "",
+   "snippet": "Investors generally prefer lower interest rates because higher rates slow the economy's growth and undercut prices for stocks and other investments.\n\nThe S&P 50...",
+   "url": "https://www.pbs.org/newshour/economy/u-s-stocks-slip-after-the-fed-raises-interest-rate-hints-more-hikes-may-be-on-the-way",
+   "image_url": "https://d3i6fh83elv35t.cloudfront.net/static/2026/09/2026-09-15T160314Z_1037588103_RC2PJNAG8M65_RTRMADP_3_USA-STOCKS-1024x683.jpg",
+   "language": "en",
+   "published_at": "2026-09-16T21:32:36.000000Z",
+   "source": "pbs.org",
+   "relevance_score": null,
+   "entities": [
+    {
+     "symbol": "NVDA",
+     "name": "NVIDIA Corporation",
+     "exchange": null,
+     "exchange_long": null,
+     "country": "us",
+     "type": "equity",
+     "industry": "Technology",
+     "match_score": 9.512825,
+     "sentiment_score": 0.204,
+     "highlights": [
+      {
+       "highlight": "<em>Nvidia</em> rose 0.8%, and Advanced [+279 characters]",
+       "sentiment": 0.204,
+       "highlighted_in": "main_text"
+      }
+     ]
+    }
+   ],
+   "similar": []
+  },
+  {
+   "uuid": "5b58cb02-dd48-48aa-8e58-da7dc6b8b333",
+   "title": "Market Steady as Investors Await Federal Reserve Policy Shift; Tech and AI Sectors Lead Gains",
+   "description": "The U.S. stock market is navigating a day of cautious optimism and strategic positioning this Wednesday, September 16th, 2026. As the trading session",
+   "keywords": "",
+   "snippet": "The U.S. stock market is navigating a day of cautious optimism and strategic positioning this Wednesday, September 16th, 2026. As the trading session progresses...",
+   "url": "https://www2.stockmarketwatch.com/stock-market-news/market-steady-as-investors-await-federal-reserve-policy-shift-tech-and-ai-sectors-lead-gains/71873/",
+   "image_url": "https://www2.stockmarketwatch.com/stock-market-news/wp-content/uploads/2025/07/smw-icon-1000x700-logo.png",
+   "language": "en",
+   "published_at": "2026-09-16T21:07:13.000000Z",
+   "source": "thestockmarketwatch.com",
+   "relevance_score": null,
+   "entities": [
+    {
+     "symbol": "NVDA",
+     "name": "NVIDIA Corporation",
+     "exchange": null,
+     "exchange_long": null,
+     "country": "us",
+     "type": "equity",
+     "industry": "Technology",
+     "match_score": 9.378527,
+     "sentiment_score": 0.8658,
+     "highlights": [
+      {
+       "highlight": "<em>Nvidia</em> Corp (NVDA) continues to[+295 characters]",
+       "sentiment": 0.8658,
+       "highlighted_in": "main_text"
+      }
+     ]
+    }
+   ],
+   "similar": []
+  },
+  {
+   "uuid": "0a75bef0-b711-494e-a839-c1c5b4216ab0",
+   "title": "Bitdeer Announces August 2026 Production and Operations Update",
+   "description": "Monthly Highlights\u00a0AI Cloud:Bitdeer AI secured 100% contracted GPU capacity for its 9.5 MW A102 facility in Malaysia ahead of energization through long-term commitments, representing more than $800 million in total expected revenue.Bitdeer has signed a non-binding Letter of Intent to develop an AI data center in Bhutan's Gelephu Mindfulness City, targeting an initial 30 MW of renewable hydro/solar-powered capacity with a potential expansion pathway to 500 MW.Bitdeer AI executed a 10-year data center services agreement securing an additional 65.1 MW at its A202 facility on the Johor campus, scaling total campus AI Cloud capacity to 86.8 MW to capture high-density compute demand.Colocation: Bitdeer recently acquired 200 acres near existing 563 MW Rockdale facility to support AI/HPC infrastructure development.Bitcoin: Production increased 249% Y/Y to 1,310 Bitcoins.\u00a0Key Metrics Summary\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0AI Cloud",
+   "keywords": "Bitdeer, Announces, August, 2026, Production, and, Operations, Update",
+   "snippet": "Monthly Highlights\n\nAI Cloud: Bitdeer AI secured 100% contracted GPU capacity for its 9.5 MW A102 facility in Malaysia ahead of energization through long-term c...",
+   "url": "https://www.manilatimes.net/2026/09/17/tmt-newswire/globenewswire/bitdeer-announces-august-2026-production-and-operations-update/2426984",
+   "image_url": "https://manilatimes.net/manilatimes/uploads/images/2026/09/17/1220989.png",
+   "language": "en",
+   "published_at": "2026-09-16T20:18:08.000000Z",
+   "source": "manilatimes.net",
+   "relevance_score": null,
+   "entities": [
+    {
+     "symbol": "NVDA",
+     "name": "NVIDIA Corporation",
+     "exchange": null,
+     "exchange_long": null,
+     "country": "us",
+     "type": "equity",
+     "industry": "Technology",
+     "match_score": 6.352085,
+     "sentiment_score": 0,
+     "highlights": [
+      {
+       "highlight": "Model Service Expansion: The model servi[+267 characters]",
+       "sentiment": 0,
+       "highlighted_in": "main_text"
+      },
+      {
+       "highlight": "The model service onboarded six open-sou[+242 characters]",
+       "sentiment": 0,
+       "highlighted_in": "main_text"
+      }
+     ]
+    }
+   ],
+   "similar": []
+  }
+ ]
+}

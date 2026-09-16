@@ -1,0 +1,222 @@
+{
+ "meta": {
+  "found": 96,
+  "returned": 3,
+  "limit": 3,
+  "page": 1
+ },
+ "data": [
+  {
+   "uuid": "d8c9fd01-e2a1-466e-a381-03fcdf95db8b",
+   "title": "Celsius Sues BitMEX to Recover 6,360 BTC Lost in 2020 Crash",
+   "description": "Celsius' estate sues BitMEX to recover 6,360 BTC, alleging the exchange designed its liquidations to defraud customers in the March 2020 crash.",
+   "keywords": "",
+   "snippet": "Why Is Celsius Suing BitMEX Six Years Later?\n\nThe Celsius Network bankruptcy estate is seeking the return of more than 6,360 bitcoin from BitMEX, alleging that ...",
+   "url": "https://financefeeds.com/celsius-estate-sues-bitmex-over-495m-bitcoin-liquidation-claims/",
+   "image_url": "https://financefeeds.com/wp-content/uploads/2026/04/Celsius-Founder-Alex-Mashinsky-Resolves-FTC-Case.webp",
+   "language": "en",
+   "published_at": "2026-09-16T20:41:26.000000Z",
+   "source": "financefeeds.com",
+   "relevance_score": null,
+   "entities": [
+    {
+     "symbol": "CC:BTC",
+     "name": "Bitcoin",
+     "exchange": null,
+     "exchange_long": null,
+     "country": "global",
+     "type": "cryptocurrency",
+     "industry": "N/A",
+     "match_score": 46.037453,
+     "sentiment_score": -0.524729,
+     "highlights": [
+      {
+       "highlight": "The Celsius Network bankruptcy estate is[+200 characters]",
+       "sentiment": -0.765,
+       "highlighted_in": "main_text"
+      },
+      {
+       "highlight": "The disputed <em>bitcoin</em> is current[+236 characters]",
+       "sentiment": -0.5106,
+       "highlighted_in": "main_text"
+      },
+      {
+       "highlight": "It is also pursuing claims assigned by i[+284 characters]",
+       "sentiment": -0.6908,
+       "highlighted_in": "main_text"
+      },
+      {
+       "highlight": "For Celsius creditors, the value is obvi[+307 characters]",
+       "sentiment": -0.128,
+       "highlighted_in": "main_text"
+      },
+      {
+       "highlight": "The BitMEX lawsuit indicates that Celsiu[+257 characters]",
+       "sentiment": -0.7884,
+       "highlighted_in": "main_text"
+      },
+      {
+       "highlight": "At roughly $495 million at current <em>b[+113 characters]",
+       "sentiment": -0.1779,
+       "highlighted_in": "main_text"
+      },
+      {
+       "highlight": "Celsius Sues BitMEX to Recover 6,360 <em>BTC</em> Lost in 2020 Crash",
+       "sentiment": -0.6124,
+       "highlighted_in": "title"
+      }
+     ]
+    }
+   ],
+   "similar": []
+  },
+  {
+   "uuid": "0a75bef0-b711-494e-a839-c1c5b4216ab0",
+   "title": "Bitdeer Announces August 2026 Production and Operations Update",
+   "description": "Monthly Highlights\u00a0AI Cloud:Bitdeer AI secured 100% contracted GPU capacity for its 9.5 MW A102 facility in Malaysia ahead of energization through long-term commitments, representing more than $800 million in total expected revenue.Bitdeer has signed a non-binding Letter of Intent to develop an AI data center in Bhutan's Gelephu Mindfulness City, targeting an initial 30 MW of renewable hydro/solar-powered capacity with a potential expansion pathway to 500 MW.Bitdeer AI executed a 10-year data center services agreement securing an additional 65.1 MW at its A202 facility on the Johor campus, scaling total campus AI Cloud capacity to 86.8 MW to capture high-density compute demand.Colocation: Bitdeer recently acquired 200 acres near existing 563 MW Rockdale facility to support AI/HPC infrastructure development.Bitcoin: Production increased 249% Y/Y to 1,310 Bitcoins.\u00a0Key Metrics Summary\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0\u00a0AI Cloud",
+   "keywords": "Bitdeer, Announces, August, 2026, Production, and, Operations, Update",
+   "snippet": "Monthly Highlights\n\nAI Cloud: Bitdeer AI secured 100% contracted GPU capacity for its 9.5 MW A102 facility in Malaysia ahead of energization through long-term c...",
+   "url": "https://www.manilatimes.net/2026/09/17/tmt-newswire/globenewswire/bitdeer-announces-august-2026-production-and-operations-update/2426984",
+   "image_url": "https://manilatimes.net/manilatimes/uploads/images/2026/09/17/1220989.png",
+   "language": "en",
+   "published_at": "2026-09-16T20:18:08.000000Z",
+   "source": "manilatimes.net",
+   "relevance_score": null,
+   "entities": [
+    {
+     "symbol": "CC:BTC",
+     "name": "Bitcoin",
+     "exchange": null,
+     "exchange_long": null,
+     "country": "global",
+     "type": "cryptocurrency",
+     "industry": "N/A",
+     "match_score": 21.966959,
+     "sentiment_score": 0.297713,
+     "highlights": [
+      {
+       "highlight": "<em>Bitcoin</em>: Production increased 2[+26 characters]",
+       "sentiment": 0.2732,
+       "highlighted_in": "main_text"
+      },
+      {
+       "highlight": "Metrics Summary AI Cloud Pipeline Get th[+322 characters]",
+       "sentiment": 0.3612,
+       "highlighted_in": "main_text"
+      },
+      {
+       "highlight": "Mined 206.5 MW ~$86M $4.7B, 16-Year Leas[+328 characters]",
+       "sentiment": 0,
+       "highlighted_in": "main_text"
+      },
+      {
+       "highlight": "Management Commentary\n\n\"Our AI-cloud str[+259 characters]",
+       "sentiment": 0.3612,
+       "highlighted_in": "main_text"
+      },
+      {
+       "highlight": "Metric August 2026 July 2026 August 2025[+328 characters]",
+       "sentiment": 0,
+       "highlighted_in": "main_text"
+      },
+      {
+       "highlight": "Self-Mining (Operated in self-owned data[+333 characters]",
+       "sentiment": 0.4019,
+       "highlighted_in": "main_text"
+      },
+      {
+       "highlight": "from self-mining operations and <em>BTC<[+324 characters]",
+       "sentiment": 0.2263,
+       "highlighted_in": "main_text"
+      },
+      {
+       "highlight": "About Bitdeer Technologies Group\n\nBitdee[+265 characters]",
+       "sentiment": 0.7579,
+       "highlighted_in": "main_text"
+      }
+     ]
+    }
+   ],
+   "similar": []
+  },
+  {
+   "uuid": "e715a962-8b04-4b03-b636-db02a3ee551e",
+   "title": "How to Know if a Crypto Will Pump: 7 On-Chain Signals",
+   "description": "Exchange outflows, MVRV below 1.0, whale buying and SOPR: 7 on-chain signals that preceded past Bitcoin rallies, with thresholds and tools to track them.",
+   "keywords": "",
+   "snippet": "How to Know if a Crypto Will Pump: 7 On-Chain and Technical Signals\n\nKEY TAKEAWAYS\n\nBitcoin exchange inflows exceeding 30,000 BTC in a single day have preceded ...",
+   "url": "https://financefeeds.com/how-to-know-if-a-crypto-will-pump/",
+   "image_url": "https://financefeeds.com/wp-content/uploads/2026/09/shutterstock_2129396501_ec37a9d7b1.jpeg",
+   "language": "en",
+   "published_at": "2026-09-16T17:53:55.000000Z",
+   "source": "financefeeds.com",
+   "relevance_score": null,
+   "entities": [
+    {
+     "symbol": "CC:BTC",
+     "name": "Bitcoin",
+     "exchange": null,
+     "exchange_long": null,
+     "country": "global",
+     "type": "cryptocurrency",
+     "industry": "N/A",
+     "match_score": 50.37511,
+     "sentiment_score": 0.07116,
+     "highlights": [
+      {
+       "highlight": "How to Know if a Crypto Will Pump: 7 On-[+230 characters]",
+       "sentiment": 0.3612,
+       "highlighted_in": "main_text"
+      },
+      {
+       "highlight": "Whale accumulation trend scores near 1.0[+185 characters]",
+       "sentiment": -0.2732,
+       "highlighted_in": "main_text"
+      },
+      {
+       "highlight": "BloFin Academy research found that <em>B[+211 characters]",
+       "sentiment": 0,
+       "highlighted_in": "main_text"
+      },
+      {
+       "highlight": "During the first quarter of 2026, <em>Bi[+281 characters]",
+       "sentiment": 0.0258,
+       "highlighted_in": "main_text"
+      },
+      {
+       "highlight": "In early 2026, the score reached 0.68 as[+172 characters]",
+       "sentiment": 0.1027,
+       "highlighted_in": "main_text"
+      },
+      {
+       "highlight": "Unlike <em>Bitcoin</em> or Ether deposit[+303 characters]",
+       "sentiment": 0.6908,
+       "highlighted_in": "main_text"
+      },
+      {
+       "highlight": "Miner Flows and the Spent Output Profit [+184 characters]",
+       "sentiment": 0.1779,
+       "highlighted_in": "main_text"
+      },
+      {
+       "highlight": "No single metric is definitive, but sust[+213 characters]",
+       "sentiment": -0.1531,
+       "highlighted_in": "main_text"
+      },
+      {
+       "highlight": "An MVRV ratio below 1.0 means the averag[+298 characters]",
+       "sentiment": 0.1531,
+       "highlighted_in": "main_text"
+      },
+      {
+       "highlight": "How do <em>Bitcoin</em> miner flows affe[+310 characters]",
+       "sentiment": -0.3736,
+       "highlighted_in": "main_text"
+      }
+     ]
+    }
+   ],
+   "similar": []
+  }
+ ]
+}

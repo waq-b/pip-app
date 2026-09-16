@@ -1,0 +1,256 @@
+{
+ "items": "50",
+ "sentiment_score_definition": "x <= -0.35: Bearish; -0.35 < x <= -0.15: Somewhat-Bearish; -0.15 < x < 0.15: Neutral; 0.15 <= x < 0.35: Somewhat_Bullish; x >= 0.35: Bullish",
+ "relevance_score_definition": "0 < x <= 1, with a higher score indicating higher relevance.",
+ "feed": [
+  {
+   "title": "International Business Machines (NYSE:IBM) Trading Down 4.3% - Here's Why",
+   "url": "https://www.marketbeat.com/instant-alerts/price-international-business-machines-nyse-ibm-trading-down-43-heres-why-2026-09-16/",
+   "time_published": "20260916T213031",
+   "authors": [
+    "MarketBeat"
+   ],
+   "summary": "International Business Machines (NYSE:IBM) shares fell 4.3% due to investors taking profits despite positive news like a $1 billion quantum computing award and an AI deployment in Turkey. The stock traded below its 200-day moving average, with analysts maintaining a \"Moderate Buy\" consensus and an average price target of $265.16, exceeding the current price. IBM met EPS expectations but fell short on revenue in its latest quarter, while institutional investors have actively modified their holdings.",
+   "banner_image": "https://www.marketbeat.com/logos/international-business-machines-co-logo-1200x675.png?v=20221020160751",
+   "source": "MarketBeat",
+   "category_within_source": "General",
+   "source_domain": "MarketBeat",
+   "topics": [
+    {
+     "topic": "earnings",
+     "relevance_score": "0.913740"
+    },
+    {
+     "topic": "financial_markets",
+     "relevance_score": "0.818692"
+    },
+    {
+     "topic": "technology",
+     "relevance_score": "0.710645"
+    }
+   ],
+   "overall_sentiment_score": -0.076853,
+   "overall_sentiment_label": "Neutral",
+   "ticker_sentiment": [
+    {
+     "ticker": "IBM",
+     "relevance_score": "1.000000",
+     "ticker_sentiment_score": "-0.190988",
+     "ticker_sentiment_label": "Somewhat-Bearish"
+    },
+    {
+     "ticker": "NVDA",
+     "relevance_score": "0.600257",
+     "ticker_sentiment_score": "0.135077",
+     "ticker_sentiment_label": "Neutral"
+    }
+   ]
+  },
+  {
+   "title": "KKR Doubles Private Debt Deals to $80 Billion as AI Spending Explodes",
+   "url": "https://finance.yahoo.com/markets/stocks/articles/kkr-doubles-private-debt-deals-204851814.html",
+   "time_published": "20260916T205227",
+   "authors": [
+    "Caroline Ryan"
+   ],
+   "summary": "KKR & Co. has significantly expanded its private investment-grade financing business, with deals totaling over $80 billion in the first half of 2026, more than double last year's amount. This growth is driven by companies seeking flexible alternatives to traditional bank financing, with demand for AI infrastructure expected to further fuel private credit. KKR also joined a partnership to mobilize over $500 billion for AI infrastructure buildout.",
+   "banner_image": "https://s.yimg.com/lo/mysterio/api/95ba5b1f7f413a505942aa8dd67e91da520594b2308665de3d2c1ba371ab04c3/lightyear_networkapi/resizefit_w960%3Bquality_80%3Bformat_webp/https%3A%2F%2Fmedia.zenfs.com%2Fen%2Fbenzinga_private_markets_129%2F498b3f86bfff43485bf4899e9b23a2f4.jpg",
+   "source": "Yahoo Finance",
+   "category_within_source": "General",
+   "source_domain": "Yahoo Finance",
+   "topics": [
+    {
+     "topic": "finance",
+     "relevance_score": "1.000000"
+    },
+    {
+     "topic": "technology",
+     "relevance_score": "0.816157"
+    },
+    {
+     "topic": "financial_markets",
+     "relevance_score": "0.702857"
+    }
+   ],
+   "overall_sentiment_score": 0.363646,
+   "overall_sentiment_label": "Bullish",
+   "ticker_sentiment": [
+    {
+     "ticker": "KKR",
+     "relevance_score": "1.000000",
+     "ticker_sentiment_score": "0.446664",
+     "ticker_sentiment_label": "Bullish"
+    },
+    {
+     "ticker": "NVDA",
+     "relevance_score": "0.617216",
+     "ticker_sentiment_score": "0.306079",
+     "ticker_sentiment_label": "Somewhat-Bullish"
+    }
+   ]
+  },
+  {
+   "title": "Salesforce (CRM), Why Is The Latest Attention Building?",
+   "url": "https://ca.finance.yahoo.com/news/salesforce-crm-why-latest-attention-180956321.html",
+   "time_published": "20260916T181123",
+   "authors": [
+    "Simply Wall St."
+   ],
+   "summary": "Salesforce (CRM) stock is gaining attention after its Dreamforce 2026 event, where the company highlighted Agentforce, a new Koa reasoning model developed with Nvidia, and expanded AI partnerships. The stock has shown strong short-term momentum but a more subdued long-term performance. Currently, Salesforce is considered fairly valued by the market, with its AI strategy pivoting from per-seat licensing to a per-action model, emphasizing its role as a data layer for enterprise AI.",
+   "banner_image": "https://s.yimg.com/lo/mysterio/api/f853aeb65b965cd54ff0edbc8191a67a0c722065b7910dc8fe9059ccca6befed/lightyear_networkapi/resizefit_w960%3Bquality_80%3Bformat_webp/https%3A%2F%2Fmedia.zenfs.com%2Fen%2Fsimply_wall_st__316%2F84768cd6bfc6279729bf1c1f29cc1625.jpg",
+   "source": "Yahoo! Finance Canada",
+   "category_within_source": "General",
+   "source_domain": "Yahoo! Finance Canada",
+   "topics": [
+    {
+     "topic": "technology",
+     "relevance_score": "1.000000"
+    },
+    {
+     "topic": "financial_markets",
+     "relevance_score": "0.929573"
+    },
+    {
+     "topic": "earnings",
+     "relevance_score": "0.727027"
+    }
+   ],
+   "overall_sentiment_score": 0.18848,
+   "overall_sentiment_label": "Somewhat-Bullish",
+   "ticker_sentiment": [
+    {
+     "ticker": "CRM",
+     "relevance_score": "1.000000",
+     "ticker_sentiment_score": "0.232554",
+     "ticker_sentiment_label": "Somewhat-Bullish"
+    },
+    {
+     "ticker": "NVDA",
+     "relevance_score": "0.628651",
+     "ticker_sentiment_score": "0.133121",
+     "ticker_sentiment_label": "Neutral"
+    }
+   ]
+  },
+  {
+   "title": "SMCI Has Something Nvidia Doesn\u2019t. Here\u2019s Why That Matters",
+   "url": "https://247wallst.com/investing/2026/09/16/smci-has-something-nvidia-doesnt-heres-why-that-matters/",
+   "time_published": "20260916T163047",
+   "authors": [
+    "Vandita Jadeja"
+   ],
+   "summary": "Super Micro Computer (SMCI) is positioned for significant growth, with a target price of $60 by 2027, despite trading at a low forward earnings multiple. Unlike Nvidia, which designs chips, SMCI builds complete AI factories including servers and liquid cooling, creating a unique \"one-stop-shop\" advantage. The company benefits from a record $60 billion order backlog and strong Q4 earnings, suggesting Wall Street may be underestimating its potential.",
+   "banner_image": "https://247wallst.com/wp-content/uploads/2018/03/balticservers_data_center-e1520874449488.jpg",
+   "source": "24/7 Wall St.",
+   "category_within_source": "General",
+   "source_domain": "24/7 Wall St.",
+   "topics": [
+    {
+     "topic": "earnings",
+     "relevance_score": "0.905995"
+    },
+    {
+     "topic": "financial_markets",
+     "relevance_score": "0.809700"
+    },
+    {
+     "topic": "technology",
+     "relevance_score": "0.743346"
+    }
+   ],
+   "overall_sentiment_score": 0.179557,
+   "overall_sentiment_label": "Somewhat-Bullish",
+   "ticker_sentiment": [
+    {
+     "ticker": "SMCI",
+     "relevance_score": "1.000000",
+     "ticker_sentiment_score": "0.533605",
+     "ticker_sentiment_label": "Bullish"
+    },
+    {
+     "ticker": "NVDA",
+     "relevance_score": "0.827887",
+     "ticker_sentiment_score": "0.266831",
+     "ticker_sentiment_label": "Somewhat-Bullish"
+    },
+    {
+     "ticker": "ORCL",
+     "relevance_score": "0.606350",
+     "ticker_sentiment_score": "0.184965",
+     "ticker_sentiment_label": "Somewhat-Bullish"
+    },
+    {
+     "ticker": "FSLR",
+     "relevance_score": "0.567691",
+     "ticker_sentiment_score": "-0.119923",
+     "ticker_sentiment_label": "Neutral"
+    },
+    {
+     "ticker": "ENPH",
+     "relevance_score": "0.559722",
+     "ticker_sentiment_score": "-0.117431",
+     "ticker_sentiment_label": "Neutral"
+    }
+   ]
+  },
+  {
+   "title": "Super Micro Rebounds 3% After This Week's AI Infrastructure Selloff",
+   "url": "https://www.benzinga.com/markets/tech/26/09/61820795/super-micro-rebounds-3-after-this-weeks-ai-infrastructure-selloff",
+   "time_published": "20260916T155347",
+   "authors": [],
+   "summary": "Super Micro Computer (SMCI) stock rose nearly 3% after a week of selloffs in the AI infrastructure sector, including semiconductors. This rebound occurred as investors returned to AI infrastructure and server-related stocks, despite caution ahead of the Federal Reserve's interest rate decision. SMCI's stock performance is significant due to its weight in several ETFs, influencing automatic buying or selling based on fund flows.",
+   "banner_image": "https://cdn.benzinga.com/cdn-cgi/image/width=3840,format=auto,quality=85/files/images/story/2025/07/24/article-header-background-image.png",
+   "source": "Benzinga",
+   "category_within_source": "General",
+   "source_domain": "Benzinga",
+   "topics": [
+    {
+     "topic": "financial_markets",
+     "relevance_score": "0.910559"
+    },
+    {
+     "topic": "technology",
+     "relevance_score": "0.843176"
+    },
+    {
+     "topic": "economy_monetary",
+     "relevance_score": "0.628214"
+    }
+   ],
+   "overall_sentiment_score": 0.220037,
+   "overall_sentiment_label": "Somewhat-Bullish",
+   "ticker_sentiment": [
+    {
+     "ticker": "SMCI",
+     "relevance_score": "1.000000",
+     "ticker_sentiment_score": "0.374514",
+     "ticker_sentiment_label": "Bullish"
+    },
+    {
+     "ticker": "NVDA",
+     "relevance_score": "0.802507",
+     "ticker_sentiment_score": "0.249801",
+     "ticker_sentiment_label": "Somewhat-Bullish"
+    },
+    {
+     "ticker": "AMD",
+     "relevance_score": "0.731882",
+     "ticker_sentiment_score": "0.205736",
+     "ticker_sentiment_label": "Somewhat-Bullish"
+    },
+    {
+     "ticker": "AVGO",
+     "relevance_score": "0.616247",
+     "ticker_sentiment_score": "0.193068",
+     "ticker_sentiment_label": "Somewhat-Bullish"
+    },
+    {
+     "ticker": "INTC",
+     "relevance_score": "0.556265",
+     "ticker_sentiment_score": "0.181278",
+     "ticker_sentiment_label": "Somewhat-Bullish"
+    }
+   ]
+  }
+ ]
+}
