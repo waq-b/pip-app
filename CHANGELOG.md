@@ -22,6 +22,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added: `docker-compose.yml` — local Postgres 17 for development, serving the `DATABASE_URL` in `.env.example` (#3226691746)
 - Added: Auth.js tables (`accounts`, `sessions`, `verification_tokens`) and `waitlist` to the Drizzle schema; `users` gains the profile columns Auth.js expects (#3226691746)
 - Added: first generated migration in `apps/api/drizzle/`, plus `db:generate` / `db:migrate` / `db:studio` scripts (#3226691746)
+- Added: Google sign-in via Auth.js — `@auth/core` mounted on Fastify by hand at `/auth/*` (there is no published `@auth/fastify`), with the Drizzle adapter and server-side database sessions (#3226677189)
+- Added: the allowlist gate in `callbacks.signIn` — unverified, unlisted and email-less sign-ins are all sent to `/not-on-the-list`, so an empty allowlist admits nobody (#3226677189)
+- Added: `AllowlistStore` and `SessionStore` interfaces with Postgres and in-memory implementations, so auth tests never open a socket (#3226677189)
+- Added: 12h idle session expiry plus a 7-day absolute cap via a new `sessions.created_at` column and `isLive()` (#3226677189)
+- Added: `pnpm --filter api allowlist <list|add|remove>` CLI, the only way to grant access (#3226677189)
+- Fixed: `apps/api` ran every test suite twice, the second time against stale compiled output in `dist/`; vitest now excludes it (#3226677189)
 
 ### Phase 0 — Scaffold
 

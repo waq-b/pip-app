@@ -92,6 +92,25 @@ interface Provider {
 
 A separate `market/` provider layer (prices, historical series — CLAUDE.md section 4) does not exist yet; it's introduced in Phase 2 alongside the first market data source.
 
+## Auth
+
+Google is the only way in, and being known to Google is not the same as being allowed in — the `allowlist` table decides that (CLAUDE.md hard line 4).
+
+**Mounting.** There is no official Fastify adapter (`@auth/fastify` is not published), so `apps/api/src/auth/plugin.ts` mounts `@auth/core`'s `Auth()` handler on `/auth/*` itself: it converts the Fastify request into a Web `Request`, and pipes the `Response` back. Two details matter — Auth.js parses the form body itself, so the plugin registers a raw `application/x-www-form-urlencoded` parser inside its own scope; and `Set-Cookie` can repeat, so the response path uses `Headers.getSetCookie()` rather than the collapsing accessor.
+
+**The gate.** `callbacks.signIn` (in `auth/config.ts`) is the wall. It refuses anyone whose email Google hasn't verified, anyone absent from the allowlist, and anyone with no email at all, redirecting each to `/not-on-the-list`. An empty allowlist therefore admits nobody, which is the correct default.
+
+**Sessions** are server-side rows, never JWTs: the cookie carries a token and nothing else. Two clocks run:
+
+- `expires` — Auth.js rolls it forward while you're active, so a session dies 12 hours after you stop using it.
+- `sessions.created_at` — ours, because Auth.js only has a rolling window. `isLive()` in `auth/session.ts` caps the session at 7 days however active you've been. The route guard enforces it.
+
+**Testability.** `AllowlistStore` and `SessionStore` are interfaces with a Postgres implementation and an in-memory one. Tests inject the in-memory versions, and `buildApp()` takes the auth config as an option, so the app starts with no environment and no database — the suite never opens a socket.
+
+**Admin.** `pnpm --filter api allowlist <list|add|remove> [email]` is the only way to grant access. Removing an address stops the next sign-in; existing sessions live out their span.
+
+**Env vars** (see `.env.example`): `AUTH_SECRET`, `AUTH_URL`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`. All four are required for the server to boot — `authConfigFromEnv` throws rather than starting half-configured. Cookies are only marked `Secure` when `AUTH_URL` is https.
+
 ## Storage
 
 Postgres via Drizzle ORM. Single `DATABASE_URL` env var — works against local Docker Postgres, Neon, or Supabase, nothing host-specific (see CLAUDE.md section 3; never Render's free Postgres, it expires after 30 days).
@@ -124,4 +143,4 @@ Provider secrets (`T212_API_KEY`, `KRAKEN_API_KEY`, etc.) don't exist as env var
 
 ## Testing
 
-Vitest in all three packages (`apps/web`, `apps/api`, `packages/shared`). `apps/web` additionally uses Testing Library + jsdom for component tests. `pnpm test` from the root runs all three via `pnpm -r test`. CI (`.github/workflows/ci.yml`) runs lint, format check, test, and build on every push to `main` and every PR, entirely in stub mode with no secrets configured.
+Vitest in all three packages (`apps/web`, `apps/api`, `packages/shared`). `apps/web` additionally uses Testing Library + jsdom for component tests. `apps/api/vitest.config.ts` excludes `dist/`: `pnpm build` emits compiled output there, and vitest's default include would otherwise collect it, running every suite twice — the second time against whatever was last compiled. `pnpm test` from the root runs all three via `pnpm -r test`. CI (`.github/workflows/ci.yml`) runs lint, format check, test, and build on every push to `main` and every PR, entirely in stub mode with no secrets configured.

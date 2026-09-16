@@ -8,6 +8,13 @@
       "when": 1789550868377,
       "tag": "0000_lucky_namorita",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789551168630,
+      "tag": "0001_regular_shriek",
+      "breakpoints": true
     }
   ]
 }

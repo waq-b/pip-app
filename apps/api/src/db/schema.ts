@@ -53,8 +53,10 @@ export const accounts = pgTable(
 );
 
 /**
- * Server-side sessions. Short-lived on purpose: 12h idle, 7-day absolute max
- * (docs/phases/phase-1.md). The cookie carries the token, never a user id.
+ * Server-side sessions. Auth.js rolls `expires` forward while someone is
+ * active; `created_at` is ours, and caps the session at 7 days however active
+ * they've been (docs/phases/phase-1.md). The cookie carries the token, never a
+ * user id.
  */
 export const sessions = pgTable("sessions", {
   sessionToken: text("session_token").primaryKey(),
@@ -62,6 +64,7 @@ export const sessions = pgTable("sessions", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   expires: timestamp("expires", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const verificationTokens = pgTable(
