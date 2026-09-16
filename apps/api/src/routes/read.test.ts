@@ -84,6 +84,15 @@ describe("GET /buckets/:id", () => {
     expect(detail.holdings).toHaveLength(5);
     expect(detail.chart.series.length).toBeGreaterThan(0);
     expect(detail.moneyIn.months).toHaveLength(6);
+    // Three letters on every machine — ICU alone would say "Sept" on some.
+    expect(detail.moneyIn.months.map((month) => month.label)).toEqual([
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+    ]);
   });
 
   it("gives every chart a sentence", async () => {

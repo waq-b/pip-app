@@ -1,4 +1,5 @@
 import type { RouteObject } from "react-router";
+import { InstrumentDetailScreen } from "./screens/instrument-detail";
 import { NotOnTheListScreen } from "./screens/not-on-the-list";
 import { Placeholder } from "./screens/placeholder";
 import { PotDetailScreen } from "./screens/pot-detail";
@@ -18,7 +19,7 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <PotsScreen /> },
       { path: "pots/:bucket", element: <PotDetailScreen /> },
-      { path: "instruments/:id", element: <Placeholder name="Holding" /> },
+      { path: "instruments/:id", element: <InstrumentDetailScreen /> },
       { path: "rules", element: <Placeholder name="Your rules" /> },
       { path: "setup", element: <Placeholder name="Setup" /> },
     ],

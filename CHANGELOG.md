@@ -83,6 +83,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added: pot detail states — loading shapes, no history (value kept, only the chart replaced), an empty Side Bet that says it may stay empty, error with retry, and "no such pot" for unknown ids without calling the API (#3226677091)
 - Added: desktop sidebar lists the three pots under Pots while you're inside one, with the current pot lit (#3226677091)
 - Changed: retry policy moved from individual hooks into the app's query client — never retry a 4xx, retry 5xx and network errors twice (#3226677091)
+- Added: holding (instrument) detail screen — pot and ticker chips, quantity and unit price, what it's worth to you with today and since-you-bought led by pounds, a price chart with Day/Month/Year/All pills, the plain-English explainer under the not-advice label, and the read-only footer; a breadcrumb on desktop (#3226677041)
+- Added: price chart captions stating what the price did in pounds, since the API sends none and every chart needs a sentence (#3226677041)
+- Added: holding states — loading shapes, bought today (won't draw one day as a trend), error with retry, and "no such holding" (#3226677041)
+- Fixed: month labels could read "Sept" on some machines, because ICU versions disagree; the API's money-in labels and the chart's start label now use fixed three-letter names (#3226677041)
 
 #### Docs
 

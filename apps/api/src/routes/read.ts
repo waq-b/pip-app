@@ -225,6 +225,13 @@ function flat() {
   return { amount: 0, percent: 0, direction: "flat" as const };
 }
 
+/**
+ * Fixed names rather than `toLocaleString`: ICU versions disagree on September
+ * ("Sep" vs "Sept"), so the label could change between machines. The design
+ * uses three letters.
+ */
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 function monthLabel(isoDate: string): string {
-  return new Date(isoDate).toLocaleString("en-GB", { month: "short", timeZone: "UTC" });
+  return MONTHS[new Date(isoDate).getUTCMonth()]!;
 }
