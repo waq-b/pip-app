@@ -15,6 +15,25 @@ export {
   type RuleSettings,
 } from "./rules.js";
 
+export {
+  DAILY_RECENCY_HOURS,
+  DEFAULT_NAMED_PUBLISHERS,
+  DEFAULT_TRUST_SETTINGS,
+  EMPTY_PROFILE,
+  NUDGE_CADENCES,
+  NUDGE_KINDS,
+  NUDGE_REASONS,
+  NUDGE_RESPONSES,
+  PROFILE_LIMITS,
+  TRUST_LIMITS,
+  type NudgeCadence,
+  type NudgeKind,
+  type NudgeReason,
+  type NudgeResponse,
+  type Profile,
+  type TrustSettings,
+} from "./research.js";
+
 export type {
   AccountKind,
   ActivityEntry,

@@ -52,6 +52,11 @@ describe("user-owned tables", () => {
         "cash",
         "trades",
         "daily_values",
+        "user_rules",
+        "user_profiles",
+        "trust_settings",
+        "digests",
+        "nudges",
       ]),
     );
   });

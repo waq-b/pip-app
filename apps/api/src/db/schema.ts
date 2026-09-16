@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { sql, type SQL } from "drizzle-orm";
 import {
   bigint,
   boolean,
@@ -29,6 +29,12 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   name: text("name"),
   authUserId: uuid("auth_user_id").unique(),
+  /**
+   * Personalised research (Phase 5): nudges written for this person's own plan.
+   * Off by default — everyone else gets general notes (hard line 12). Set only
+   * with the allowlist CLI, never through the API.
+   */
+  personalResearch: boolean("personal_research").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -329,3 +335,311 @@ export const marketSchedules = pgTable("market_schedules", {
   events: jsonb("events").notNull(),
   fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// ─── Phase 5: research ────────────────────────────────────────────────────────
+//
+// Facts are shared, like prices: one fetch per holding for everyone, written by
+// the server, readable when signed in. Profiles, trust settings, weeks and
+// nudges are the user's own.
+//
+// The limits and allowed values below are copies of the constants in
+// `@finance-app/shared` (drizzle-kit can't load the shared package's source).
+// `research-schema.test.ts` fails if they ever differ.
+
+export const DB_BUCKETS = ["Base", "Medium", "Degen"] as const;
+export const DB_NUDGE_CADENCES = ["weekly", "daily"] as const;
+export const DB_NUDGE_KINDS = ["none", "shape", "calendar", "awareness"] as const;
+export const DB_NUDGE_REASONS = {
+  none: ["quiet"],
+  shape: ["cap", "drift"],
+  calendar: ["earnings", "isa_year_end"],
+  awareness: ["news", "move"],
+} as const;
+export const DB_NUDGE_RESPONSES = ["nothing", "acted", "dismissed"] as const;
+export const DB_PROFILE_LIMITS = {
+  textMax: 280,
+  horizonYears: { min: 0, max: 60 },
+  exclusionsMax: 20,
+} as const;
+export const DB_TRUST_LIMITS = {
+  recencyDays: { min: 1, max: 14 },
+  minSources: { min: 1, max: 5 },
+  resultsQuietDays: { min: 0, max: 7 },
+  weeklyBudget: { min: 1, max: 8 },
+  dailyBudgetPerDay: { min: 0, max: 3 },
+  dailyBudgetPerWeek: { min: 0, max: 7 },
+  bigMovePercent: { min: 1, max: 50 },
+  namedPublishers: { min: 1, max: 100 },
+} as const;
+
+/** `column between min and max`, with the numbers from the shared limits. */
+function within(column: SQL | object, limits: { min: number; max: number }): SQL {
+  return sql`${column} between ${sql.raw(String(limits.min))} and ${sql.raw(String(limits.max))}`;
+}
+
+/** `column in ('a', 'b')` from a shared list of values. */
+function oneOf(column: object, values: readonly string[]): SQL {
+  return sql`${column} in (${sql.raw(values.map((value) => `'${value}'`).join(", "))})`;
+}
+
+/**
+ * A news report, from any source (Google News, Alpha Vantage, Marketaux, RSS).
+ * Keyed by a hash of its link, so the same report reached through two sources
+ * is stored once. Only the headline and the source's own short summary are
+ * kept; the article itself is linked, never copied.
+ */
+export const factsNews = pgTable(
+  "facts_news",
+  {
+    /** sha-256 of the canonical url, hex. */
+    id: text("id").primaryKey(),
+    /** Which adapter found it first: `google-news`, `alpha-vantage`, `marketaux`, `rss:<feed>`, `stub`. */
+    source: text("source").notNull(),
+    /** As the source names it: "Reuters". */
+    publisher: text("publisher").notNull(),
+    /** What trust rules match on: `reuters.com`. */
+    publisherDomain: text("publisher_domain").notNull(),
+    headline: text("headline").notNull(),
+    snippet: text("snippet"),
+    url: text("url").notNull(),
+    publishedAt: timestamp("published_at", { withTimezone: true }).notNull(),
+    fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    check("facts_news_headline_length", sql`char_length(${table.headline}) <= 300`),
+    check("facts_news_snippet_length", sql`char_length(${table.snippet}) <= 400`),
+  ],
+);
+
+/** Which holdings a report is about. One report can be about several; an unmatched one is about none. */
+export const factsNewsInstruments = pgTable(
+  "facts_news_instruments",
+  {
+    newsId: text("news_id")
+      .notNull()
+      .references(() => factsNews.id, { onDelete: "cascade" }),
+    instrumentId: text("instrument_id")
+      .notNull()
+      .references(() => instruments.id),
+  },
+  (table) => [primaryKey({ columns: [table.newsId, table.instrumentId] })],
+);
+
+/** Dated facts about a holding — results dates. (ISA year-end is computed, not stored.) */
+export const factsEvents = pgTable(
+  "facts_events",
+  {
+    instrumentId: text("instrument_id")
+      .notNull()
+      .references(() => instruments.id),
+    kind: text("kind").notNull(),
+    onDate: date("on_date").notNull(),
+    /** Source-specific extras: time of day, estimate. */
+    detail: jsonb("detail").notNull().default({}),
+    source: text("source").notNull(),
+    fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.instrumentId, table.kind, table.onDate] }),
+    check("facts_events_kind", oneOf(table.kind, ["earnings"])),
+  ],
+);
+
+/**
+ * When each fact source was last read for each target (an instrument id, or a
+ * feed name for general RSS), so the collector knows what's due. Server-only,
+ * like `source_usage`, which still counts the calls.
+ */
+export const factsFetches = pgTable(
+  "facts_fetches",
+  {
+    source: text("source").notNull(),
+    /** `news` or `events`. */
+    kind: text("kind").notNull(),
+    target: text("target").notNull(),
+    lastFetchedAt: timestamp("last_fetched_at", { withTimezone: true }),
+    lastFailedAt: timestamp("last_failed_at", { withTimezone: true }),
+  },
+  (table) => [primaryKey({ columns: [table.source, table.kind, table.target] })],
+);
+
+/** What a user tells Pip about their plan. No row means an empty profile. */
+export const userProfiles = pgTable(
+  "user_profiles",
+  {
+    userId: uuid("user_id")
+      .primaryKey()
+      .references(() => users.id, { onDelete: "cascade" }),
+    goals: text("goals").notNull().default(""),
+    horizonYears: integer("horizon_years"),
+    monthlyInPence: bigint("monthly_in_pence", { mode: "number" }),
+    riskWords: text("risk_words").notNull().default(""),
+    exclusions: text("exclusions")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    check(
+      "user_profiles_goals_length",
+      sql`char_length(${table.goals}) <= ${sql.raw(String(DB_PROFILE_LIMITS.textMax))}`,
+    ),
+    check(
+      "user_profiles_risk_length",
+      sql`char_length(${table.riskWords}) <= ${sql.raw(String(DB_PROFILE_LIMITS.textMax))}`,
+    ),
+    check("user_profiles_horizon", within(table.horizonYears, DB_PROFILE_LIMITS.horizonYears)),
+    check("user_profiles_monthly_in", sql`${table.monthlyInPence} >= 0`),
+    check(
+      "user_profiles_exclusions_count",
+      sql`cardinality(${table.exclusions}) <= ${sql.raw(String(DB_PROFILE_LIMITS.exclusionsMax))}`,
+    ),
+  ],
+);
+
+/** A user's trust rules. No row means `DEFAULT_TRUST_SETTINGS`. */
+export const trustSettings = pgTable(
+  "trust_settings",
+  {
+    userId: uuid("user_id")
+      .primaryKey()
+      .references(() => users.id, { onDelete: "cascade" }),
+    namedPublishers: text("named_publishers").array().notNull(),
+    recencyDays: integer("recency_days").notNull(),
+    minSources: integer("min_sources").notNull(),
+    resultsQuietDays: integer("results_quiet_days").notNull(),
+    weeklyBudget: integer("weekly_budget").notNull(),
+    dailyBudgetPerDay: integer("daily_budget_per_day").notNull(),
+    dailyBudgetPerWeek: integer("daily_budget_per_week").notNull(),
+    bigMoveBase: integer("big_move_base").notNull(),
+    bigMoveMedium: integer("big_move_medium").notNull(),
+    bigMoveDegen: integer("big_move_degen").notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    check(
+      "trust_settings_publishers",
+      within(sql`cardinality(${table.namedPublishers})`, DB_TRUST_LIMITS.namedPublishers),
+    ),
+    check("trust_settings_recency", within(table.recencyDays, DB_TRUST_LIMITS.recencyDays)),
+    check("trust_settings_min_sources", within(table.minSources, DB_TRUST_LIMITS.minSources)),
+    check("trust_settings_quiet", within(table.resultsQuietDays, DB_TRUST_LIMITS.resultsQuietDays)),
+    check("trust_settings_weekly", within(table.weeklyBudget, DB_TRUST_LIMITS.weeklyBudget)),
+    check(
+      "trust_settings_daily",
+      within(table.dailyBudgetPerDay, DB_TRUST_LIMITS.dailyBudgetPerDay),
+    ),
+    check(
+      "trust_settings_daily_week",
+      within(table.dailyBudgetPerWeek, DB_TRUST_LIMITS.dailyBudgetPerWeek),
+    ),
+    check("trust_settings_move_base", within(table.bigMoveBase, DB_TRUST_LIMITS.bigMovePercent)),
+    check(
+      "trust_settings_move_medium",
+      within(table.bigMoveMedium, DB_TRUST_LIMITS.bigMovePercent),
+    ),
+    check("trust_settings_move_degen", within(table.bigMoveDegen, DB_TRUST_LIMITS.bigMovePercent)),
+  ],
+);
+
+/** One user's week: built once, on the Monday. */
+export const digests = pgTable(
+  "digests",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** The Monday the week starts. */
+    weekOf: date("week_of").notNull(),
+    /** The week's opening sentence. */
+    opening: text("opening").notNull(),
+    /** What the build looked at: holdings checked, reports read, held back by which rule. */
+    counts: jsonb("counts").notNull(),
+    builtAt: timestamp("built_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    unique().on(table.userId, table.weekOf),
+    check("digests_week_of_monday", sql`extract(isodow from ${table.weekOf}) = 1`),
+  ],
+);
+
+/**
+ * The nudge log — every nudge Pip built, shown or held back, with everything it
+ * was built from, what the user did about it, and what happened after. The
+ * thing that tells us, months on, which kinds of nudge earned trust.
+ */
+export const nudges = pgTable(
+  "nudges",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** Null for a daily nudge. */
+    digestId: uuid("digest_id").references(() => digests.id, { onDelete: "cascade" }),
+    cadence: text("cadence").notNull(),
+    kind: text("kind").notNull(),
+    reason: text("reason").notNull(),
+    /** Internal bucket id, when the nudge is about one pot. */
+    bucket: text("bucket"),
+    instrumentId: text("instrument_id").references(() => instruments.id),
+
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    /** "Based on 3 sources over 2 days". */
+    basis: text("basis"),
+
+    /** A frozen copy of every fact row and figure it was built from. */
+    facts: jsonb("facts").notNull(),
+    /** `[{ rule, setting, passed, detail }]` — every trust rule it was checked against. */
+    checks: jsonb("checks").notNull(),
+    /** False when a trust rule held it back. */
+    shown: boolean("shown").notNull(),
+    /** `groq:openai/gpt-oss-120b`, `template` or `stub`. */
+    model: text("model").notNull(),
+    promptVersion: text("prompt_version"),
+    personalised: boolean("personalised").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+
+    response: text("response"),
+    respondedAt: timestamp("responded_at", { withTimezone: true }),
+
+    /** Price of the holding when the nudge was built, in `price_currency`. */
+    priceAt: numeric("price_at"),
+    priceCurrency: text("price_currency"),
+    priceSource: text("price_source"),
+    price7d: numeric("price_7d"),
+    price7dAt: timestamp("price_7d_at", { withTimezone: true }),
+    price30d: numeric("price_30d"),
+    price30dAt: timestamp("price_30d_at", { withTimezone: true }),
+    /** For shape nudges: the pot's share of everything, in percent. */
+    potShareAt: numeric("pot_share_at"),
+    potShare7d: numeric("pot_share_7d"),
+    potShare30d: numeric("pot_share_30d"),
+  },
+  (table) => [
+    check("nudges_cadence", oneOf(table.cadence, DB_NUDGE_CADENCES)),
+    check(
+      "nudges_kind_reason",
+      sql.raw(
+        "(" +
+          Object.entries(DB_NUDGE_REASONS)
+            .map(
+              ([kind, reasons]) =>
+                `("kind" = '${kind}' and "reason" in (${reasons.map((r) => `'${r}'`).join(", ")}))`,
+            )
+            .join(" or ") +
+          ")",
+      ),
+    ),
+    check("nudges_kind", oneOf(table.kind, DB_NUDGE_KINDS)),
+    check("nudges_bucket", oneOf(table.bucket, DB_BUCKETS)),
+    check("nudges_response", oneOf(table.response, DB_NUDGE_RESPONSES)),
+    check(
+      "nudges_weekly_in_a_week",
+      sql`(${table.cadence} = 'weekly') = (${table.digestId} is not null)`,
+    ),
+  ],
+);

@@ -4,6 +4,7 @@
  *   pnpm --filter api allowlist list
  *   pnpm --filter api allowlist add someone@example.com
  *   pnpm --filter api allowlist remove someone@example.com
+ *   pnpm --filter api allowlist personal someone@example.com on|off
  *
  * Needs a real DATABASE_URL.
  */
@@ -12,7 +13,7 @@ import { getDb } from "../db/client.js";
 import { users } from "../db/schema.js";
 import { normaliseEmail } from "./allowlist.js";
 
-const [command, rawEmail] = process.argv.slice(2);
+const [command, rawEmail, rawSwitch] = process.argv.slice(2);
 
 async function main() {
   const db = getDb();
@@ -26,7 +27,8 @@ async function main() {
       }
       for (const row of rows) {
         const linked = row.authUserId ? "signed in" : "not yet signed in";
-        console.log(`${row.email}\t${linked}\t${row.createdAt.toISOString()}`);
+        const research = row.personalResearch ? "personal research" : "general research";
+        console.log(`${row.email}\t${linked}\t${research}\t${row.createdAt.toISOString()}`);
       }
       return;
     }
@@ -47,8 +49,32 @@ async function main() {
       return;
     }
 
+    case "personal": {
+      // Personalised research (Phase 5): nudges written for this person's own
+      // plan. Everyone else gets general notes (hard line 12). Only here, never
+      // through the API.
+      const email = requireEmail(rawEmail);
+      if (rawSwitch !== "on" && rawSwitch !== "off") {
+        console.error("Say on or off: allowlist personal <email> on|off");
+        process.exitCode = 1;
+        return;
+      }
+      const updated = await db
+        .update(users)
+        .set({ personalResearch: rawSwitch === "on" })
+        .where(eq(users.email, email))
+        .returning({ email: users.email });
+      if (updated.length === 0) {
+        console.error(`Not on the allowlist: ${email}`);
+        process.exitCode = 1;
+        return;
+      }
+      console.log(`Personal research ${rawSwitch}: ${email}`);
+      return;
+    }
+
     default:
-      console.error("Usage: allowlist <list|add|remove> [email]");
+      console.error("Usage: allowlist <list|add|remove|personal> [email] [on|off]");
       process.exitCode = 1;
   }
 }

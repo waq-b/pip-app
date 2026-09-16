@@ -21,6 +21,7 @@ The API also answers `GET /api/health` (`{ status: "ok" }`) with no sign-in, for
 - **Asking to be let in.** Someone turned away is still signed in, so they can put themselves on the waiting list. Pip takes the address from their sign-in, so there's no form to fill in and no way to submit somebody else's. Asking twice is harmless.
 - **No promises are made.** No queue position, no countdown, no "we'll email you" — the only emails Pip sends are sign-in links. Waqar grants access by hand.
 - **Access is granted by hand**, with `pnpm --filter api allowlist add <email>`. There is no self-service sign-up, by design.
+- **Personalised research is granted by hand too** (Phase 5): `allowlist personal <email> on`. Off for everyone by default; nothing reads it yet — Your week arrives later in Phase 5.
 
 ## What Pip can tell you
 
