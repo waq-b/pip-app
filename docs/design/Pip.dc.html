@@ -1,0 +1,1583 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/organic-286c4e68-8af6-4496-ad73-dd6583daf908/styles.css">
+<script src="_ds/organic-286c4e68-8af6-4496-ad73-dd6583daf908/_ds_bundle.js"></script>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caprasimo&family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #ded4c2; }
+  body:has(.board-dark) { background: #141110; }
+  a { color: #8c491a; text-underline-offset: 3px; }
+  a:hover { color: #b2622d; }
+  .board { --board:#ded4c2; --panel:#f5ead8; --bink:#201e1d; --bink2:rgba(32,30,29,.80); --bink3:rgba(32,30,29,.74); --brule:rgba(32,30,29,.15); --k-fnd:#3d472b; --k-pick:#643312; --k-bet:#7a2418; }
+  .board-dark { --board:#141110; --panel:#241f1a; --bink:#f3ead9; --bink2:rgba(243,234,217,.84); --bink3:rgba(243,234,217,.66); --brule:rgba(243,234,217,.18); --k-fnd:#ccdbb2; --k-pick:#ffc6a5; --k-bet:#ffc7bf; }
+  .pip {
+    --bg:#ebddc5; --card:#f5ead8; --sunk:#e3d4ba; --ink:#201e1d;
+    --ink2:rgba(32,30,29,.80); --ink3:rgba(32,30,29,.72); --line:rgba(32,30,29,.12);
+    --up:#56633f; --dn:#a33327; --skel:rgba(32,30,29,.10);
+    --acc:#c67139; --tint:#ffe1d0; --aink:#643312;
+    --solid:#8c491a; --solidInk:#fff4ea;
+  }
+  .pip-dark {
+    --bg:#1c1815; --card:#2a241e; --sunk:#171310; --ink:#f3ead9;
+    --ink2:rgba(243,234,217,.84); --ink3:rgba(243,234,217,.68); --line:rgba(243,234,217,.14);
+    --up:#aebf92; --dn:#f08a7e; --skel:rgba(243,234,217,.09);
+    --acc:#f6a06b; --tint:#3a2a1d; --aink:#ffc6a5;
+    --solid:#f6a06b; --solidInk:#241a12;
+  }
+  .pip-fnd { --acc:#7a8a5e; --tint:#e1eecc; --aink:#3d472b; }
+  .pip-pick { --acc:#c67139; --tint:#ffe1d0; --aink:#643312; }
+  .pip-bet { --acc:#c0392c; --tint:#ffdcd6; --aink:#7a2418; }
+  .pip-dark.pip-fnd, .pip-dark .pip-fnd { --acc:#aebf92; --tint:#2d3323; --aink:#ccdbb2; }
+  .pip-dark.pip-pick, .pip-dark .pip-pick { --acc:#f6a06b; --tint:#3a2a1d; --aink:#ffc6a5; }
+  .pip-dark.pip-bet, .pip-dark .pip-bet { --acc:#f08a7e; --tint:#3d211c; --aink:#ffc7bf; }
+  .up { color: var(--up); }
+  .dn { color: var(--dn); }
+  @keyframes pipPulse { 0%,100% { opacity:.45 } 50% { opacity:.95 } }
+  .sk { background: var(--skel); border-radius: 10px; animation: pipPulse 1.5s ease-in-out infinite; }
+  @keyframes pipSpin { to { transform: rotate(360deg) } }
+  .spin { animation: pipSpin 1s linear infinite; }
+  .tap { cursor: pointer; -webkit-tap-highlight-color: transparent; transition: filter .12s ease; }
+  .tap:hover { filter: brightness(.97); }
+  .pip-dark .tap:hover { filter: brightness(1.12); }
+  .tap:focus-visible { outline: 2px solid var(--acc); outline-offset: 3px; }
+  .noscroll::-webkit-scrollbar { width: 0; height: 0; }
+  .lbl { font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--bink2); font-weight:700; }
+</style>
+</helmet>
+
+<div class="board {{ boardCls }}" style="background:var(--board);color:var(--bink);font-family:'Figtree',system-ui,sans-serif;padding:64px 56px 120px;display:flex;flex-direction:column;gap:96px;min-width:1240px">
+
+<div style="display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap">
+  <div style="display:flex;align-items:center;gap:13px">
+    <svg width="32" height="32" viewBox="0 0 56 56" aria-hidden="true"><circle cx="19" cy="20" r="13" fill="#7a8a5e"></circle><circle cx="36.5" cy="25" r="10" fill="#c67139"></circle><circle cx="27" cy="41.5" r="6.5" fill="#c0392c"></circle></svg>
+    <span style="font-family:'Caprasimo',serif;font-size:27px;letter-spacing:-.02em">Pip</span>
+    <span style="font-size:13.5px;color:var(--bink3);font-weight:600;padding-bottom:2px">Personal investing · design board</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <span class="lbl">Theme</span>
+    <div style="display:flex;gap:4px;background:var(--panel);padding:4px;border-radius:999px;box-shadow:0 0 0 1px var(--brule)">
+      <button class="tap" onClick="{{ boardLight }}" style="border:0;background:{{ bbgLight }};color:{{ bfgLight }};font:inherit;font-size:13px;font-weight:700;padding:9px 18px;border-radius:999px">Light</button>
+      <button class="tap" onClick="{{ boardDark }}" style="border:0;background:{{ bbgDark }};color:{{ bfgDark }};font:inherit;font-size:13px;font-weight:700;padding:9px 18px;border-radius:999px">Dark</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ 01 · BRAND ════════════════ -->
+<section style="display:flex;flex-direction:column;gap:40px">
+  <div style="display:flex;align-items:center;gap:18px">
+    <span class="lbl">01 — Brand</span>
+    <span style="flex:1;height:2px;background:var(--brule)"></span>
+  </div>
+
+  <div style="display:flex;gap:72px;flex-wrap:wrap;align-items:flex-start">
+    <div style="display:flex;flex-direction:column;gap:22px;max-width:420px">
+      <div style="display:flex;align-items:center;gap:16px">
+        <svg width="60" height="60" viewBox="0 0 56 56" aria-label="Pip logo mark"><circle cx="19" cy="20" r="13" fill="#7a8a5e"></circle><circle cx="36.5" cy="25" r="10" fill="#c67139"></circle><circle cx="27" cy="41.5" r="6.5" fill="#c0392c"></circle></svg>
+        <span style="font-family:'Caprasimo',serif;font-size:58px;line-height:1;letter-spacing:-.025em">Pip</span>
+      </div>
+      <div style="font-family:'Caprasimo',serif;font-size:25px;line-height:1.22;letter-spacing:-.01em">Three pots. One number.<br>No homework.</div>
+      <p style="font-size:15px;line-height:1.62;color:var(--bink2);margin:0">A pip is a seed — the smallest thing that grows. Three seeds at three sizes <em>is</em> the product: a big calm one you never touch, a middle one you chose yourself, and a small hot one you're allowed to gamble with. The mark never rearranges; only the colour changes.</p>
+      <p style="font-size:15px;line-height:1.62;color:var(--bink2);margin:0">Voice: a mate who's good with money and bad at jargon. Leads with pounds, never percentages alone. Tells you when to do nothing — which is most days.</p>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <span class="lbl">Mark · four grounds</span>
+      <div style="display:flex;gap:14px;flex-wrap:wrap">
+        <div style="width:96px;height:96px;border-radius:30px;background:#f5ead8;display:grid;place-items:center;box-shadow:0 0 0 1px rgba(32,30,29,.12)"><svg width="50" height="50" viewBox="0 0 56 56"><circle cx="19" cy="20" r="13" fill="#7a8a5e"></circle><circle cx="36.5" cy="25" r="10" fill="#c67139"></circle><circle cx="27" cy="41.5" r="6.5" fill="#c0392c"></circle></svg></div>
+        <div style="width:96px;height:96px;border-radius:30px;background:#1c1815;display:grid;place-items:center"><svg width="50" height="50" viewBox="0 0 56 56"><circle cx="19" cy="20" r="13" fill="#aebf92"></circle><circle cx="36.5" cy="25" r="10" fill="#f6a06b"></circle><circle cx="27" cy="41.5" r="6.5" fill="#f08a7e"></circle></svg></div>
+        <div style="width:96px;height:96px;border-radius:30px;background:#c67139;display:grid;place-items:center"><svg width="50" height="50" viewBox="0 0 56 56"><circle cx="19" cy="20" r="13" fill="#f5ead8"></circle><circle cx="36.5" cy="25" r="10" fill="#f5ead8" opacity=".74"></circle><circle cx="27" cy="41.5" r="6.5" fill="#f5ead8" opacity=".52"></circle></svg></div>
+        <div style="width:96px;height:96px;border-radius:999px;background:#f5ead8;display:grid;place-items:center;box-shadow:0 0 0 1px rgba(32,30,29,.12)"><svg width="30" height="30" viewBox="0 0 56 56"><circle cx="19" cy="20" r="13" fill="#201e1d"></circle><circle cx="36.5" cy="25" r="10" fill="#201e1d"></circle><circle cx="27" cy="41.5" r="6.5" fill="#201e1d"></circle></svg></div>
+      </div>
+      <div style="font-size:13px;color:var(--bink3);line-height:1.5;max-width:420px">Full colour · dark ground · reversed on terracotta · one-ink for the 16px favicon.</div>
+
+      <span class="lbl" style="margin-top:20px">Type</span>
+      <div style="background:var(--panel);border-radius:24px;padding:22px 24px;max-width:420px">
+        <div style="font-family:'Caprasimo',serif;font-size:40px;line-height:1.05;letter-spacing:-.02em">£11,430</div>
+        <div style="font-size:12px;color:var(--bink3);margin:6px 0 16px">Caprasimo — every big number and every heading. Nothing else.</div>
+        <div style="font-size:15px;line-height:1.6;font-weight:500">Figtree carries all interface copy, labels and small print. Two faces, no exceptions — 600 for emphasis, 400 for prose.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- bucket identities -->
+  <div>
+    <span class="lbl">The three pots</span>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(280px,1fr));gap:18px;margin-top:14px;max-width:1120px">
+      <div style="background:var(--panel);border-radius:26px;padding:24px;border-left:9px solid #7a8a5e">
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px"><span style="width:13px;height:13px;border-radius:999px;background:#7a8a5e"></span><span style="font-family:'Caprasimo',serif;font-size:24px">Foundation</span></div>
+        <div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--k-fnd);font-weight:600;margin-bottom:12px">Sage · autopilot · 70%</div>
+        <p style="font-size:14px;line-height:1.55;color:var(--bink2);margin:0">The ISA that quietly drips into world index funds. Calm type, generous air, no red unless something genuinely matters. The pot you're meant to forget.</p>
+      </div>
+      <div style="background:var(--panel);border-radius:26px;padding:24px;border-left:9px solid #c67139">
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px"><span style="width:13px;height:13px;border-radius:999px;background:#c67139"></span><span style="font-family:'Caprasimo',serif;font-size:24px">Handpicked</span></div>
+        <div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--k-pick);font-weight:600;margin-bottom:12px">Terracotta · yours · 25%</div>
+        <p style="font-size:14px;line-height:1.55;color:var(--bink2);margin:0">Shares and ETFs you chose on purpose. Warm and faintly proud — it shows real company names, because these are ones you've heard of.</p>
+      </div>
+      <div style="background:var(--panel);border-radius:26px;padding:24px;border-left:9px solid #c0392c;background-image:repeating-linear-gradient(135deg,rgba(192,57,44,.07) 0 9px,transparent 9px 18px)">
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px"><span style="width:13px;height:13px;border-radius:999px;background:#c0392c"></span><span style="font-family:'Caprasimo',serif;font-size:24px">Side Bet</span></div>
+        <div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--k-bet);font-weight:600;margin-bottom:12px">Hot clay · capped · 5%</div>
+        <p style="font-size:14px;line-height:1.55;color:var(--bink2);margin:0">The crypto corner, on a leash. Always drawn inside a hatched fence with a hard border, so it reads as "the risky bit" from across the room — and never looks like the other two.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- palette -->
+  <div style="display:flex;gap:56px;flex-wrap:wrap">
+    <div>
+      <span class="lbl">Light ground</span>
+      <div style="display:flex;gap:10px;margin-top:12px">
+        <div style="width:78px"><div style="height:60px;border-radius:16px;background:#f5ead8;box-shadow:inset 0 0 0 1px var(--brule)"></div><div style="font-size:10.5px;margin-top:6px;color:var(--bink3)">card<br>f5ead8</div></div>
+        <div style="width:78px"><div style="height:60px;border-radius:16px;background:#ebddc5"></div><div style="font-size:10.5px;margin-top:6px;color:var(--bink3)">ground<br>ebddc5</div></div>
+        <div style="width:78px"><div style="height:60px;border-radius:16px;background:#201e1d"></div><div style="font-size:10.5px;margin-top:6px;color:var(--bink3)">ink<br>201e1d</div></div>
+        <div style="width:78px"><div style="height:60px;border-radius:16px;background:#56633f"></div><div style="font-size:10.5px;margin-top:6px;color:var(--bink3)">up<br>56633f</div></div>
+        <div style="width:78px"><div style="height:60px;border-radius:16px;background:#a33327"></div><div style="font-size:10.5px;margin-top:6px;color:var(--bink3)">down<br>a33327</div></div>
+      </div>
+    </div>
+    <div>
+      <span class="lbl">Dark ground</span>
+      <div style="display:flex;gap:10px;margin-top:12px">
+        <div style="width:78px"><div style="height:60px;border-radius:16px;background:#2a241e"></div><div style="font-size:10.5px;margin-top:6px;color:var(--bink3)">card<br>2a241e</div></div>
+        <div style="width:78px"><div style="height:60px;border-radius:16px;background:#1c1815"></div><div style="font-size:10.5px;margin-top:6px;color:var(--bink3)">ground<br>1c1815</div></div>
+        <div style="width:78px"><div style="height:60px;border-radius:16px;background:#f3ead9"></div><div style="font-size:10.5px;margin-top:6px;color:var(--bink3)">ink<br>f3ead9</div></div>
+        <div style="width:78px"><div style="height:60px;border-radius:16px;background:#aebf92"></div><div style="font-size:10.5px;margin-top:6px;color:var(--bink3)">up<br>aebf92</div></div>
+        <div style="width:78px"><div style="height:60px;border-radius:16px;background:#f08a7e"></div><div style="font-size:10.5px;margin-top:6px;color:var(--bink3)">down<br>f08a7e</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ 02 · SIGN-IN ════════════════ -->
+<section style="display:flex;flex-direction:column;gap:28px">
+  <div style="display:flex;align-items:center;gap:18px">
+    <span class="lbl">02 — Getting in</span>
+    <span style="flex:1;height:2px;background:var(--brule)"></span>
+  </div>
+  <p style="font-size:14.5px;line-height:1.6;color:var(--bink3);margin:0;max-width:640px">One button. No passwords to forget, no email verification loop, nothing to set up before you can see anything. Pip is invite-only for now, so the door has to be able to say no kindly.</p>
+
+  <div style="display:flex;gap:18px;flex-wrap:wrap">
+    <div class="pip {{ dk }}" style="width:300px;border-radius:30px;background:var(--bg);color:var(--ink);padding:20px 18px;box-shadow:0 0 0 1px var(--brule)">
+      <div class="lbl" style="margin-bottom:14px">Sign in</div>
+      <div style="background:var(--card);border-radius:24px;padding:30px 20px 24px;display:flex;flex-direction:column;align-items:flex-start;gap:16px">
+        <svg width="52" height="52" viewBox="0 0 56 56"><circle cx="19" cy="20" r="13" fill="#7a8a5e"></circle><circle cx="36.5" cy="25" r="10" fill="#c67139"></circle><circle cx="27" cy="41.5" r="6.5" fill="#c0392c"></circle></svg>
+        <div style="font-family:'Caprasimo',serif;font-size:27px;line-height:1.18;letter-spacing:-.015em">Three pots.<br>One number.<br>No homework.</div>
+        <div style="font-size:13.5px;line-height:1.55;color:var(--ink2);font-weight:500">Pip shows you your money in plain English. It can look, never touch.</div>
+        <button class="tap" style="width:100%;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:14.5px;font-weight:700;padding:14px 18px;border-radius:999px;display:flex;align-items:center;gap:12px">
+          <svg width="19" height="19" viewBox="0 0 48 48" style="flex:0 0 19px"><path fill="#4285F4" d="M45 24c0-1.6-.1-2.7-.4-4H24v8h12c-.2 2-1.5 5-4.7 7l6.4 5C41.4 36.2 45 30.8 45 24z"></path><path fill="#34A853" d="M24 46c5.9 0 10.9-2 14.5-5.3l-6.4-5c-1.9 1.3-4.5 2.2-8.1 2.2-6.1 0-11.2-4-13-9.5l-6.7 5.2C8 41 15.4 46 24 46z"></path><path fill="#FBBC05" d="M11 28.4c-.5-1.4-.8-2.9-.8-4.4s.3-3 .8-4.4l-6.7-5.2C2.8 17.3 2 20.5 2 24s.8 6.7 2.3 9.6l6.7-5.2z"></path><path fill="#EA4335" d="M24 10.2c3.3 0 6.3 1.2 8.6 3.4l5.7-5.7C34.9 4.6 29.9 2 24 2 15.4 2 8 7 4.3 14.4l6.7 5.2c1.8-5.5 6.9-9.4 13-9.4z"></path></svg>
+          Continue with Google
+        </button>
+        <div style="font-size:11.5px;color:var(--ink3);line-height:1.5;font-weight:500">Invite-only while it's young. Pip reads your name and email, nothing else.</div>
+      </div>
+    </div>
+
+    <div class="pip {{ dk }}" style="width:300px;border-radius:30px;background:var(--bg);color:var(--ink);padding:20px 18px;box-shadow:0 0 0 1px var(--brule)">
+      <div class="lbl" style="margin-bottom:14px">Loading · signing in</div>
+      <div style="background:var(--card);border-radius:24px;padding:30px 20px;display:flex;flex-direction:column;align-items:center;gap:16px;min-height:262px;justify-content:center">
+        <svg class="spin" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2.75" stroke-linecap="round"><path d="M12 3a9 9 0 1 0 9 9"></path></svg>
+        <div style="font-family:'Caprasimo',serif;font-size:20px;text-align:center;line-height:1.25">Checking you're on the list</div>
+        <div style="font-size:12.5px;color:var(--ink2);text-align:center;font-weight:500;line-height:1.5">Two seconds. Pip is only asking Google who you are.</div>
+      </div>
+    </div>
+
+    <div class="pip {{ dk }}" style="width:300px;border-radius:30px;background:var(--bg);color:var(--ink);padding:20px 18px;box-shadow:0 0 0 1px var(--brule)">
+      <div class="lbl" style="margin-bottom:14px">Not on the list yet</div>
+      <div style="background:var(--card);border-radius:24px;padding:26px 20px;display:flex;flex-direction:column;align-items:flex-start;gap:14px">
+        <svg width="46" height="46" viewBox="0 0 56 56" opacity=".55"><circle cx="19" cy="20" r="13" fill="none" stroke="#7a8a5e" stroke-width="2.5" stroke-dasharray="5 4"></circle><circle cx="36.5" cy="25" r="10" fill="none" stroke="#c67139" stroke-width="2.5" stroke-dasharray="5 4"></circle><circle cx="27" cy="41.5" r="6.5" fill="none" stroke="#c0392c" stroke-width="2.5" stroke-dasharray="5 4"></circle></svg>
+        <div style="font-family:'Caprasimo',serif;font-size:23px;line-height:1.2">You're not on the list — yet</div>
+        <div style="font-size:13.5px;line-height:1.55;color:var(--ink2);font-weight:500">Pip is invite-only while it's small. We've noted <strong>test@example.com</strong> and we'll email the moment there's room.</div>
+        <button class="tap" style="border:0;background:var(--solid);color:var(--solidInk);font:inherit;font-size:14px;font-weight:700;padding:12px 20px;border-radius:999px;text-align:left">Put me on the waiting list</button>
+        <button class="tap" style="border:0;background:transparent;color:var(--solid);font:inherit;font-size:13.5px;font-weight:700;padding:2px 0;text-align:left">Try a different account</button>
+        <div style="font-size:11.5px;color:var(--ink3);line-height:1.5;font-weight:500">No queue position, no countdown, no dark patterns. Just an email when it's your turn.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ 03 · THE APP ════════════════ -->
+<section style="display:flex;flex-direction:column;gap:32px">
+  <div style="display:flex;align-items:center;gap:18px">
+    <span class="lbl">03 — The app · tap it</span>
+    <span style="flex:1;height:2px;background:var(--brule)"></span>
+  </div>
+
+  <div style="display:flex;gap:56px;align-items:flex-start;flex-wrap:wrap">
+    <!-- ── live phone ── -->
+    <div class="pip {{ themeCls }}" style="width:390px;height:844px;flex:0 0 390px;border-radius:48px;overflow:hidden;background:var(--bg);color:var(--ink);font-size:15px;display:flex;flex-direction:column;box-shadow:0 0 0 1px rgba(32,30,29,.16), 0 24px 60px rgba(46,43,37,.26)">
+
+      <div style="height:48px;flex:0 0 48px;display:flex;align-items:center;justify-content:space-between;padding:0 30px;font-size:13.5px;font-weight:700">
+        <span>9:41</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect y="7" width="3" height="4" rx="1"></rect><rect x="4.5" y="5" width="3" height="6" rx="1"></rect><rect x="9" y="2.5" width="3" height="8.5" rx="1"></rect><rect x="13.5" width="3" height="11" rx="1" opacity=".35"></rect></svg>
+          <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x=".5" y=".5" width="20" height="11" rx="3.5" stroke="currentColor" opacity=".45"></rect><rect x="2" y="2" width="14" height="8" rx="2" fill="currentColor"></rect><path d="M22.5 4v4a2.3 2.3 0 0 0 0-4z" fill="currentColor" opacity=".45"></path></svg>
+        </div>
+      </div>
+
+      <div class="noscroll" style="flex:1;overflow-y:auto;padding:0 20px 24px">
+
+        <!-- ─── HOME ─── -->
+        <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0 16px">
+            <div style="display:flex;align-items:center;gap:9px">
+              <svg width="26" height="26" viewBox="0 0 56 56"><circle cx="19" cy="20" r="13" fill="#7a8a5e"></circle><circle cx="36.5" cy="25" r="10" fill="#c67139"></circle><circle cx="27" cy="41.5" r="6.5" fill="#c0392c"></circle></svg>
+              <span style="font-family:'Caprasimo',serif;font-size:21px;letter-spacing:-.015em">Pip</span>
+            </div>
+            <button class="tap" onClick="{{ toggleTheme }}" style="border:0;background:var(--card);color:var(--ink2);font:inherit;font-size:12px;font-weight:600;padding:7px 14px;border-radius:999px;display:flex;align-items:center;gap:7px">
+              <span style="width:7px;height:7px;border-radius:999px;background:var(--up)"></span>Synced 4 min ago
+            </button>
+          </div>
+
+          <div style="background:var(--card);border-radius:30px;padding:24px 22px 22px;display:flex;flex-direction:column;gap:16px">
+            <div style="font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink2);font-weight:600">Your week</div>
+            <div style="font-family:'Caprasimo',serif;font-size:28px;line-height:1.18;letter-spacing:-.015em;text-wrap:pretty">Up <span class="up">£41</span> this week.<br>Nothing needs you.</div>
+            <div style="height:1px;background:var(--line)"></div>
+            <div>
+              <div style="font-size:12.5px;color:var(--ink2);font-weight:500">Everything you own</div>
+              <div style="display:flex;align-items:baseline;gap:8px;margin-top:4px">
+                <span style="font-family:'Caprasimo',serif;font-size:47px;line-height:1;letter-spacing:-.025em">£11,430</span>
+                <span style="font-size:16px;color:var(--ink2);font-weight:700">.18</span>
+              </div>
+              <div style="font-size:14px;font-weight:600;margin-top:7px"><span class="{{ totalDir }}">{{ totalChange }}</span> <span style="color:var(--ink3);font-weight:500">· {{ totalPct }} · {{ tfLabel }}</span></div>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:8px;margin:12px 2px 0;font-size:11.5px;color:var(--ink3);font-weight:600">
+            <span style="width:6px;height:6px;border-radius:999px;background:var(--up);flex:0 0 6px"></span>
+            Prices from Trading 212 &amp; Kraken · updated 4 min ago
+          </div>
+
+          <div style="display:flex;gap:5px;margin:14px 0;background:var(--sunk);padding:4px;border-radius:999px">
+            <button class="tap" onClick="{{ setDay }}" style="flex:1;border:0;background:{{ bgDay }};color:{{ fgDay }};font:inherit;font-weight:700;font-size:13px;padding:9px 0;border-radius:999px">Today</button>
+            <button class="tap" onClick="{{ setMonth }}" style="flex:1;border:0;background:{{ bgMonth }};color:{{ fgMonth }};font:inherit;font-weight:700;font-size:13px;padding:9px 0;border-radius:999px">This month</button>
+            <button class="tap" onClick="{{ setAll }}" style="flex:1;border:0;background:{{ bgAll }};color:{{ fgAll }};font:inherit;font-weight:700;font-size:13px;padding:9px 0;border-radius:999px">All time</button>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:11px">
+            <sc-for list="{{ cards }}" as="b" hint-placeholder-count="3">
+              <div class="tap {{ b.cls }}" role="button" tabindex="0" onClick="{{ b.open }}" style="background:var(--card);border-radius:26px;padding:17px 19px;display:flex;flex-direction:column;gap:13px;border:{{ b.border }};background-image:{{ b.hatch }}">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+                  <div style="display:flex;flex-direction:column;gap:5px">
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <span style="width:11px;height:11px;border-radius:999px;background:var(--acc)"></span>
+                      <span style="font-family:'Caprasimo',serif;font-size:20px;letter-spacing:-.01em">{{ b.name }}</span>
+                    </div>
+                    <div style="font-size:12px;color:var(--ink2);max-width:178px;line-height:1.42">{{ b.blurb }}</div>
+                  </div>
+                  <div style="text-align:right;flex:0 0 auto">
+                    <div style="font-family:'Caprasimo',serif;font-size:24px;letter-spacing:-.015em">{{ b.value }}</div>
+                    <div class="{{ b.dir }}" style="font-size:13.5px;font-weight:700;margin-top:3px">{{ b.change }}</div>
+                    <svg width="62" height="20" viewBox="0 0 62 20" fill="none" style="margin-top:5px;overflow:visible" aria-hidden="true"><path d="{{ b.spark }}" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:7px">
+                  <div style="height:9px;border-radius:999px;background:var(--sunk);position:relative;overflow:visible">
+                    <div style="position:absolute;top:0;bottom:0;left:0;width:{{ b.pct }};background:var(--acc);border-radius:999px"></div>
+                    <div style="position:absolute;top:-4px;bottom:-4px;left:{{ b.target }};width:2px;background:var(--ink);border-radius:2px"></div>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink2);font-weight:500">
+                    <span>{{ b.share }} of your money</span>
+                    <span class="{{ b.ruleDir }}" style="font-weight:600">{{ b.rule }}</span>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="background:var(--card);border-radius:26px;padding:19px;margin-top:11px">
+            <div style="font-family:'Caprasimo',serif;font-size:19px;margin-bottom:3px">How it splits</div>
+            <div style="font-size:12.5px;color:var(--ink2);font-weight:500;margin-bottom:14px">Where your £11,430 actually sits, against the shape you asked for.</div>
+            <div style="display:flex;align-items:center;gap:20px">
+              <svg width="112" height="112" viewBox="0 0 120 120" style="flex:0 0 112px" aria-label="Allocation across your three pots">
+                <circle cx="60" cy="60" r="46" fill="none" stroke="var(--sunk)" stroke-width="14"></circle>
+                <g transform="rotate(-90 60 60)">
+                  <sc-for list="{{ ring }}" as="r" hint-placeholder-count="3">
+                    <circle cx="60" cy="60" r="46" fill="none" stroke="{{ r.color }}" stroke-width="14" stroke-dasharray="{{ r.dash }}" stroke-dashoffset="{{ r.off }}" stroke-linecap="butt"></circle>
+                  </sc-for>
+                </g>
+                <text x="60" y="56" text-anchor="middle" font-family="Caprasimo, serif" font-size="21" fill="var(--ink)">72%</text>
+                <text x="60" y="72" text-anchor="middle" font-family="Figtree, sans-serif" font-size="9.5" font-weight="700" fill="var(--ink2)">SAFE MONEY</text>
+              </svg>
+              <div style="flex:1;display:flex;flex-direction:column;gap:9px">
+                <sc-for list="{{ splits }}" as="s" hint-placeholder-count="3">
+                  <div style="display:flex;align-items:center;gap:9px;font-size:12.5px">
+                    <span style="width:9px;height:9px;flex:0 0 9px;border-radius:999px;background:{{ s.swatch }}"></span>
+                    <span style="flex:1;font-weight:600">{{ s.name }}</span>
+                    <span style="font-weight:700">{{ s.w }}</span>
+                  </div>
+                </sc-for>
+                <div style="font-size:11.5px;color:var(--ink2);line-height:1.45;font-weight:500;margin-top:2px">You asked for 70 / 25 / 5. You're at 72 / 21 / 7.</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:24px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px">
+              <span style="font-family:'Caprasimo',serif;font-size:19px">What changed</span>
+              <span style="font-size:12px;color:var(--ink2);font-weight:500">Last 7 days</span>
+            </div>
+            <div style="background:var(--card);border-radius:26px;padding:2px 18px 6px">
+              <sc-for list="{{ feed }}" as="f" hint-placeholder-count="4">
+                <div class="{{ f.cls }}" style="display:flex;gap:13px;padding:15px 0;border-bottom:1px solid var(--line);align-items:flex-start">
+                  <span style="width:32px;height:32px;flex:0 0 32px;border-radius:999px;background:var(--tint);color:var(--aink);display:grid;place-items:center;font-size:15px;font-weight:800">{{ f.glyph }}</span>
+                  <div style="flex:1">
+                    <div style="font-size:14px;line-height:1.45;font-weight:500;text-wrap:pretty">{{ f.text }}</div>
+                    <div style="font-size:11.5px;color:var(--ink3);margin-top:3px;font-weight:500">{{ f.when }}</div>
+                  </div>
+                </div>
+              </sc-for>
+              <div style="padding:15px 0 16px;font-size:13px;color:var(--ink2);text-align:center;font-weight:500">That's the lot. Quiet week.</div>
+            </div>
+          </div>
+
+          <div style="margin:18px 8px 0;font-size:11.5px;color:var(--ink3);line-height:1.5;text-align:center;font-weight:500">Pip can look, not touch. Nothing in here can buy or sell anything.</div>
+        </sc-if>
+
+        <!-- ─── BUCKET DETAIL ─── -->
+        <sc-if value="{{ isBucket }}" hint-placeholder-val="{{ true }}">
+          <div class="{{ bk.cls }}">
+            <div style="display:flex;align-items:center;gap:12px;padding:4px 0 14px">
+              <button class="tap" onClick="{{ goHome }}" style="width:36px;height:36px;border-radius:999px;border:0;background:var(--card);color:var(--ink);display:grid;place-items:center">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
+              </button>
+              <span style="font-size:13px;color:var(--ink2);font-weight:600">Back to your pots</span>
+            </div>
+
+            <div style="background:var(--card);border-radius:30px;padding:22px;background-image:{{ bk.hatch }};border:{{ bk.border }}">
+              <div style="display:flex;align-items:center;gap:9px;margin-bottom:4px">
+                <span style="width:13px;height:13px;border-radius:999px;background:var(--acc)"></span>
+                <span style="font-family:'Caprasimo',serif;font-size:26px;letter-spacing:-.015em">{{ bk.name }}</span>
+                <span style="margin-left:auto;font-size:11px;font-weight:700;padding:4px 11px;border-radius:999px;background:var(--tint);color:var(--aink)">{{ bk.badge }}</span>
+              </div>
+              <div style="font-size:13px;color:var(--ink2);line-height:1.5;margin-bottom:16px">{{ bk.blurb }}</div>
+              <div style="font-family:'Caprasimo',serif;font-size:42px;line-height:1;letter-spacing:-.025em">{{ bk.value }}</div>
+              <div style="font-size:14px;font-weight:700;margin-top:7px"><span class="{{ bk.dir }}">{{ bk.change }}</span> <span style="color:var(--ink3);font-weight:500">· {{ bk.pctChange }} · {{ tfLabel }}</span></div>
+              <div style="height:1px;background:var(--line);margin:18px 0 14px"></div>
+              <div style="font-size:13.5px;line-height:1.5;font-weight:500">{{ bk.plain }}</div>
+            </div>
+
+            <div style="background:var(--card);border-radius:26px;padding:18px;margin-top:11px">
+              <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px">
+                <span style="font-family:'Caprasimo',serif;font-size:18px">How it's gone</span>
+                <span style="font-size:11.5px;color:var(--ink2);font-weight:600">Since you started</span>
+              </div>
+              <svg viewBox="0 0 320 120" width="100%" height="120" preserveAspectRatio="none" aria-label="Performance since you started">
+                <defs>
+                  <linearGradient id="pipFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="var(--acc)" stop-opacity=".42"></stop>
+                    <stop offset="100%" stop-color="var(--acc)" stop-opacity="0"></stop>
+                  </linearGradient>
+                </defs>
+                <path d="{{ bk.area }}" fill="url(#pipFill)"></path>
+                <path d="{{ bk.line }}" fill="none" stroke="var(--acc)" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"></path>
+              </svg>
+              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink3);font-weight:600;margin-top:4px">
+                <span>{{ bk.chartFrom }}</span><span>Today</span>
+              </div>
+              <div style="font-size:12.5px;color:var(--ink2);line-height:1.5;margin-top:10px">{{ bk.chartNote }}</div>
+            </div>
+
+            <div style="background:var(--card);border-radius:26px;padding:18px;margin-top:11px">
+              <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px">
+                <span style="font-family:'Caprasimo',serif;font-size:18px">Money in</span>
+                <span style="font-size:11.5px;color:var(--ink2);font-weight:600">Last 6 months</span>
+              </div>
+              <div style="display:flex;align-items:flex-end;gap:8px;height:76px">
+                <sc-for list="{{ bk.bars }}" as="bar" hint-placeholder-count="6">
+                  <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;opacity:{{ bar.dim }}">
+                    <span style="font-size:10.5px;font-weight:700;color:var(--ink2)">{{ bar.amount }}</span>
+                    <span style="width:100%;height:{{ bar.h }};background:var(--acc);border-radius:7px 7px 0 0"></span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:7px">
+                <sc-for list="{{ bk.bars }}" as="bar" hint-placeholder-count="6">
+                  <span style="flex:1;text-align:center;font-size:10.5px;font-weight:700;color:var(--ink3)">{{ bar.label }}</span>
+                </sc-for>
+              </div>
+              <div style="font-size:12.5px;color:var(--ink2);line-height:1.5;margin-top:11px;font-weight:500">{{ bk.barNote }}</div>
+            </div>
+
+            <div style="background:var(--card);border-radius:26px;padding:18px;margin-top:11px">
+              <div style="font-family:'Caprasimo',serif;font-size:18px;margin-bottom:12px">What's inside</div>
+              <div style="display:flex;height:11px;border-radius:999px;overflow:hidden;gap:2px;margin-bottom:16px">
+                <sc-for list="{{ bk.holdings }}" as="h" hint-placeholder-count="3">
+                  <div style="width:{{ h.w }};background:{{ h.swatch }}"></div>
+                </sc-for>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;padding-bottom:9px">
+                <sc-for list="{{ sortCols }}" as="c" hint-placeholder-count="3">
+                  <button class="tap" onClick="{{ c.pick }}" style="border:0;background:transparent;color:{{ c.ink }};font:inherit;font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:2px 0;flex:1;text-align:left">{{ c.label }}</button>
+                </sc-for>
+              </div>
+              <sc-for list="{{ bk.rows }}" as="h" hint-placeholder-count="3">
+                <div class="tap" role="button" tabindex="0" onClick="{{ h.open }}" style="display:flex;align-items:center;gap:11px;padding:11px 0;border-top:1px solid var(--line)">
+                  <span style="width:10px;height:10px;flex:0 0 10px;border-radius:999px;background:{{ h.swatch }}"></span>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:14px;font-weight:600;line-height:1.3">{{ h.name }}</div>
+                    <div style="font-size:11.5px;color:var(--ink3);font-weight:500;margin-top:1px">{{ h.sub }}</div>
+                  </div>
+                  <svg width="44" height="16" viewBox="0 0 44 16" fill="none" style="flex:0 0 44px;overflow:visible" aria-hidden="true"><path d="{{ h.spark }}" stroke="var(--acc)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                  <div style="text-align:right;flex:0 0 auto;min-width:62px">
+                    <div style="font-size:14px;font-weight:700">{{ h.value }}</div>
+                    <div class="{{ h.dir }}" style="font-size:11.5px;font-weight:600;margin-top:1px">{{ h.change }}</div>
+                  </div>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink3)" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 15px"><path d="M9 18l6-6-6-6"></path></svg>
+                </div>
+              </sc-for>
+              <div style="font-size:11.5px;color:var(--ink3);font-weight:600;margin-top:12px">Tap any holding for its own page. Tap a column to sort.</div>
+            </div>
+
+            <div style="margin:18px 8px 0;font-size:11.5px;color:var(--ink3);line-height:1.5;text-align:center;font-weight:500">Read-only. To buy or sell, use {{ bk.provider }} — Pip just keeps score.</div>
+          </div>
+        </sc-if>
+
+        <!-- ─── INSTRUMENT DETAIL ─── -->
+        <sc-if value="{{ isInstrument }}" hint-placeholder-val="{{ true }}">
+          <div class="{{ instr.cls }}">
+            <div style="display:flex;align-items:center;gap:12px;padding:4px 0 14px">
+              <button class="tap" onClick="{{ goBucket }}" style="width:36px;height:36px;border-radius:999px;border:0;background:var(--card);color:var(--ink);display:grid;place-items:center">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
+              </button>
+              <span style="font-size:13px;color:var(--ink2);font-weight:600">Back to {{ instr.bucket }}</span>
+            </div>
+
+            <div style="background:var(--card);border-radius:30px;padding:22px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+                <span style="font-size:11px;font-weight:700;padding:4px 11px;border-radius:999px;background:var(--tint);color:var(--aink);display:flex;align-items:center;gap:6px">
+                  <span style="width:8px;height:8px;border-radius:999px;background:var(--acc)"></span>{{ instr.bucket }}
+                </span>
+                <span style="font-size:11px;font-weight:700;padding:4px 11px;border-radius:999px;background:var(--sunk);color:var(--ink2)">{{ instr.ticker }}</span>
+              </div>
+              <div style="font-family:'Caprasimo',serif;font-size:27px;line-height:1.15;letter-spacing:-.015em">{{ instr.name }}</div>
+              <div style="font-size:12.5px;color:var(--ink2);font-weight:500;margin-top:6px">{{ instr.qty }} · {{ instr.price }} each</div>
+              <div style="height:1px;background:var(--line);margin:16px 0 14px"></div>
+              <div style="font-size:12.5px;color:var(--ink2);font-weight:600">What it's worth to you</div>
+              <div style="font-family:'Caprasimo',serif;font-size:42px;line-height:1;letter-spacing:-.025em;margin-top:3px">{{ instr.value }}</div>
+              <div style="display:flex;gap:16px;margin-top:10px;flex-wrap:wrap">
+                <div>
+                  <div style="font-size:11px;color:var(--ink3);font-weight:700;letter-spacing:.05em;text-transform:uppercase">Today</div>
+                  <div class="{{ instr.dir }}" style="font-size:15px;font-weight:700;margin-top:2px">{{ instr.day }} <span style="font-weight:600">· {{ instr.dayPct }}</span></div>
+                </div>
+                <div>
+                  <div style="font-size:11px;color:var(--ink3);font-weight:700;letter-spacing:.05em;text-transform:uppercase">Since you bought</div>
+                  <div class="{{ instr.totalDir }}" style="font-size:15px;font-weight:700;margin-top:2px">{{ instr.total }}</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="background:var(--card);border-radius:26px;padding:18px;margin-top:11px">
+              <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px">
+                <span style="font-family:'Caprasimo',serif;font-size:18px">Price</span>
+                <span style="font-size:11.5px;color:var(--ink2);font-weight:600">{{ instr.from }} → today</span>
+              </div>
+              <svg viewBox="0 0 320 120" width="100%" height="120" preserveAspectRatio="none" aria-label="Price history">
+                <defs>
+                  <linearGradient id="pipFill2" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="var(--acc)" stop-opacity=".42"></stop>
+                    <stop offset="100%" stop-color="var(--acc)" stop-opacity="0"></stop>
+                  </linearGradient>
+                </defs>
+                <path d="{{ instr.area }}" fill="url(#pipFill2)"></path>
+                <path d="{{ instr.line }}" fill="none" stroke="var(--acc)" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"></path>
+              </svg>
+              <div style="display:flex;gap:5px;margin-top:12px;background:var(--sunk);padding:4px;border-radius:999px">
+                <sc-for list="{{ instr.ranges }}" as="r" hint-placeholder-count="4">
+                  <button class="tap" onClick="{{ r.pick }}" style="flex:1;border:0;background:{{ r.bg }};color:{{ r.fg }};font:inherit;font-weight:700;font-size:12.5px;padding:8px 0;border-radius:999px">{{ r.label }}</button>
+                </sc-for>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:11.5px;color:var(--ink3);font-weight:600">
+                <span style="width:6px;height:6px;border-radius:999px;background:var(--up);flex:0 0 6px"></span>
+                Prices from {{ instr.provider }} · updated 4 min ago
+              </div>
+            </div>
+
+            <div style="background:var(--card);border-radius:26px;padding:18px;margin-top:11px">
+              <div style="font-family:'Caprasimo',serif;font-size:18px;margin-bottom:8px">In plain English</div>
+              <div style="font-size:13.5px;line-height:1.55;font-weight:500">{{ instr.note }}</div>
+              <div style="display:flex;align-items:center;gap:6px;margin-top:14px;font-size:11px;font-weight:700;letter-spacing:.03em;color:var(--ink3)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><circle cx="12" cy="12" r="9.2"></circle><path d="M12 11v5"></path><path d="M12 7.6h.01"></path></svg>
+                INFORMATION, NOT ADVICE
+              </div>
+            </div>
+
+            <div style="margin:18px 8px 0;font-size:11.5px;color:var(--ink3);line-height:1.5;text-align:center;font-weight:500">Read-only. To buy or sell, use {{ instr.provider }} — Pip just keeps score.</div>
+          </div>
+        </sc-if>
+
+        <!-- ─── RULES ─── -->
+        <sc-if value="{{ isRules }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:4px 0 16px">
+            <div style="font-family:'Caprasimo',serif;font-size:29px;letter-spacing:-.02em">Your rules</div>
+            <div style="font-size:13.5px;color:var(--ink2);line-height:1.5;margin-top:6px">You set the shape once. Pip nags you if the shape drifts.</div>
+          </div>
+
+          <sc-if value="{{ overCap }}" hint-placeholder-val="{{ true }}">
+            <div class="pip-bet" style="background:var(--tint);border:2px solid var(--acc);border-radius:26px;padding:18px;display:flex;gap:13px;align-items:flex-start;margin-bottom:12px">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--aink)" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 22px;margin-top:1px"><path d="M12 9v4"></path><path d="M12 17h.01"></path><path d="M10.3 3.9 2.4 17.5A2 2 0 0 0 4.1 20.5h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path></svg>
+              <div style="color:var(--aink)">
+                <div style="font-family:'Caprasimo',serif;font-size:19px;line-height:1.25">Side Bet is 1.8% over its cap</div>
+                <div style="font-size:13.5px;line-height:1.52;margin-top:6px;font-weight:500">It's grown to 6.8% of your money — you told Pip to keep it under 5%. That's <strong>£208 more</strong> than you meant to have riding on crypto.</div>
+                <div style="display:flex;gap:9px;margin-top:14px;flex-wrap:wrap">
+                  <button class="tap" style="border:0;background:var(--aink);color:var(--tint);font:inherit;font-size:13px;font-weight:700;padding:10px 16px;border-radius:999px">Show me how to fix it</button>
+                  <button class="tap" style="border:1.5px solid var(--aink);background:transparent;color:var(--aink);font:inherit;font-size:13px;font-weight:700;padding:10px 16px;border-radius:999px">Raise the cap</button>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:12px;font-size:11px;font-weight:700;letter-spacing:.03em;opacity:.85">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><circle cx="12" cy="12" r="9.2"></circle><path d="M12 11v5"></path><path d="M12 7.6h.01"></path></svg>
+                  INFORMATION, NOT ADVICE
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <div style="display:flex;flex-direction:column;gap:11px">
+            <sc-for list="{{ rules }}" as="r" hint-placeholder-count="3">
+              <div class="{{ r.cls }}" style="background:var(--card);border-radius:26px;padding:18px 19px;border:{{ r.border }};background-image:{{ r.hatch }}">
+                <div style="display:flex;align-items:center;gap:9px;margin-bottom:12px">
+                  <span style="width:11px;height:11px;border-radius:999px;background:var(--acc)"></span>
+                  <span style="font-family:'Caprasimo',serif;font-size:20px">{{ r.name }}</span>
+                  <span style="margin-left:auto;font-size:11px;font-weight:700;padding:4px 11px;border-radius:999px;background:var(--tint);color:var(--aink)">{{ r.kind }}</span>
+                </div>
+                <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:11px">
+                  <div>
+                    <div style="font-size:11.5px;color:var(--ink2);font-weight:600;letter-spacing:.04em;text-transform:uppercase">{{ r.kind }}</div>
+                    <div style="font-family:'Caprasimo',serif;font-size:34px;line-height:1.05;margin-top:2px">{{ r.targetPct }}</div>
+                  </div>
+                  <div style="display:flex;gap:8px;align-items:center">
+                    <button class="tap" style="width:40px;height:40px;border-radius:999px;border:1.5px solid var(--line);background:transparent;color:var(--ink);display:grid;place-items:center;font-size:20px;font-weight:700">−</button>
+                    <button class="tap" style="width:40px;height:40px;border-radius:999px;border:0;background:var(--acc);color:{{ r.plusInk }};display:grid;place-items:center;font-size:20px;font-weight:700">+</button>
+                  </div>
+                </div>
+                <div style="height:9px;border-radius:999px;background:var(--sunk);position:relative;margin-bottom:9px">
+                  <div style="position:absolute;top:0;bottom:0;left:0;width:{{ r.pct }};background:var(--acc);border-radius:999px"></div>
+                  <div style="position:absolute;top:-4px;bottom:-4px;left:{{ r.target }};width:2px;background:var(--ink);border-radius:2px"></div>
+                </div>
+                <div style="font-size:12.5px;line-height:1.5;color:var(--ink2);font-weight:500">{{ r.plain }}</div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="background:var(--card);border-radius:26px;padding:18px 19px;margin-top:11px">
+            <div style="font-family:'Caprasimo',serif;font-size:19px;margin-bottom:4px">Where new money goes</div>
+            <div style="font-size:13px;color:var(--ink2);line-height:1.5;margin-bottom:14px">Your £200 a month, split automatically. Side Bet never gets topped up past its cap.</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ splits }}" as="s" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:12px">
+                  <span style="font-size:13.5px;font-weight:600;flex:0 0 96px">{{ s.name }}</span>
+                  <span style="flex:1;height:8px;border-radius:999px;background:var(--sunk);position:relative"><span style="position:absolute;top:0;bottom:0;left:0;width:{{ s.w }};background:{{ s.swatch }};border-radius:999px"></span></span>
+                  <span style="font-size:13.5px;font-weight:700;flex:0 0 46px;text-align:right">{{ s.amount }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="margin:18px 8px 0;font-size:11.5px;color:var(--ink3);line-height:1.5;text-align:center;font-weight:500">Changing a rule changes what Pip tells you — it never moves your money.</div>
+        </sc-if>
+
+        <!-- ─── SETTINGS ─── -->
+        <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:4px 0 16px">
+            <div style="font-family:'Caprasimo',serif;font-size:29px;letter-spacing:-.02em">Settings</div>
+            <div style="font-size:13.5px;color:var(--ink2);line-height:1.5;margin-top:6px">Where Pip reads your numbers from.</div>
+          </div>
+
+          <div style="background:var(--card);border-radius:26px;padding:4px 18px 8px">
+            <sc-for list="{{ providers }}" as="p" hint-placeholder-count="3">
+              <div class="tap" style="display:flex;align-items:center;gap:13px;padding:16px 0;border-bottom:1px solid var(--line)">
+                <span style="width:40px;height:40px;flex:0 0 40px;border-radius:14px;background:{{ p.swatch }};color:#fff;display:grid;place-items:center;font-family:'Caprasimo',serif;font-size:17px">{{ p.initial }}</span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:14.5px;font-weight:600">{{ p.name }}</div>
+                  <div style="font-size:12px;color:var(--ink2);font-weight:500;margin-top:2px">{{ p.sub }}</div>
+                </div>
+                <span style="font-size:11px;font-weight:700;padding:5px 11px;border-radius:999px;background:{{ p.badgeBg }};color:{{ p.badgeInk }};flex:0 0 auto">{{ p.status }}</span>
+              </div>
+            </sc-for>
+            <button class="tap" style="width:100%;border:0;background:transparent;color:var(--solid);font:inherit;font-size:14px;font-weight:700;padding:17px 0;text-align:left;display:flex;align-items:center;gap:9px">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+              Connect another account
+            </button>
+          </div>
+
+          <div style="background:var(--card);border-radius:26px;padding:4px 18px 4px;margin-top:11px">
+            <div style="display:flex;align-items:center;gap:13px;padding:16px 0;border-bottom:1px solid var(--line)">
+              <div style="flex:1"><div style="font-size:14.5px;font-weight:600">Appearance</div><div style="font-size:12px;color:var(--ink2);font-weight:500;margin-top:2px">Follows your phone</div></div>
+              <div style="display:flex;gap:4px;background:var(--sunk);padding:3px;border-radius:999px">
+                <button class="tap" onClick="{{ setLight }}" style="border:0;background:{{ bgLight }};color:{{ fgLight }};font:inherit;font-size:12px;font-weight:700;padding:7px 13px;border-radius:999px">Light</button>
+                <button class="tap" onClick="{{ setDark }}" style="border:0;background:{{ bgDark }};color:{{ fgDark }};font:inherit;font-size:12px;font-weight:700;padding:7px 13px;border-radius:999px">Dark</button>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:13px;padding:16px 0;border-bottom:1px solid var(--line)">
+              <div style="flex:1"><div style="font-size:14.5px;font-weight:600">Nudge me</div><div style="font-size:12px;color:var(--ink2);font-weight:500;margin-top:2px">Only when a rule breaks</div></div>
+              <span style="width:46px;height:27px;border-radius:999px;background:var(--acc);position:relative;flex:0 0 46px"><span style="position:absolute;top:3px;right:3px;width:21px;height:21px;border-radius:999px;background:#fff"></span></span>
+            </div>
+            <div style="display:flex;align-items:center;gap:13px;padding:16px 0;border-bottom:1px solid var(--line)">
+              <div style="flex:1"><div style="font-size:14.5px;font-weight:600">Hide the numbers</div><div style="font-size:12px;color:var(--ink2);font-weight:500;margin-top:2px">Blur totals until you tap</div></div>
+              <span style="width:46px;height:27px;border-radius:999px;background:var(--sunk);position:relative;flex:0 0 46px"><span style="position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:999px;background:var(--ink3)"></span></span>
+            </div>
+            <div style="display:flex;align-items:center;gap:13px;padding:16px 0">
+              <div style="flex:1"><div style="font-size:14.5px;font-weight:600">Currency</div><div style="font-size:12px;color:var(--ink2);font-weight:500;margin-top:2px">Pounds sterling</div></div>
+              <span style="font-size:14px;font-weight:700;color:var(--ink2)">£ GBP</span>
+            </div>
+          </div>
+
+          <div style="margin:18px 8px 0;font-size:11.5px;color:var(--ink3);line-height:1.5;text-align:center;font-weight:500">Pip uses read-only keys. Even if someone took your phone, they couldn't trade.</div>
+        </sc-if>
+      </div>
+
+      <!-- tab bar -->
+      <div style="flex:0 0 auto;background:var(--card);border-top:1px solid var(--line);padding:10px 26px 26px;display:flex;justify-content:space-between">
+        <button class="tap" onClick="{{ goHome }}" style="border:0;background:transparent;color:{{ tabHome }};font:inherit;display:flex;flex-direction:column;align-items:center;gap:5px;padding:4px 16px">
+          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path></svg>
+          <span style="font-size:10.5px;font-weight:700;letter-spacing:.02em">Pots</span>
+        </button>
+        <button class="tap" onClick="{{ goRules }}" style="border:0;background:transparent;color:{{ tabRules }};font:inherit;display:flex;flex-direction:column;align-items:center;gap:5px;padding:4px 16px;position:relative">
+          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V4"></path><path d="M4 6h10l-2 3 2 3H4"></path><path d="M18 12v9"></path><circle cx="18" cy="8" r="3"></circle></svg>
+          <span style="font-size:10.5px;font-weight:700;letter-spacing:.02em">Rules</span>
+          <span style="position:absolute;top:2px;right:11px;width:9px;height:9px;border-radius:999px;background:#c0392c;box-shadow:0 0 0 2px var(--card)"></span>
+        </button>
+        <button class="tap" onClick="{{ goSettings }}" style="border:0;background:transparent;color:{{ tabSettings }};font:inherit;display:flex;flex-direction:column;align-items:center;gap:5px;padding:4px 16px">
+          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"></circle><path d="M12 2.5v3M12 18.5v3M3.6 7.2l2.6 1.5M17.8 15.3l2.6 1.5M3.6 16.8l2.6-1.5M17.8 8.7l2.6-1.5"></path></svg>
+          <span style="font-size:10.5px;font-weight:700;letter-spacing:.02em">Setup</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── notes beside the phone ── -->
+    <div style="flex:1;min-width:300px;max-width:440px;display:flex;flex-direction:column;gap:20px">
+      <div style="background:var(--panel);border-radius:26px;padding:22px">
+        <div style="font-family:'Caprasimo',serif;font-size:20px;margin-bottom:10px">Tap around</div>
+        <p style="font-size:14px;line-height:1.6;color:var(--bink2);margin:0 0 10px">The three tabs work. Tapping any pot opens its detail. The timeframe pills change every number on the screen. The "Synced 4 min ago" chip and the Appearance switch in Setup flip light/dark.</p>
+        <p style="font-size:14px;line-height:1.6;color:var(--bink2);margin:0">The red dot on Rules is the over-cap warning; it's the only red chrome in the app, and only Side Bet can cause it.</p>
+      </div>
+      <div style="background:var(--panel);border-radius:26px;padding:22px">
+        <div style="font-family:'Caprasimo',serif;font-size:20px;margin-bottom:10px">Rules the design follows</div>
+        <div style="display:flex;flex-direction:column;gap:12px;font-size:13.5px;line-height:1.55;color:var(--bink2)">
+          <div><strong>Pounds before percent.</strong> Every percentage is followed by what it means in money. "Up 6%" alone is banned.</div>
+          <div><strong>One number is the hero.</strong> Everything you own, once, at the top, bigger than anything else on the screen.</div>
+          <div><strong>Silence is a result.</strong> "Nothing needs you" is the most common state and it's designed for, not an empty screen.</div>
+          <div><strong>Side Bet looks different.</strong> Hatched fence, hard border, its own hot colour. You can't mistake it for the safe money.</div>
+          <div><strong>No chart without a sentence.</strong> Charts always carry a plain-English caption underneath.</div>
+          <div><strong>Read-only, said out loud.</strong> Every screen ends with a line reminding you Pip can't trade.</div>
+        </div>
+      </div>
+      <div style="background:var(--panel);border-radius:26px;padding:22px">
+        <div style="font-family:'Caprasimo',serif;font-size:20px;margin-bottom:10px">Jargon, translated</div>
+        <div style="display:flex;flex-direction:column;gap:9px;font-size:13.5px;line-height:1.5">
+          <div style="display:flex;gap:10px"><s style="color:var(--bink3);flex:0 0 118px">Portfolio</s><span style="font-weight:600">Everything you own</span></div>
+          <div style="display:flex;gap:10px"><s style="color:var(--bink3);flex:0 0 118px">Allocation</s><span style="font-weight:600">What's inside</span></div>
+          <div style="display:flex;gap:10px"><s style="color:var(--bink3);flex:0 0 118px">Rebalance</s><span style="font-weight:600">Even it back out</span></div>
+          <div style="display:flex;gap:10px"><s style="color:var(--bink3);flex:0 0 118px">Contribution</s><span style="font-weight:600">Money in</span></div>
+          <div style="display:flex;gap:10px"><s style="color:var(--bink3);flex:0 0 118px">Drawdown</s><span style="font-weight:600">The worst dip so far</span></div>
+          <div style="display:flex;gap:10px"><s style="color:var(--bink3);flex:0 0 118px">Exposure</s><span style="font-weight:600">How much is riding on it</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ 04 · CONNECTING ════════════════ -->
+<section style="display:flex;flex-direction:column;gap:28px">
+  <div style="display:flex;align-items:center;gap:18px">
+    <span class="lbl">04 — Connecting an account</span>
+    <span style="flex:1;height:2px;background:var(--brule)"></span>
+  </div>
+  <p style="font-size:14.5px;line-height:1.6;color:var(--bink3);margin:0;max-width:640px">Pasting an API key is the least friendly thing Pip asks of anyone, so it gets the most hand-holding: numbered steps, a plain description of what each permission means, and a hard refusal of any key that can trade. Read-only or nothing.</p>
+
+  <div style="display:flex;gap:18px;flex-wrap:wrap">
+    <div class="pip {{ dk }}" style="width:300px;border-radius:30px;background:var(--bg);color:var(--ink);padding:20px 18px;box-shadow:0 0 0 1px var(--brule)">
+      <div class="lbl" style="margin-bottom:14px">Not connected</div>
+      <div style="background:var(--card);border-radius:24px;padding:20px 18px">
+        <div style="display:flex;align-items:center;gap:11px;margin-bottom:14px">
+          <span style="width:38px;height:38px;flex:0 0 38px;border-radius:13px;background:#1f3a5f;color:#fff;display:grid;place-items:center;font-family:'Caprasimo',serif;font-size:16px">T</span>
+          <div><div style="font-size:15px;font-weight:700">Trading 212</div><div style="font-size:11.5px;color:var(--ink2);font-weight:600">Not connected</div></div>
+        </div>
+        <div style="font-size:12.5px;line-height:1.6;color:var(--ink2);font-weight:500;margin-bottom:14px">
+          <div style="display:grid;grid-template-columns:auto 1fr;gap:8px;margin-bottom:6px"><strong style="color:var(--ink)">1</strong><span>Open Trading 212 → Settings → API</span></div>
+          <div style="display:grid;grid-template-columns:auto 1fr;gap:8px;margin-bottom:6px"><strong style="color:var(--ink)">2</strong><span>Generate a key with <strong style="color:var(--ink)">read-only</strong> ticked, nothing else</span></div>
+          <div style="display:grid;grid-template-columns:auto 1fr;gap:8px"><strong style="color:var(--ink)">3</strong><span>Paste it below</span></div>
+        </div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);margin-bottom:6px">API key</div>
+        <div style="background:var(--sunk);border:1.5px solid var(--line);border-radius:16px;padding:12px 14px;font-size:13px;color:var(--ink3);font-family:ui-monospace,monospace">Paste your key here</div>
+        <button class="tap" style="width:100%;border:0;background:var(--solid);color:var(--solidInk);font:inherit;font-size:14px;font-weight:700;padding:13px 18px;border-radius:999px;margin-top:12px;text-align:left">Connect Trading 212</button>
+        <div style="font-size:11.5px;color:var(--ink3);line-height:1.5;font-weight:500;margin-top:11px">Your key is stored encrypted and only ever used to read balances.</div>
+      </div>
+    </div>
+
+    <div class="pip {{ dk }}" style="width:300px;border-radius:30px;background:var(--bg);color:var(--ink);padding:20px 18px;box-shadow:0 0 0 1px var(--brule)">
+      <div class="lbl" style="margin-bottom:14px">Connected</div>
+      <div style="background:var(--card);border-radius:24px;padding:20px 18px">
+        <div style="display:flex;align-items:center;gap:11px;margin-bottom:16px">
+          <span style="width:38px;height:38px;flex:0 0 38px;border-radius:13px;background:#1f3a5f;color:#fff;display:grid;place-items:center;font-family:'Caprasimo',serif;font-size:16px">T</span>
+          <div style="flex:1"><div style="font-size:15px;font-weight:700">Trading 212</div><div style="font-size:11.5px;color:var(--ink2);font-weight:600">Read-only · added 2 Sep</div></div>
+          <span class="pip-fnd" style="font-size:10.5px;font-weight:700;padding:5px 11px;border-radius:999px;background:var(--tint);color:var(--aink)">LIVE</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:11px;font-size:13px;font-weight:600">
+          <div style="display:flex;justify-content:space-between;padding-bottom:11px;border-bottom:1px solid var(--line)"><span style="color:var(--ink2)">Feeding</span><span>Foundation · Handpicked</span></div>
+          <div style="display:flex;justify-content:space-between;padding-bottom:11px;border-bottom:1px solid var(--line)"><span style="color:var(--ink2)">Holdings seen</span><span>8</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--ink2)">Last read</span><span>4 min ago</span></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;margin-top:16px;padding:11px 13px;border-radius:16px;background:var(--sunk);font-size:11.5px;font-weight:600;color:var(--ink2);line-height:1.45">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 15px"><path d="M12 3l7 3.5v5c0 4.3-2.9 8-7 9.5-4.1-1.5-7-5.2-7-9.5v-5L12 3z"></path><path d="M9.2 12.2l2 2 3.6-4"></path></svg>
+          This key cannot place orders. Pip checked.
+        </div>
+        <button class="tap" style="border:0;background:transparent;color:var(--solid);font:inherit;font-size:13.5px;font-weight:700;padding:13px 0 0;text-align:left">Disconnect</button>
+      </div>
+    </div>
+
+    <div class="pip {{ dk }}" style="width:300px;border-radius:30px;background:var(--bg);color:var(--ink);padding:20px 18px;box-shadow:0 0 0 1px var(--brule)">
+      <div class="lbl" style="margin-bottom:14px">Error · invalid key</div>
+      <div style="background:var(--card);border-radius:24px;padding:20px 18px">
+        <div style="display:flex;align-items:center;gap:11px;margin-bottom:14px">
+          <span style="width:38px;height:38px;flex:0 0 38px;border-radius:13px;background:#5741d9;color:#fff;display:grid;place-items:center;font-family:'Caprasimo',serif;font-size:16px">K</span>
+          <div><div style="font-size:15px;font-weight:700">Kraken</div><div style="font-size:11.5px;color:var(--ink2);font-weight:600">Couldn't connect</div></div>
+        </div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);margin-bottom:6px">API key</div>
+        <div class="pip-bet" style="background:var(--sunk);border:2px solid var(--acc);border-radius:16px;padding:12px 14px;font-size:13px;font-family:ui-monospace,monospace;color:var(--ink);word-break:break-all">kr-live-9f2c…8814</div>
+        <div class="pip-bet" style="background:var(--tint);border-radius:18px;padding:14px;margin-top:11px;color:var(--aink)">
+          <div style="font-family:'Caprasimo',serif;font-size:17px;line-height:1.25">Kraken doesn't recognise that key</div>
+          <div style="font-size:12.5px;line-height:1.5;margin-top:6px;font-weight:500">Usually a stray space at one end, or the key was deleted at Kraken's side. Nothing is connected, and nothing was changed.</div>
+        </div>
+        <button class="tap" style="width:100%;border:0;background:var(--solid);color:var(--solidInk);font:inherit;font-size:14px;font-weight:700;padding:13px 18px;border-radius:999px;margin-top:12px;text-align:left">Try that again</button>
+        <button class="tap" style="border:0;background:transparent;color:var(--solid);font:inherit;font-size:13.5px;font-weight:700;padding:11px 0 0;text-align:left">Show me where to find it</button>
+      </div>
+    </div>
+
+    <div class="pip {{ dk }}" style="width:300px;border-radius:30px;background:var(--bg);color:var(--ink);padding:20px 18px;box-shadow:0 0 0 1px var(--brule)">
+      <div class="lbl" style="margin-bottom:14px">Error · too much access</div>
+      <div style="background:var(--card);border-radius:24px;padding:20px 18px">
+        <div style="display:flex;align-items:center;gap:11px;margin-bottom:14px">
+          <span style="width:38px;height:38px;flex:0 0 38px;border-radius:13px;background:#5741d9;color:#fff;display:grid;place-items:center;font-family:'Caprasimo',serif;font-size:16px">K</span>
+          <div><div style="font-size:15px;font-weight:700">Kraken</div><div style="font-size:11.5px;color:var(--ink2);font-weight:600">Refused on purpose</div></div>
+        </div>
+        <div class="pip-bet" style="background:var(--tint);border:2px solid var(--acc);border-radius:18px;padding:15px;color:var(--aink)">
+          <div style="font-family:'Caprasimo',serif;font-size:18px;line-height:1.25">That key can do too much</div>
+          <div style="font-size:12.5px;line-height:1.5;margin-top:6px;font-weight:500">It can trade and withdraw. Pip only ever accepts keys that can look, so it won't store this one.</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:9px;margin-top:14px;font-size:12.5px;font-weight:600">
+          <div style="display:flex;align-items:center;gap:9px"><span style="width:17px;height:17px;border-radius:999px;background:var(--tint);color:var(--aink);display:grid;place-items:center;font-size:11px;font-weight:800;flex:0 0 17px">✓</span><span>Query funds — <span style="color:var(--ink2);font-weight:500">needed</span></span></div>
+          <div class="pip-bet" style="display:flex;align-items:center;gap:9px"><span style="width:17px;height:17px;border-radius:999px;background:var(--solid);color:var(--solidInk);display:grid;place-items:center;font-size:11px;font-weight:800;flex:0 0 17px">✕</span><span>Create &amp; cancel orders — <span style="color:var(--ink2);font-weight:500">must be off</span></span></div>
+          <div class="pip-bet" style="display:flex;align-items:center;gap:9px"><span style="width:17px;height:17px;border-radius:999px;background:var(--solid);color:var(--solidInk);display:grid;place-items:center;font-size:11px;font-weight:800;flex:0 0 17px">✕</span><span>Withdraw funds — <span style="color:var(--ink2);font-weight:500">must be off</span></span></div>
+        </div>
+        <button class="tap" style="width:100%;border:0;background:var(--solid);color:var(--solidInk);font:inherit;font-size:14px;font-weight:700;padding:13px 18px;border-radius:999px;margin-top:14px;text-align:left">Make a read-only key</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ 05 · DATA BLOCKS ════════════════ -->
+<section style="display:flex;flex-direction:column;gap:28px">
+  <div style="display:flex;align-items:center;gap:18px">
+    <span class="lbl">05 — Data display system</span>
+    <span style="flex:1;height:2px;background:var(--brule)"></span>
+  </div>
+  <p style="font-size:14.5px;line-height:1.6;color:var(--bink3);margin:0;max-width:680px">Seven blocks, each with one job. Every one of them is already doing that job on a screen above — nothing here is decorative. All seven read their colour from the pot they're inside (Foundation sage, Handpicked terracotta, Side Bet hot clay) and from the board theme, so they never need a variant per context.</p>
+
+  <div style="display:flex;gap:18px;flex-wrap:wrap">
+
+    <div style="width:352px;border-radius:30px;background:var(--panel);padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 0 0 1px var(--brule)">
+      <div>
+        <div style="font-family:'Caprasimo',serif;font-size:21px">Big number</div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--bink3)">Job · answer "how much have I got"</div>
+      </div>
+      <div class="pip {{ dk }}" style="background:var(--bg);border-radius:22px;padding:16px;color:var(--ink)">
+        <div style="font-size:12.5px;color:var(--ink2);font-weight:600">Everything you own</div>
+        <div style="display:flex;align-items:baseline;gap:7px;margin-top:3px">
+          <span style="font-family:'Caprasimo',serif;font-size:42px;line-height:1;letter-spacing:-.025em">£11,430</span>
+          <span style="font-size:15px;color:var(--ink2);font-weight:700">.18</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:8px">
+          <span class="up" style="font-size:14px;font-weight:700">+£25.80 today</span>
+          <span style="color:var(--ink3);font-size:13px;font-weight:600">+0.23%</span>
+        </div>
+      </div>
+      <div style="font-size:13px;line-height:1.55;color:var(--bink2)">One per screen, never two. Money always precedes percent, and the decimals shrink so the pounds carry the weight. <strong>Used on:</strong> dashboard, pot detail, instrument detail.</div>
+    </div>
+
+    <div style="width:352px;border-radius:30px;background:var(--panel);padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 0 0 1px var(--brule)">
+      <div>
+        <div style="font-family:'Caprasimo',serif;font-size:21px">Sparkline</div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--bink3)">Job · shape of the trend, at a glance</div>
+      </div>
+      <div class="pip {{ dk }}" style="background:var(--bg);border-radius:22px;padding:16px;color:var(--ink)" >
+        <div class="pip-pick" style="display:flex;align-items:center;gap:11px;padding-bottom:11px;border-bottom:1px solid var(--line)">
+          <span style="width:10px;height:10px;border-radius:999px;background:var(--acc);flex:0 0 10px"></span>
+          <span style="flex:1;font-size:13.5px;font-weight:600">Nvidia</span>
+          <svg width="48" height="18" viewBox="0 0 48 18" fill="none" style="flex:0 0 48px"><path d="M0 14 L8 11 L16 13 L24 7 L32 9 L40 4 L48 2" stroke="var(--acc)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          <span class="up" style="font-size:13px;font-weight:700">+24%</span>
+        </div>
+        <div class="pip-bet" style="display:flex;align-items:center;gap:11px;padding-top:11px">
+          <span style="width:10px;height:10px;border-radius:999px;background:var(--acc);flex:0 0 10px"></span>
+          <span style="flex:1;font-size:13.5px;font-weight:600">Solana</span>
+          <svg width="48" height="18" viewBox="0 0 48 18" fill="none" style="flex:0 0 48px"><path d="M0 5 L8 3 L16 9 L24 6 L32 12 L40 10 L48 15" stroke="var(--acc)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          <span class="dn" style="font-size:13px;font-weight:700">−12%</span>
+        </div>
+      </div>
+      <div style="font-size:13px;line-height:1.55;color:var(--bink2)">No axes, no numbers, never tappable on its own — it is punctuation next to a figure, not a chart. <strong>Used on:</strong> pot cards, holdings table.</div>
+    </div>
+
+    <div style="width:352px;border-radius:30px;background:var(--panel);padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 0 0 1px var(--brule)">
+      <div>
+        <div style="font-family:'Caprasimo',serif;font-size:21px">Line chart</div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--bink3)">Job · value or price over a chosen span</div>
+      </div>
+      <div class="pip {{ dk }}" style="background:var(--bg);border-radius:22px;padding:16px;color:var(--ink)">
+        <svg viewBox="0 0 300 96" width="100%" height="96" preserveAspectRatio="none">
+          <defs><linearGradient id="pipSpecFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--acc)" stop-opacity=".4"></stop><stop offset="100%" stop-color="var(--acc)" stop-opacity="0"></stop></linearGradient></defs>
+          <path d="M0 74 C40 74 40 58 80 58 C120 58 120 66 160 62 C200 58 200 34 240 28 C270 24 280 18 300 12 L300 96 L0 96 Z" fill="url(#pipSpecFill)"></path>
+          <path d="M0 74 C40 74 40 58 80 58 C120 58 120 66 160 62 C200 58 200 34 240 28 C270 24 280 18 300 12" fill="none" stroke="var(--acc)" stroke-width="2.75" stroke-linecap="round"></path>
+        </svg>
+        <div style="display:flex;gap:4px;margin-top:11px;background:var(--sunk);padding:4px;border-radius:999px">
+          <span style="flex:1;text-align:center;font-size:12px;font-weight:700;padding:7px 0;border-radius:999px;color:var(--ink2)">Day</span>
+          <span style="flex:1;text-align:center;font-size:12px;font-weight:700;padding:7px 0;border-radius:999px;color:var(--ink2)">Month</span>
+          <span style="flex:1;text-align:center;font-size:12px;font-weight:700;padding:7px 0;border-radius:999px;color:var(--ink2)">Year</span>
+          <span style="flex:1;text-align:center;font-size:12px;font-weight:700;padding:7px 0;border-radius:999px;background:var(--ink);color:var(--bg)">All</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;margin-top:11px;font-size:11.5px;color:var(--ink3);font-weight:600">
+          <span style="width:6px;height:6px;border-radius:999px;background:var(--up);flex:0 0 6px"></span>Prices from Kraken · updated 4 min ago
+        </div>
+      </div>
+      <div style="font-size:13px;line-height:1.55;color:var(--bink2)">No gridlines, no y-axis numbers — a caption underneath says in words what the line did. Always carries the price-provenance line. <strong>Used on:</strong> pot detail, instrument detail.</div>
+    </div>
+
+    <div style="width:352px;border-radius:30px;background:var(--panel);padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 0 0 1px var(--brule)">
+      <div>
+        <div style="font-family:'Caprasimo',serif;font-size:21px">Bar chart</div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--bink3)">Job · compare discrete things or months</div>
+      </div>
+      <div class="pip {{ dk }}" style="background:var(--bg);border-radius:22px;padding:16px;color:var(--ink)">
+        <div style="display:flex;align-items:flex-end;gap:8px;height:74px">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px"><span style="font-size:10px;font-weight:700;color:var(--ink2)">£140</span><span style="width:100%;height:60px;background:#7a8a5e;border-radius:7px 7px 0 0"></span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px"><span style="font-size:10px;font-weight:700;color:var(--ink2)">£140</span><span style="width:100%;height:60px;background:#7a8a5e;border-radius:7px 7px 0 0"></span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px"><span style="font-size:10px;font-weight:700;color:var(--ink2)">£50</span><span style="width:100%;height:22px;background:#c67139;border-radius:7px 7px 0 0"></span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px"><span style="font-size:10px;font-weight:700;color:var(--ink2)">£60</span><span style="width:100%;height:26px;background:#c67139;border-radius:7px 7px 0 0"></span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;opacity:.4"><span style="font-size:10px;font-weight:700;color:var(--ink2)">—</span><span style="width:100%;height:4px;background:#c0392c;border-radius:7px 7px 0 0"></span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;opacity:.4"><span style="font-size:10px;font-weight:700;color:var(--ink2)">—</span><span style="width:100%;height:4px;background:#c0392c;border-radius:7px 7px 0 0"></span></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <span style="flex:1;text-align:center;font-size:10px;font-weight:700;color:var(--ink3)">Apr</span>
+          <span style="flex:1;text-align:center;font-size:10px;font-weight:700;color:var(--ink3)">May</span>
+          <span style="flex:1;text-align:center;font-size:10px;font-weight:700;color:var(--ink3)">Jun</span>
+          <span style="flex:1;text-align:center;font-size:10px;font-weight:700;color:var(--ink3)">Jul</span>
+          <span style="flex:1;text-align:center;font-size:10px;font-weight:700;color:var(--ink3)">Aug</span>
+          <span style="flex:1;text-align:center;font-size:10px;font-weight:700;color:var(--ink3)">Sep</span>
+        </div>
+      </div>
+      <div style="font-size:13px;line-height:1.55;color:var(--bink2)">Value labels sit above the bars so nobody has to read a scale. A zero month is a stub at 40% opacity, never a gap. <strong>Used on:</strong> pot detail, money in.</div>
+    </div>
+
+    <div style="width:352px;border-radius:30px;background:var(--panel);padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 0 0 1px var(--brule)">
+      <div>
+        <div style="font-family:'Caprasimo',serif;font-size:21px">Allocation ring &amp; stacked bar</div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--bink3)">Job · how the whole splits, against target</div>
+      </div>
+      <div class="pip {{ dk }}" style="background:var(--bg);border-radius:22px;padding:16px;color:var(--ink)" >
+        <div style="display:flex;align-items:center;gap:16px">
+          <svg width="92" height="92" viewBox="0 0 120 120" style="flex:0 0 92px">
+            <circle cx="60" cy="60" r="46" fill="none" stroke="var(--sunk)" stroke-width="14"></circle>
+            <g transform="rotate(-90 60 60)">
+              <sc-for list="{{ ring }}" as="r" hint-placeholder-count="3">
+                <circle cx="60" cy="60" r="46" fill="none" stroke="{{ r.color }}" stroke-width="14" stroke-dasharray="{{ r.dash }}" stroke-dashoffset="{{ r.off }}"></circle>
+              </sc-for>
+            </g>
+          </svg>
+          <div style="flex:1;display:flex;flex-direction:column;gap:7px;font-size:12px;font-weight:600">
+            <div style="display:flex;align-items:center;gap:8px"><span style="width:9px;height:9px;border-radius:999px;background:#7a8a5e"></span><span style="flex:1">Foundation</span><span style="font-weight:700">72%</span></div>
+            <div style="display:flex;align-items:center;gap:8px"><span style="width:9px;height:9px;border-radius:999px;background:#c67139"></span><span style="flex:1">Handpicked</span><span style="font-weight:700">21%</span></div>
+            <div style="display:flex;align-items:center;gap:8px"><span style="width:9px;height:9px;border-radius:999px;background:#c0392c"></span><span style="flex:1">Side Bet</span><span style="font-weight:700">7%</span></div>
+          </div>
+        </div>
+        <div style="height:1px;background:var(--line);margin:14px 0"></div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);margin-bottom:7px">Inside one pot</div>
+        <div style="display:flex;height:11px;border-radius:999px;overflow:hidden;gap:2px">
+          <div style="width:55%;background:#c0392c"></div><div style="width:28%;background:#e06a5c"></div><div style="width:17%;background:#ffdcd6"></div>
+        </div>
+      </div>
+      <div style="font-size:13px;line-height:1.55;color:var(--bink2)">Ring for three-way splits across pots, stacked bar for what's inside one pot. Target is stated in words underneath — never a second faint ring. <strong>Used on:</strong> dashboard, pot detail.</div>
+    </div>
+
+    <div style="width:352px;border-radius:30px;background:var(--panel);padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 0 0 1px var(--brule)">
+      <div>
+        <div style="font-family:'Caprasimo',serif;font-size:21px">Table</div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--bink3)">Job · the full holdings list, sortable</div>
+      </div>
+      <div class="pip {{ dk }}" style="background:var(--bg);border-radius:22px;padding:16px;color:var(--ink)">
+        <div style="display:flex;gap:10px;padding-bottom:8px">
+          <span style="flex:1;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink2)">Holding</span>
+          <span style="flex:1;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink)">Value ↓</span>
+          <span style="flex:1;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink2)">Change</span>
+        </div>
+        <div class="pip-pick" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)">
+          <span style="width:9px;height:9px;border-radius:999px;background:var(--acc);flex:0 0 9px"></span>
+          <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">Nvidia</div><div style="font-size:10.5px;color:var(--ink3);font-weight:500">Chips for AI</div></div>
+          <span style="font-size:13px;font-weight:700">£720</span>
+          <span class="up" style="font-size:11.5px;font-weight:700;min-width:42px;text-align:right">+24%</span>
+        </div>
+        <div class="pip-pick" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)">
+          <span style="width:9px;height:9px;border-radius:999px;background:var(--acc);flex:0 0 9px"></span>
+          <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">Apple</div><div style="font-size:10.5px;color:var(--ink3);font-weight:500">Phones, laptops</div></div>
+          <span style="font-size:13px;font-weight:700">£560</span>
+          <span class="up" style="font-size:11.5px;font-weight:700;min-width:42px;text-align:right">+6%</span>
+        </div>
+        <div class="pip-pick" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)">
+          <span style="width:9px;height:9px;border-radius:999px;background:var(--acc);flex:0 0 9px"></span>
+          <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">ASML</div><div style="font-size:10.5px;color:var(--ink3);font-weight:500">Chip machines</div></div>
+          <span style="font-size:13px;font-weight:700">£430</span>
+          <span class="dn" style="font-size:11.5px;font-weight:700;min-width:42px;text-align:right">−3%</span>
+        </div>
+      </div>
+      <div style="font-size:13px;line-height:1.55;color:var(--bink2)">Three columns is the phone limit; the plain-English sub-line replaces a fourth. Whole rows are the tap target, not a chevron. <strong>Used on:</strong> pot detail.</div>
+    </div>
+
+    <div style="width:352px;border-radius:30px;background:var(--panel);padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 0 0 1px var(--brule)">
+      <div>
+        <div style="font-family:'Caprasimo',serif;font-size:21px">Progress &amp; cap bar</div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--bink3)">Job · where you are against a line you set</div>
+      </div>
+      <div class="pip {{ dk }}" style="background:var(--bg);border-radius:22px;padding:16px;color:var(--ink)">
+        <div class="pip-fnd">
+          <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;margin-bottom:7px"><span>Foundation</span><span style="color:var(--ink2)">72% · target 70%</span></div>
+          <div style="height:9px;border-radius:999px;background:var(--sunk);position:relative">
+            <div style="position:absolute;top:0;bottom:0;left:0;width:72%;background:var(--acc);border-radius:999px"></div>
+            <div style="position:absolute;top:-4px;bottom:-4px;left:70%;width:2px;background:var(--ink);border-radius:2px"></div>
+          </div>
+        </div>
+        <div class="pip-bet" style="margin-top:16px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;margin-bottom:7px"><span>Side Bet</span><span class="dn" style="font-weight:700">6.8% · 1.8% over cap</span></div>
+          <div style="height:9px;border-radius:999px;background:var(--sunk);position:relative;background-image:repeating-linear-gradient(135deg,rgba(192,57,44,.16) 0 6px,transparent 6px 12px)">
+            <div style="position:absolute;top:0;bottom:0;left:0;width:68%;background:var(--acc);border-radius:999px"></div>
+            <div style="position:absolute;top:-4px;bottom:-4px;left:50%;width:2px;background:var(--ink);border-radius:2px"></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:9px;font-size:10.5px;font-weight:700;letter-spacing:.03em;color:var(--ink3)">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><circle cx="12" cy="12" r="9.2"></circle><path d="M12 11v5"></path><path d="M12 7.6h.01"></path></svg>
+            INFORMATION, NOT ADVICE
+          </div>
+        </div>
+      </div>
+      <div style="font-size:13px;line-height:1.55;color:var(--bink2)">The ink tick is the line you set; the fill is where you are. Over the line, the track picks up the Side Bet hatch and the figure turns red — the only red in the app. <strong>Used on:</strong> dashboard, rules.</div>
+    </div>
+  </div>
+
+  <div style="background:var(--panel);border-radius:26px;padding:22px;max-width:724px;box-shadow:0 0 0 1px var(--brule)">
+    <div style="font-family:'Caprasimo',serif;font-size:20px;margin-bottom:10px">Two patterns that travel with the data</div>
+    <div style="display:flex;flex-direction:column;gap:14px;font-size:13.5px;line-height:1.55;color:var(--bink2)">
+      <div><strong style="color:var(--bink)">Price provenance.</strong> Any screen showing a live figure carries one small line — a green dot, then "Prices from Trading 212 &amp; Kraken · updated 4 min ago". It turns amber when a feed is over an hour stale and names the pot that's affected. It is never a badge, never a tooltip, and never hidden behind an icon.</div>
+      <div><strong style="color:var(--bink)">Information, not advice.</strong> Anything that reads like a suggestion — the over-cap alert, the "in plain English" explainers, the suggested 70/25/5 rules — carries the same 11px uppercase label with an (i) glyph, set in the muted ink so it informs without shouting. Pure statements of fact (your balance, today's change) never carry it, so the label keeps its meaning.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ 06 · STATES ════════════════ -->
+<section style="display:flex;flex-direction:column;gap:28px">
+  <div style="display:flex;align-items:center;gap:18px">
+    <span class="lbl">06 — Loading · empty · error</span>
+    <span style="flex:1;height:2px;background:var(--brule)"></span>
+  </div>
+  <p style="font-size:14.5px;line-height:1.6;color:var(--bink2);margin:0;max-width:640px">Three rules: loading never shows a spinner where a number will be (it shows the number's shape), empty always says what to do next, and errors say what Pip still knows — your last good number stays on screen.</p>
+
+  <div style="display:flex;flex-direction:column;gap:38px">
+
+    <!-- HOME states -->
+    <div>
+      <div style="font-family:'Caprasimo',serif;font-size:22px;margin-bottom:14px">Pots · home</div>
+      <div style="display:flex;gap:18px;flex-wrap:wrap">
+        <div class="pip {{ dk }}" style="width:300px;border-radius:30px;background:var(--bg);color:var(--ink);padding:20px 18px;box-shadow:0 0 0 1px var(--brule)">
+          <div class="lbl" style="margin-bottom:14px">Loading</div>
+          <div style="background:var(--card);border-radius:24px;padding:18px;display:flex;flex-direction:column;gap:11px">
+            <div class="sk" style="width:72px;height:10px"></div>
+            <div class="sk" style="width:100%;height:20px"></div>
+            <div class="sk" style="width:64%;height:20px"></div>
+            <div style="height:1px;background:var(--line);margin:4px 0"></div>
+            <div class="sk" style="width:104px;height:11px"></div>
+            <div class="sk" style="width:180px;height:42px"></div>
+            <div class="sk" style="width:130px;height:13px"></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:9px;margin-top:11px">
+            <div class="sk" style="height:74px;border-radius:22px"></div>
+            <div class="sk" style="height:74px;border-radius:22px"></div>
+          </div>
+          <div style="font-size:12px;color:var(--ink2);text-align:center;margin-top:14px;font-weight:600">Counting your money…</div>
+        </div>
+
+        <div class="pip {{ dk }}" style="width:300px;border-radius:30px;background:var(--bg);color:var(--ink);padding:20px 18px;box-shadow:0 0 0 1px var(--brule)">
+          <div class="lbl" style="margin-bottom:14px">Empty · first run</div>
+          <div style="background:var(--card);border-radius:24px;padding:26px 20px;display:flex;flex-direction:column;align-items:flex-start;gap:14px">
+            <svg width="54" height="54" viewBox="0 0 56 56" opacity=".5"><circle cx="19" cy="20" r="13" fill="none" stroke="#7a8a5e" stroke-width="2.5" stroke-dasharray="5 4"></circle><circle cx="36.5" cy="25" r="10" fill="none" stroke="#c67139" stroke-width="2.5" stroke-dasharray="5 4"></circle><circle cx="27" cy="41.5" r="6.5" fill="none" stroke="#c0392c" stroke-width="2.5" stroke-dasharray="5 4"></circle></svg>
+            <div style="font-family:'Caprasimo',serif;font-size:23px;line-height:1.22;letter-spacing:-.01em">Three empty pots,<br>waiting for you.</div>
+            <div style="font-size:13.5px;line-height:1.55;color:var(--ink2);font-weight:500">Hook up one account and Pip will fill all of this in. Takes about a minute, and it can only ever look.</div>
+            <button class="tap" style="border:0;background:var(--solid);color:var(--solidInk);font:inherit;font-size:14px;font-weight:700;padding:12px 20px;border-radius:999px;text-align:left">Connect Trading 212</button>
+            <button class="tap" style="border:0;background:transparent;color:var(--solid);font:inherit;font-size:13.5px;font-weight:700;padding:2px 0;text-align:left">Or type in numbers myself</button>
+          </div>
+        </div>
+
+        <div class="pip {{ dk }}" style="width:300px;border-radius:30px;background:var(--bg);color:var(--ink);padding:20px 18px;box-shadow:0 0 0 1px var(--brule)">
+          <div class="lbl" style="margin-bottom:14px">Error · stale data</div>
+          <div class="pip-bet" style="background:var(--tint);border:2px solid var(--acc);border-radius:22px;padding:15px;margin-bottom:11px;color:var(--aink)">
+            <div style="font-family:'Caprasimo',serif;font-size:17px;line-height:1.25">Kraken isn't answering</div>
+            <div style="font-size:12.5px;line-height:1.5;margin-top:5px;font-weight:500">Your Side Bet number is from 2 hours ago. Everything else is live.</div>
+            <button class="tap" style="border:1.5px solid var(--aink);background:transparent;color:var(--aink);font:inherit;font-size:12.5px;font-weight:700;padding:8px 14px;border-radius:999px;margin-top:11px">Try again</button>
+          </div>
+          <div style="background:var(--card);border-radius:24px;padding:18px">
+            <div style="font-size:12px;color:var(--ink2);font-weight:600">Everything you own</div>
+            <div style="font-family:'Caprasimo',serif;font-size:38px;line-height:1;letter-spacing:-.025em;margin-top:4px">£11,430</div>
+            <div style="font-size:12.5px;color:var(--ink3);font-weight:600;margin-top:7px">Roughly — one pot is stale</div>
+          </div>
+          <div class="pip-bet" style="background:var(--card);border:1.5px solid var(--acc);border-radius:22px;padding:14px;margin-top:9px;display:flex;align-items:center;gap:10px">
+            <span style="width:11px;height:11px;border-radius:999px;background:var(--acc)"></span>
+            <span style="font-family:'Caprasimo',serif;font-size:17px">Side Bet</span>
+            <span style="margin-left:auto;font-size:13px;font-weight:700;color:var(--ink3)">£780 · 2h old</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUCKET states -->
+    <div>
+      <div style="font-family:'Caprasimo',serif;font-size:22px;margin-bottom:14px">Pot detail</div>
+      <div style="display:flex;gap:18px;flex-wrap:wrap">
+        <div class="pip pip-pick {{ dk }}" style="width:300px;border-radius:30px;background:var(--bg);color:var(--ink);padding:20px 18px;box-shadow:0 0 0 1px var(--brule)">
+          <div class="lbl" style="margin-bottom:14px">Loading</div>
+          <div style="background:var(--card);border-radius:24px;padding:18px;display:flex;flex-direction:column;gap:10px">
+            <div class="sk" style="width:120px;height:20px"></div>
+            <div class="sk" style="width:200px;height:36px"></div>
+            <div class="sk" style="width:120px;height:13px"></div>
+          </div>
+          <div style="background:var(--card);border-radius:24px;padding:18px;margin-top:11px">
+            <div class="sk" style="width:110px;height:15px;margin-bottom:12px"></div>
+            <div class="sk" style="height:96px;border-radius:14px"></div>
+          </div>
+          <div style="background:var(--card);border-radius:24px;padding:18px;margin-top:11px;display:flex;flex-direction:column;gap:12px">
+            <div class="sk" style="width:96px;height:15px"></div>
+            <div class="sk" style="height:11px;border-radius:999px"></div>
+            <div class="sk" style="height:13px;width:80%"></div>
+            <div class="sk" style="height:13px;width:64%"></div>
+          </div>
+        </div>
+
+        <div class="pip pip-bet {{ dk }}" style="width:300px;border-radius:30px;background:var(--bg);color:var(--ink);padding:20px 18px;box-shadow:0 0 0 1px var(--brule)">
+          <div class="lbl" style="margin-bottom:14px">Empty · nothing in it yet</div>
+          <div style="background:var(--card);border:1.5px solid var(--acc);border-radius:24px;padding:22px 18px;background-image:repeating-linear-gradient(135deg,rgba(192,57,44,.06) 0 9px,transparent 9px 18px)">
+            <div style="display:flex;align-items:center;gap:9px;margin-bottom:14px">
+              <span style="width:12px;height:12px;border-radius:999px;background:var(--acc)"></span>
+              <span style="font-family:'Caprasimo',serif;font-size:22px">Side Bet</span>
+            </div>
+            <div style="font-family:'Caprasimo',serif;font-size:40px;line-height:1;letter-spacing:-.025em">£0</div>
+            <div style="font-size:13.5px;line-height:1.55;color:var(--ink2);font-weight:500;margin-top:12px">Nothing in here, which is a perfectly good place to leave it. If you do want a flutter, Pip will cap it at £570 — 5% of your money — and tell you the day it creeps over.</div>
+            <button class="tap" style="border:0;background:var(--solid);color:var(--solidInk);font:inherit;font-size:13.5px;font-weight:700;padding:11px 18px;border-radius:999px;margin-top:16px;text-align:left">Connect Kraken</button>
+          </div>
+          <div style="font-size:11.5px;color:var(--ink3);text-align:center;margin-top:14px;font-weight:500;line-height:1.5">You don't need this pot. It's just allowed to exist.</div>
+        </div>
+
+        <div class="pip pip-fnd {{ dk }}" style="width:300px;border-radius:30px;background:var(--bg);color:var(--ink);padding:20px 18px;box-shadow:0 0 0 1px var(--brule)">
+          <div class="lbl" style="margin-bottom:14px">Error · no history</div>
+          <div style="background:var(--card);border-radius:24px;padding:18px">
+            <div style="display:flex;align-items:center;gap:9px;margin-bottom:10px">
+              <span style="width:12px;height:12px;border-radius:999px;background:var(--acc)"></span>
+              <span style="font-family:'Caprasimo',serif;font-size:22px">Foundation</span>
+            </div>
+            <div style="font-family:'Caprasimo',serif;font-size:38px;line-height:1;letter-spacing:-.025em">£8,240</div>
+            <div style="font-size:13px;font-weight:700;margin-top:6px"><span class="up">+£11.40</span> <span style="color:var(--ink3);font-weight:500">· today</span></div>
+          </div>
+          <div style="background:var(--card);border-radius:24px;padding:18px;margin-top:11px">
+            <div style="font-family:'Caprasimo',serif;font-size:17px;margin-bottom:12px">How it's gone</div>
+            <div style="height:96px;border-radius:14px;background:var(--sunk);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;padding:0 16px">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--ink3)" stroke-width="2.75" stroke-linecap="round"><path d="M3 17l6-6 4 4 7-8"></path><path d="M3 21h18"></path></svg>
+              <div style="font-size:12.5px;color:var(--ink2);text-align:center;font-weight:600;line-height:1.45">Can't draw the chart right now</div>
+            </div>
+            <div style="font-size:12.5px;color:var(--ink2);line-height:1.5;margin-top:11px;font-weight:500">The value above is correct — it's only the history that's missing. Nothing's wrong with your money.</div>
+            <button class="tap" style="border:1.5px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-size:12.5px;font-weight:700;padding:9px 15px;border-radius:999px;margin-top:12px">Reload the chart</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INSTRUMENT states -->
+    <div>
+      <div style="font-family:'Caprasimo',serif;font-size:22px;margin-bottom:14px">Instrument detail</div>
+      <div style="display:flex;gap:18px;flex-wrap:wrap">
+        <div class="pip pip-pick {{ dk }}" style="width:300px;border-radius:30px;background:var(--bg);color:var(--ink);padding:20px 18px;box-shadow:0 0 0 1px var(--brule)">
+          <div class="lbl" style="margin-bottom:14px">Loading · fetching price</div>
+          <div style="background:var(--card);border-radius:24px;padding:18px;display:flex;flex-direction:column;gap:10px">
+            <div class="sk" style="width:104px;height:20px;border-radius:999px"></div>
+            <div style="font-family:'Caprasimo',serif;font-size:24px;line-height:1.15">Nvidia</div>
+            <div class="sk" style="width:190px;height:38px"></div>
+            <div class="sk" style="width:150px;height:14px"></div>
+          </div>
+          <div style="background:var(--card);border-radius:24px;padding:18px;margin-top:11px">
+            <div class="sk" style="width:64px;height:15px;margin-bottom:12px"></div>
+            <div class="sk" style="height:86px;border-radius:14px"></div>
+            <div class="sk" style="height:34px;border-radius:999px;margin-top:12px"></div>
+          </div>
+          <div style="font-size:11.5px;color:var(--ink3);text-align:center;margin-top:13px;font-weight:600">The name and the pot are known instantly — only the numbers wait.</div>
+        </div>
+
+        <div class="pip pip-fnd {{ dk }}" style="width:300px;border-radius:30px;background:var(--bg);color:var(--ink);padding:20px 18px;box-shadow:0 0 0 1px var(--brule)">
+          <div class="lbl" style="margin-bottom:14px">Empty · bought today</div>
+          <div style="background:var(--card);border-radius:24px;padding:20px 18px">
+            <span style="font-size:11px;font-weight:700;padding:4px 11px;border-radius:999px;background:var(--tint);color:var(--aink);display:inline-flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:999px;background:var(--acc)"></span>Foundation</span>
+            <div style="font-family:'Caprasimo',serif;font-size:24px;line-height:1.15;margin-top:12px">Vanguard S&amp;P 500</div>
+            <div style="font-family:'Caprasimo',serif;font-size:38px;line-height:1;letter-spacing:-.025em;margin-top:12px">£2,180</div>
+            <div style="font-size:13px;color:var(--ink2);font-weight:600;margin-top:6px">Bought this morning</div>
+            <div style="height:86px;border-radius:14px;background:var(--sunk);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;margin-top:14px;padding:0 18px">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--ink3)" stroke-width="2.75" stroke-linecap="round"><path d="M12 7v5l3 2"></path><circle cx="12" cy="12" r="9.2"></circle></svg>
+              <div style="font-size:12.5px;color:var(--ink2);text-align:center;font-weight:600;line-height:1.45">No history yet — come back tomorrow</div>
+            </div>
+            <div style="font-size:12.5px;color:var(--ink2);line-height:1.5;font-weight:500;margin-top:11px">One day is not a trend, so Pip won't draw you one.</div>
+          </div>
+        </div>
+
+        <div class="pip pip-bet {{ dk }}" style="width:300px;border-radius:30px;background:var(--bg);color:var(--ink);padding:20px 18px;box-shadow:0 0 0 1px var(--brule)">
+          <div class="lbl" style="margin-bottom:14px">Error · stale price</div>
+          <div style="background:var(--card);border-radius:24px;padding:20px 18px">
+            <span style="font-size:11px;font-weight:700;padding:4px 11px;border-radius:999px;background:var(--tint);color:var(--aink);display:inline-flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:999px;background:var(--acc)"></span>Side Bet</span>
+            <div style="font-family:'Caprasimo',serif;font-size:24px;line-height:1.15;margin-top:12px">Bitcoin</div>
+            <div style="font-family:'Caprasimo',serif;font-size:38px;line-height:1;letter-spacing:-.025em;margin-top:12px;opacity:.6">£430</div>
+            <div style="display:flex;align-items:center;gap:7px;margin-top:9px;font-size:12px;font-weight:700;color:var(--aink)">
+              <span style="width:7px;height:7px;border-radius:999px;background:var(--acc);flex:0 0 7px"></span>Price is 2 hours old
+            </div>
+            <div style="font-size:12.5px;color:var(--ink2);line-height:1.5;font-weight:500;margin-top:11px">Kraken stopped answering at 07:38. This is the last figure Pip saw — your actual holding hasn't changed, only what we can see of it.</div>
+            <button class="tap" style="border:1.5px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-size:13px;font-weight:700;padding:10px 16px;border-radius:999px;margin-top:14px">Try Kraken again</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RULES states -->
+    <div>
+      <div style="font-family:'Caprasimo',serif;font-size:22px;margin-bottom:14px">Rules</div>
+      <div style="display:flex;gap:18px;flex-wrap:wrap">
+        <div class="pip {{ dk }}" style="width:300px;border-radius:30px;background:var(--bg);color:var(--ink);padding:20px 18px;box-shadow:0 0 0 1px var(--brule)">
+          <div class="lbl" style="margin-bottom:14px">Loading</div>
+          <div class="sk" style="width:150px;height:26px;margin-bottom:16px"></div>
+          <div style="display:flex;flex-direction:column;gap:11px">
+            <div class="sk" style="height:112px;border-radius:24px"></div>
+            <div class="sk" style="height:112px;border-radius:24px"></div>
+            <div class="sk" style="height:112px;border-radius:24px"></div>
+          </div>
+        </div>
+
+        <div class="pip {{ dk }}" style="width:300px;border-radius:30px;background:var(--bg);color:var(--ink);padding:20px 18px;box-shadow:0 0 0 1px var(--brule)">
+          <div class="lbl" style="margin-bottom:14px">Empty · no rules set</div>
+          <div style="background:var(--card);border-radius:24px;padding:24px 20px">
+            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:14px"><path d="M4 21V4"></path><path d="M4 6h10l-2 3 2 3H4"></path><path d="M18 12v9"></path><circle cx="18" cy="8" r="3"></circle></svg>
+            <div style="font-family:'Caprasimo',serif;font-size:22px;line-height:1.22">No rules yet — want the sensible ones?</div>
+            <div style="font-size:13.5px;line-height:1.55;color:var(--ink2);font-weight:500;margin-top:10px">Most people start 70 / 25 / 5. Boring pot biggest, gambling pot smallest. You can change any of it later.</div>
+            <button class="tap" style="border:0;background:var(--solid);color:var(--solidInk);font:inherit;font-size:14px;font-weight:700;padding:12px 20px;border-radius:999px;margin-top:16px;text-align:left">Use 70 / 25 / 5</button>
+            <button class="tap" style="border:0;background:transparent;color:var(--solid);font:inherit;font-size:13.5px;font-weight:700;padding:10px 0 0;text-align:left">I'll pick my own</button>
+          </div>
+        </div>
+
+        <div class="pip {{ dk }}" style="width:300px;border-radius:30px;background:var(--bg);color:var(--ink);padding:20px 18px;box-shadow:0 0 0 1px var(--brule)">
+          <div class="lbl" style="margin-bottom:14px">Error · couldn't save</div>
+          <div class="pip-bet" style="background:var(--tint);border:2px solid var(--acc);border-radius:22px;padding:16px;color:var(--aink)">
+            <div style="font-family:'Caprasimo',serif;font-size:18px;line-height:1.25">That change didn't stick</div>
+            <div style="font-size:12.5px;line-height:1.5;margin-top:6px;font-weight:500">Pip couldn't save your new Side Bet cap. Your old cap of 5% is still what's running — nothing's been half-applied.</div>
+            <div style="display:flex;gap:8px;margin-top:13px;flex-wrap:wrap">
+              <button class="tap" style="border:0;background:var(--aink);color:var(--tint);font:inherit;font-size:12.5px;font-weight:700;padding:9px 15px;border-radius:999px">Save again</button>
+              <button class="tap" style="border:1.5px solid var(--aink);background:transparent;color:var(--aink);font:inherit;font-size:12.5px;font-weight:700;padding:9px 15px;border-radius:999px">Leave it</button>
+            </div>
+          </div>
+          <div class="pip-bet" style="background:var(--card);border-radius:22px;padding:16px;margin-top:11px;opacity:.8">
+            <div style="display:flex;align-items:center;gap:9px;margin-bottom:9px"><span style="width:11px;height:11px;border-radius:999px;background:var(--acc)"></span><span style="font-family:'Caprasimo',serif;font-size:18px">Side Bet</span></div>
+            <div style="font-family:'Caprasimo',serif;font-size:30px;line-height:1">5%</div>
+            <div style="font-size:12px;color:var(--ink2);font-weight:600;margin-top:5px">Hard cap · unchanged</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS states -->
+    <div>
+      <div style="font-family:'Caprasimo',serif;font-size:22px;margin-bottom:14px">Setup</div>
+      <div style="display:flex;gap:18px;flex-wrap:wrap">
+        <div class="pip {{ dk }}" style="width:300px;border-radius:30px;background:var(--bg);color:var(--ink);padding:20px 18px;box-shadow:0 0 0 1px var(--brule)">
+          <div class="lbl" style="margin-bottom:14px">Loading · connecting</div>
+          <div style="background:var(--card);border-radius:24px;padding:4px 16px">
+            <div style="display:flex;align-items:center;gap:12px;padding:15px 0;border-bottom:1px solid var(--line)">
+              <span style="width:38px;height:38px;flex:0 0 38px;border-radius:13px;background:#1f3a5f;color:#fff;display:grid;place-items:center;font-family:'Caprasimo',serif;font-size:16px">T</span>
+              <div style="flex:1"><div style="font-size:14px;font-weight:600">Trading 212</div><div style="font-size:11.5px;color:var(--ink2);font-weight:500">Checking your keys…</div></div>
+              <svg class="spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink3)" stroke-width="2.75" stroke-linecap="round"><path d="M12 3a9 9 0 1 0 9 9"></path></svg>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:15px 0;border-bottom:1px solid var(--line)">
+              <div class="sk" style="width:38px;height:38px;flex:0 0 38px;border-radius:13px"></div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:6px"><div class="sk" style="width:92px;height:13px"></div><div class="sk" style="width:130px;height:11px"></div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:15px 0">
+              <div class="sk" style="width:38px;height:38px;flex:0 0 38px;border-radius:13px"></div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:6px"><div class="sk" style="width:76px;height:13px"></div><div class="sk" style="width:112px;height:11px"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pip {{ dk }}" style="width:300px;border-radius:30px;background:var(--bg);color:var(--ink);padding:20px 18px;box-shadow:0 0 0 1px var(--brule)">
+          <div class="lbl" style="margin-bottom:14px">Empty · nothing connected</div>
+          <div style="background:var(--card);border-radius:24px;padding:24px 20px">
+            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:14px"><path d="M9 7H6a4 4 0 0 0 0 8h3"></path><path d="M15 17h3a4 4 0 0 0 0-8h-3"></path><path d="M9 11h6" stroke-dasharray="2 3"></path></svg>
+            <div style="font-family:'Caprasimo',serif;font-size:22px;line-height:1.22">Nothing plugged in yet</div>
+            <div style="font-size:13.5px;line-height:1.55;color:var(--ink2);font-weight:500;margin-top:10px">Pip needs read-only access to see your numbers. Pick whichever you already use — you can add the others whenever.</div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">
+              <button class="tap" style="border:1.5px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-size:13.5px;font-weight:700;padding:11px 15px;border-radius:999px;display:flex;align-items:center;gap:11px"><span style="width:26px;height:26px;border-radius:9px;background:#1f3a5f;color:#fff;display:grid;place-items:center;font-family:'Caprasimo',serif;font-size:13px">T</span>Trading 212</button>
+              <button class="tap" style="border:1.5px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-size:13.5px;font-weight:700;padding:11px 15px;border-radius:999px;display:flex;align-items:center;gap:11px"><span style="width:26px;height:26px;border-radius:9px;background:#5741d9;color:#fff;display:grid;place-items:center;font-family:'Caprasimo',serif;font-size:13px">K</span>Kraken</button>
+              <button class="tap" style="border:1.5px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-size:13.5px;font-weight:700;padding:11px 15px;border-radius:999px;display:flex;align-items:center;gap:11px"><span style="width:26px;height:26px;border-radius:9px;background:#0052ff;color:#fff;display:grid;place-items:center;font-family:'Caprasimo',serif;font-size:13px">C</span>Coinbase</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="pip {{ dk }}" style="width:300px;border-radius:30px;background:var(--bg);color:var(--ink);padding:20px 18px;box-shadow:0 0 0 1px var(--brule)">
+          <div class="lbl" style="margin-bottom:14px">Error · access expired</div>
+          <div class="pip-bet" style="background:var(--tint);border:2px solid var(--acc);border-radius:22px;padding:16px;color:var(--aink)">
+            <div style="font-family:'Caprasimo',serif;font-size:18px;line-height:1.25">Coinbase needs a new key</div>
+            <div style="font-size:12.5px;line-height:1.5;margin-top:6px;font-weight:500">Its read-only access expired on 12 Sep, so that £0 isn't real. Takes about thirty seconds to redo.</div>
+            <button class="tap" style="border:0;background:var(--aink);color:var(--tint);font:inherit;font-size:12.5px;font-weight:700;padding:9px 15px;border-radius:999px;margin-top:13px">Reconnect Coinbase</button>
+          </div>
+          <div style="background:var(--card);border-radius:24px;padding:4px 16px;margin-top:11px">
+            <div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)">
+              <span style="width:36px;height:36px;flex:0 0 36px;border-radius:12px;background:#1f3a5f;color:#fff;display:grid;place-items:center;font-family:'Caprasimo',serif;font-size:15px">T</span>
+              <div style="flex:1"><div style="font-size:13.5px;font-weight:600">Trading 212</div><div style="font-size:11.5px;color:var(--ink2);font-weight:500">Two pots · live</div></div>
+              <span style="font-size:10.5px;font-weight:700;padding:4px 10px;border-radius:999px;background:#e1eecc;color:#3d472b">OK</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:14px 0">
+              <span style="width:36px;height:36px;flex:0 0 36px;border-radius:12px;background:#0052ff;color:#fff;display:grid;place-items:center;font-family:'Caprasimo',serif;font-size:15px">C</span>
+              <div style="flex:1"><div style="font-size:13.5px;font-weight:600">Coinbase</div><div style="font-size:11.5px;color:var(--ink2);font-weight:500">Can't see it</div></div>
+              <span style="font-size:10.5px;font-weight:700;padding:4px 10px;border-radius:999px;background:#ffdcd6;color:#7a2418">Expired</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;boardTheme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;'light' | 'dark'&quot;,&quot;section&quot;:&quot;Theme&quot;},&quot;overCap&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Scenario&quot;}}">
+const SW = { fnd: '#7a8a5e', pick: '#c67139', bet: '#c0392c' };
+const HATCH = 'repeating-linear-gradient(135deg,rgba(192,57,44,.07) 0 9px,transparent 9px 18px)';
+
+const DATA = {
+  fnd: {
+    id: 'fnd', cls: 'pip-fnd', name: 'Foundation', badge: 'Autopilot',
+    blurb: 'Your ISA, dripping into world index funds',
+    long: 'Your ISA, dripping £140 a month into two world index funds. Nothing here needs a decision.',
+    value: '£8,240', share: '72%', pct: '72%', target: '70%',
+    rule: '2% over target', ruleDir: '', provider: 'Trading 212',
+    tf: {
+      day: { change: '+£11.40', pct: '+0.14%', dir: 'up' },
+      month: { change: '+£96.20', pct: '+1.2%', dir: 'up' },
+      all: { change: '+£640', pct: '+8.4%', dir: 'up' }
+    },
+    plain: "Boring on purpose. It owns a slice of about 7,000 companies, so no single one can hurt you much.",
+    chartFrom: 'Mar 2024', chartNote: 'Two dips along the way, both recovered within a month. This is what normal looks like.',
+    pts: [42, 46, 44, 52, 58, 54, 63, 70, 66, 76, 84, 92],
+    holdings: [
+      { name: 'Vanguard FTSE Global All Cap', sub: 'A slice of nearly everything · 62%', value: '£5,120', change: '+8.9%', dir: 'up', w: '62%', swatch: '#7a8a5e' },
+      { name: 'Vanguard S&P 500 (VUAG)', sub: 'The 500 biggest US companies · 27%', value: '£2,180', change: '+11.2%', dir: 'up', w: '27%', swatch: '#aebf92' },
+      { name: 'Cash, waiting', sub: "Next month's buy · 11%", value: '£940', change: 'idle', dir: '', w: '11%', swatch: '#ccdbb2' }
+    ]
+  },
+  pick: {
+    id: 'pick', cls: 'pip-pick', name: 'Handpicked', badge: 'Yours',
+    blurb: 'Five companies you chose yourself',
+    long: 'Five companies you chose yourself. Hands-off, but they are your calls.',
+    value: '£2,410', share: '21%', pct: '21%', target: '25%',
+    rule: '4% under target', ruleDir: '', provider: 'Trading 212',
+    tf: {
+      day: { change: '+£9.10', pct: '+0.38%', dir: 'up' },
+      month: { change: '+£58.40', pct: '+2.5%', dir: 'up' },
+      all: { change: '+£210', pct: '+9.5%', dir: 'up' }
+    },
+    plain: 'Fewer companies means bigger swings — up and down. Nvidia alone is a third of this pot.',
+    chartFrom: 'Aug 2024', chartNote: 'Bumpier than Foundation, and that is the trade you made by picking your own.',
+    pts: [50, 44, 58, 52, 66, 60, 74, 62, 78, 72, 86, 90],
+    holdings: [
+      { name: 'Nvidia', sub: 'Chips for AI · 30%', value: '£720', change: '+24%', dir: 'up', w: '30%', swatch: '#c67139' },
+      { name: 'Apple', sub: 'Phones, laptops · 23%', value: '£560', change: '+6%', dir: 'up', w: '23%', swatch: '#d67f48' },
+      { name: 'ASML', sub: 'Machines that make chips · 18%', value: '£430', change: '−3%', dir: 'dn', w: '18%', swatch: '#f6a06b' },
+      { name: 'Greggs', sub: 'Sausage rolls · 16%', value: '£380', change: '+2%', dir: 'up', w: '16%', swatch: '#ffc6a5' },
+      { name: 'Rolls-Royce', sub: 'Aero engines · 13%', value: '£320', change: '+14%', dir: 'up', w: '13%', swatch: '#ffe1d0' }
+    ]
+  },
+  bet: {
+    id: 'bet', cls: 'pip-bet', name: 'Side Bet', badge: 'Capped at 5%',
+    blurb: 'The fun money. Capped, fenced off, never topped up past its limit',
+    long: 'The fun money — capped, fenced off, and never topped up past its limit.',
+    value: '£780', share: '6.8%', pct: '6.8%', target: '5%',
+    rule: '1.8% over cap', ruleDir: 'dn', provider: 'Kraken',
+    tf: {
+      day: { change: '+£5.30', pct: '+0.68%', dir: 'up' },
+      month: { change: '−£34.20', pct: '−4.2%', dir: 'dn' },
+      all: { change: '+£280', pct: '+56%', dir: 'up' }
+    },
+    plain: 'Assume you could lose the lot. That is the deal you made with this pot, and £780 is a sum you can shrug at.',
+    chartFrom: 'Jan 2025', chartNote: 'Up 56% overall, and it has been down 40% twice on the way. Both are normal here.',
+    pts: [30, 62, 40, 78, 50, 88, 46, 70, 38, 82, 60, 74],
+    holdings: [
+      { name: 'Bitcoin', sub: 'The big one · 55%', value: '£430', change: '+62%', dir: 'up', w: '55%', swatch: '#c0392c' },
+      { name: 'Ethereum', sub: 'The second one · 28%', value: '£220', change: '+31%', dir: 'up', w: '28%', swatch: '#e06a5c' },
+      { name: 'Solana', sub: 'A faster, riskier one · 17%', value: '£130', change: '−12%', dir: 'dn', w: '17%', swatch: '#ffdcd6' }
+    ]
+  }
+};
+
+const INSTR = {
+  'Nvidia': { ticker: 'NVDA', price: '£142.80', qty: '5.04 shares', day: '+£4.10', dayPct: '+2.9%', dir: 'up', bucket: 'Handpicked', cls: 'pip-pick', provider: 'Trading 212', note: 'Makes the chips that AI runs on. Swings hard in both directions — a third of your Handpicked pot sits here.' },
+  'Apple': { ticker: 'AAPL', price: '£183.40', qty: '3.05 shares', day: '+£0.90', dayPct: '+0.5%', dir: 'up', bucket: 'Handpicked', cls: 'pip-pick', provider: 'Trading 212', note: 'Phones and laptops. About as steady as a single company gets.' },
+  'ASML': { ticker: 'ASML', price: '£612.00', qty: '0.70 shares', day: '−£3.20', dayPct: '−0.5%', dir: 'dn', bucket: 'Handpicked', cls: 'pip-pick', provider: 'Trading 212', note: 'Builds the machines that make chips. One customer sneezes and the price moves.' },
+  'Greggs': { ticker: 'GRG', price: '£24.60', qty: '15.4 shares', day: '+£1.10', dayPct: '+0.3%', dir: 'up', bucket: 'Handpicked', cls: 'pip-pick', provider: 'Trading 212', note: 'Sausage rolls. Genuinely a fine business.' },
+  'Rolls-Royce': { ticker: 'RR', price: '£5.94', qty: '53.9 shares', day: '+£2.40', dayPct: '+0.8%', dir: 'up', bucket: 'Handpicked', cls: 'pip-pick', provider: 'Trading 212', note: 'Aeroplane engines, not the cars. Up 14% since you bought.' },
+  'Bitcoin': { ticker: 'BTC', price: '£48,900', qty: '0.0088 BTC', day: '+£3.80', dayPct: '+0.9%', dir: 'up', bucket: 'Side Bet', cls: 'pip-bet', provider: 'Kraken', note: 'The big one. Assume you could lose the lot — that is the deal you made with this pot.' },
+  'Ethereum': { ticker: 'ETH', price: '£2,140', qty: '0.103 ETH', day: '+£1.20', dayPct: '+0.6%', dir: 'up', bucket: 'Side Bet', cls: 'pip-bet', provider: 'Kraken', note: 'The second one. Same rules: money you can shrug at.' },
+  'Solana': { ticker: 'SOL', price: '£118.20', qty: '1.10 SOL', day: '+£0.30', dayPct: '+0.3%', dir: 'up', bucket: 'Side Bet', cls: 'pip-bet', provider: 'Kraken', note: 'Faster and riskier again. Down 12% since you bought — normal for this corner.' },
+  'Vanguard FTSE Global All Cap': { ticker: 'VAFTGAG', price: '£2.18', qty: '2,348 units', day: '+£7.10', dayPct: '+0.14%', dir: 'up', bucket: 'Foundation', cls: 'pip-fnd', provider: 'Trading 212', note: 'A slice of nearly 7,000 companies in one line. No single one can hurt you much.' },
+  'Vanguard S&P 500 (VUAG)': { ticker: 'VUAG', price: '£94.30', qty: '23.1 units', day: '+£4.30', dayPct: '+0.20%', dir: 'up', bucket: 'Foundation', cls: 'pip-fnd', provider: 'Trading 212', note: 'The 500 biggest US companies. Overlaps with the fund above, which is fine.' },
+  'Cash, waiting': { ticker: 'GBP', price: '£1.00', qty: '£940', day: '£0.00', dayPct: '0%', dir: '', bucket: 'Foundation', cls: 'pip-fnd', provider: 'Trading 212', note: "Next month's buy, sitting still. Not invested yet, not lost." }
+};
+
+const SERIES = [58, 54, 61, 57, 66, 62, 70, 64, 73, 69, 77, 72, 80, 75, 83, 79, 87, 82, 90, 85, 92, 88, 95, 91];
+function seriesFor(name) {
+  let seed = 0;
+  for (let i = 0; i < name.length; i++) seed = (seed * 31 + name.charCodeAt(i)) % 997;
+  return SERIES.map((v, i) => Math.max(14, Math.min(96, v + ((seed + i * 37) % 23) - 11)));
+}
+
+const RANGES = [
+  { id: 'day', label: 'Day', n: 4, from: 'This morning' },
+  { id: 'month', label: 'Month', n: 8, from: '1 Sep' },
+  { id: 'year', label: 'Year', n: 16, from: 'Sep 2025' },
+  { id: 'all', label: 'All', n: 24, from: 'Since you bought' }
+];
+
+const CONTRIB = {
+  fnd: [140, 140, 140, 140, 140, 140],
+  pick: [50, 50, 50, 60, 50, 50],
+  bet: [10, 10, 10, 0, 0, 0]
+};
+const MONTHS = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'];
+
+const TOTALS = {
+  day: { change: '+£25.80', pct: '+0.23%', dir: 'up' },
+  month: { change: '+£120.40', pct: '+1.1%', dir: 'up' },
+  all: { change: '+£1,130', pct: '+11.0%', dir: 'up' }
+};
+const TF_LABEL = { day: 'today', month: 'this month', all: 'all time' };
+
+function path(pts, close) {
+  const w = 320, h = 120, n = pts.length;
+  const x = i => (i / (n - 1)) * w;
+  const y = v => h - 8 - (v / 100) * (h - 20);
+  let d = 'M' + x(0).toFixed(1) + ' ' + y(pts[0]).toFixed(1);
+  for (let i = 1; i < n; i++) {
+    const cx = ((x(i - 1) + x(i)) / 2).toFixed(1);
+    d += ' C' + cx + ' ' + y(pts[i - 1]).toFixed(1) + ' ' + cx + ' ' + y(pts[i]).toFixed(1) + ' ' + x(i).toFixed(1) + ' ' + y(pts[i]).toFixed(1);
+  }
+  if (close) d += ' L' + w + ' ' + h + ' L0 ' + h + ' Z';
+  return d;
+}
+
+function spark(pts, w, h) {
+  const n = pts.length;
+  const lo = Math.min(...pts), hi = Math.max(...pts), span = hi - lo || 1;
+  return pts.map((v, i) => (i ? 'L' : 'M') + ((i / (n - 1)) * w).toFixed(1) + ' ' + (h - 2 - ((v - lo) / span) * (h - 4)).toFixed(1)).join(' ');
+}
+
+function moneyNum(s) { return parseFloat(String(s).replace(/[£,]/g, '')) || 0; }
+function pctNum(s) { return parseFloat(String(s).replace(/[+−%]/g, '').replace('idle', '0')) * (String(s).indexOf('−') === 0 ? -1 : 1) || 0; }
+
+class Component extends DCLogic {
+  state = { route: 'home', bucket: 'bet', tf: 'day', theme: null, board: null, instr: 'Nvidia', range: 'all', sort: 'value', asc: false };
+
+  boardPill(on) {
+    const bd = (this.state.board || this.props.boardTheme || 'light') === 'dark';
+    return {
+      bg: on ? (bd ? '#f3ead9' : '#201e1d') : 'transparent',
+      fg: on ? (bd ? '#141110' : '#f5ead8') : (bd ? 'rgba(243,234,217,.72)' : 'rgba(32,30,29,.72)')
+    };
+  }
+
+  pill(on) {
+    const s = this.state;
+    const dark = (s.theme || ((s.board || this.props.boardTheme || 'light') === 'dark' ? 'dark' : 'light')) === 'dark';
+    return {
+      bg: on ? (dark ? '#f3ead9' : '#201e1d') : 'transparent',
+      fg: on ? (dark ? '#1c1815' : '#f5ead8') : (dark ? 'rgba(243,234,217,.84)' : 'rgba(32,30,29,.80)')
+    };
+  }
+
+  renderVals() {
+    const s = this.state;
+    const boardDarkNow = (s.board || this.props.boardTheme || 'light') === 'dark';
+    const dark = (s.theme || (boardDarkNow ? 'dark' : 'light')) === 'dark';
+    const overCap = this.props.overCap ?? true;
+    const order = ['fnd', 'pick', 'bet'];
+
+    const cards = order.map(id => {
+      const b = DATA[id], t = b.tf[s.tf];
+      return {
+        cls: b.cls, name: b.name, blurb: b.blurb, value: b.value,
+        change: t.change + ' · ' + TF_LABEL[s.tf], dir: t.dir,
+        pct: b.pct, target: b.target, share: b.share,
+        rule: id === 'bet' && !overCap ? 'inside its cap' : b.rule,
+        ruleDir: id === 'bet' && overCap ? 'dn' : '',
+        border: id === 'bet' ? '1.5px solid var(--acc)' : '1.5px solid transparent',
+        hatch: id === 'bet' ? HATCH : 'none',
+        spark: spark(b.pts, 62, 20), sparkDir: t.dir,
+        open: () => this.setState({ route: 'bucket', bucket: id })
+      };
+    });
+
+    const C = 2 * Math.PI * 46;
+    let acc = 0;
+    const ring = order.map(id => {
+      const share = parseFloat(DATA[id].share);
+      const len = (share / 100) * C;
+      const seg = { color: SW[id], dash: len.toFixed(1) + ' ' + C.toFixed(1), off: (-acc).toFixed(1) };
+      acc += len;
+      return seg;
+    });
+
+    const b = DATA[s.bucket], bt = b.tf[s.tf];
+    const bk = {
+      cls: b.cls, name: b.name, badge: b.badge, blurb: b.long, value: b.value,
+      change: bt.change, pctChange: bt.pct, dir: bt.dir, plain: b.plain,
+      provider: b.provider, chartFrom: b.chartFrom, chartNote: b.chartNote,
+      line: path(b.pts, false), area: path(b.pts, true),
+      holdings: b.holdings.map(h => ({
+        ...h, spark: spark(seriesFor(h.name), 54, 18),
+        open: () => this.setState({ route: 'instrument', instr: h.name })
+      })),
+      rows: b.holdings.slice().sort((x, y) => {
+        const k = s.sort === 'name' ? (x.name > y.name ? 1 : -1)
+          : s.sort === 'change' ? pctNum(x.change) - pctNum(y.change)
+            : moneyNum(x.value) - moneyNum(y.value);
+        return s.asc ? k : -k;
+      }).map(h => ({
+        ...h, spark: spark(seriesFor(h.name), 44, 16),
+        open: () => this.setState({ route: 'instrument', instr: h.name })
+      })),
+      bars: CONTRIB[b.id].map((v, i) => ({
+        h: Math.max(4, (v / 140) * 72) + 'px', label: MONTHS[i],
+        amount: v ? '£' + v : '—', dim: v ? '1' : '.35'
+      })),
+      barNote: b.id === 'bet'
+        ? 'Nothing new has gone in since June — Pip stopped topping it up when it hit the cap.'
+        : b.id === 'pick' ? 'Steady £50 a month, with one £60 month when you added Rolls-Royce.'
+          : 'Same £140 every month since April. That regularity is doing most of the work.',
+      border: b.id === 'bet' ? '1.5px solid var(--acc)' : '1.5px solid transparent',
+      hatch: b.id === 'bet' ? HATCH : 'none'
+    };
+
+    const rules = order.map(id => {
+      const r = DATA[id];
+      return {
+        cls: r.cls, name: r.name, pct: r.pct, target: r.target,
+        targetPct: r.target, kind: id === 'bet' ? 'Hard cap' : 'Target',
+        plain: id === 'fnd'
+          ? "It is 2% over, which is nothing. Pip will nudge new money elsewhere until it evens out."
+          : id === 'pick'
+            ? 'A bit under. Your next few payments will lean this way on their own.'
+            : overCap
+              ? 'Over the line. Pip has stopped putting new money in here until it drops back under 5%.'
+              : 'Comfortably inside. New money stops going in the moment it touches 5%.',
+        border: id === 'bet' ? '1.5px solid var(--acc)' : '1.5px solid transparent',
+        hatch: id === 'bet' ? HATCH : 'none',
+        plusInk: dark ? '#1c1815' : '#ffffff'
+      };
+    });
+
+    const feedAll = [
+      { cls: 'pip-fnd', glyph: '↓', text: '£140 of your ISA bought Vanguard FTSE Global All Cap', when: 'Monday · automatic' },
+      { cls: 'pip-pick', glyph: '↑', text: "Nvidia up 6% — that's £41 to you", when: 'Tuesday' },
+      { cls: 'pip-bet', glyph: '!', text: 'Side Bet crept 1.8% over its 5% cap', when: 'Wednesday · needs a look' },
+      { cls: 'pip-fnd', glyph: '★', text: 'You crossed £11,000. First time.', when: 'Thursday' },
+      { cls: 'pip-pick', glyph: '↓', text: '£60 of your ISA bought Rolls-Royce', when: 'Friday · automatic' }
+    ];
+    const feed = overCap ? feedAll : feedAll.filter(f => f.glyph !== '!');
+
+    const providers = [
+      { name: 'Trading 212', initial: 'T', swatch: '#1f3a5f', sub: 'Foundation + Handpicked · synced 4 min ago', status: 'Live', badgeBg: dark ? '#2d3323' : '#e1eecc', badgeInk: dark ? '#ccdbb2' : '#3d472b' },
+      { name: 'Kraken', initial: 'K', swatch: '#5741d9', sub: 'Side Bet · synced 11 min ago', status: 'Live', badgeBg: dark ? '#2d3323' : '#e1eecc', badgeInk: dark ? '#ccdbb2' : '#3d472b' },
+      { name: 'Coinbase', initial: 'C', swatch: '#0052ff', sub: 'Nothing here — key expired 12 Sep', status: 'Expired', badgeBg: dark ? '#3d211c' : '#ffdcd6', badgeInk: dark ? '#ffc7bf' : '#7a2418' }
+    ];
+
+    const splits = [
+      { name: 'Foundation', w: '70%', amount: '£140', swatch: SW.fnd },
+      { name: 'Handpicked', w: '25%', amount: '£50', swatch: SW.pick },
+      { name: 'Side Bet', w: '5%', amount: '£10', swatch: SW.bet }
+    ];
+
+    const iName = s.instr, iMeta = INSTR[iName] || INSTR['Nvidia'];
+    const iAll = seriesFor(iName);
+    const rangeDef = RANGES.find(r => r.id === s.range) || RANGES[3];
+    const iPts = iAll.slice(-rangeDef.n);
+    const iHold = (DATA[iMeta.cls === 'pip-fnd' ? 'fnd' : iMeta.cls === 'pip-pick' ? 'pick' : 'bet'].holdings.find(h => h.name === iName)) || {};
+    const instr = {
+      name: iName, ticker: iMeta.ticker, price: iMeta.price, qty: iMeta.qty,
+      day: iMeta.day, dayPct: iMeta.dayPct, dir: iMeta.dir, bucket: iMeta.bucket,
+      cls: iMeta.cls, provider: iMeta.provider, note: iMeta.note,
+      value: iHold.value || '£0', total: iHold.change || '—', totalDir: iHold.dir || '',
+      sub: iHold.sub || '', line: path(iPts, false), area: path(iPts, true),
+      from: rangeDef.from, spark: spark(iAll, 62, 20),
+      ranges: RANGES.map(r => {
+        const on = r.id === s.range, p = this.pill(on);
+        return { label: r.label, bg: p.bg, fg: p.fg, pick: () => this.setState({ range: r.id }) };
+      })
+    };
+
+    const sortCols = [
+      { id: 'name', label: 'Holding' },
+      { id: 'value', label: 'Value' },
+      { id: 'change', label: 'Change' }
+    ].map(c => ({
+      label: c.label + (s.sort === c.id ? (s.asc ? ' ↑' : ' ↓') : ''),
+      ink: s.sort === c.id ? 'var(--ink)' : 'var(--ink2)',
+      pick: () => this.setState(st => ({ sort: c.id, asc: st.sort === c.id ? !st.asc : c.id === 'name' }))
+    }));
+
+    const d = this.pill(s.tf === 'day'), m = this.pill(s.tf === 'month'), a = this.pill(s.tf === 'all');
+    const lt = this.pill(!dark), dk = this.pill(dark);
+    const tabInk = on => on ? 'var(--ink)' : 'var(--ink3)';
+
+    const bd = boardDarkNow;
+    const bl = this.boardPill(!bd), bdk = this.boardPill(bd);
+
+    return {
+      themeCls: dark ? 'pip-dark' : '',
+      boardCls: bd ? 'board-dark' : '',
+      dk: bd ? 'pip-dark' : '',
+      bbgLight: bl.bg, bfgLight: bl.fg, bbgDark: bdk.bg, bfgDark: bdk.fg,
+      boardLight: () => this.setState({ board: 'light', theme: 'light' }),
+      boardDark: () => this.setState({ board: 'dark', theme: 'dark' }),
+      isHome: s.route === 'home', isBucket: s.route === 'bucket',
+      isRules: s.route === 'rules', isSettings: s.route === 'settings',
+      isInstrument: s.route === 'instrument',
+      cards, bk, rules, feed, providers, splits, overCap, ring, instr, sortCols,
+      goBucket: () => this.setState({ route: 'bucket' }),
+      totalChange: TOTALS[s.tf].change, totalPct: TOTALS[s.tf].pct, totalDir: TOTALS[s.tf].dir,
+      tfLabel: TF_LABEL[s.tf],
+      bgDay: d.bg, fgDay: d.fg, bgMonth: m.bg, fgMonth: m.fg, bgAll: a.bg, fgAll: a.fg,
+      bgLight: lt.bg, fgLight: lt.fg, bgDark: dk.bg, fgDark: dk.fg,
+      tabHome: tabInk(s.route === 'home' || s.route === 'bucket' || s.route === 'instrument'),
+      tabRules: tabInk(s.route === 'rules'),
+      tabSettings: tabInk(s.route === 'settings'),
+      setDay: () => this.setState({ tf: 'day' }),
+      setMonth: () => this.setState({ tf: 'month' }),
+      setAll: () => this.setState({ tf: 'all' }),
+      goHome: () => this.setState({ route: 'home' }),
+      goRules: () => this.setState({ route: 'rules' }),
+      goSettings: () => this.setState({ route: 'settings' }),
+      setLight: () => this.setState({ theme: 'light' }),
+      setDark: () => this.setState({ theme: 'dark' }),
+      toggleTheme: () => this.setState({ theme: dark ? 'light' : 'dark' })
+    };
+  }
+}
+
+</script>
+</body>
+</html>

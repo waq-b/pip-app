@@ -33,6 +33,17 @@ finance-app-personal/
 
 `apps/api/src/auth/`, `market/`, `rules/`, `research/` don't exist yet — they arrive with the phases that need them (1, 2, 5, 6 respectively). Don't scaffold them early.
 
+## Brand assets and fonts (Phase 1)
+
+The Claude Design handover ("Pip") lives in the repo, not just in the design tool:
+
+- `docs/design/Pip.dc.html` — the original prototype, kept as the reference for every screen and state. Read-only; it is never built or imported.
+- `apps/web/src/assets/brand/` — the logo mark as SVG: `pip-mark.svg` (full colour), `-dark.svg` (dark ground), `-reversed.svg` (on terracotta), `-mono.svg` (one ink, uses `currentColor`), plus `pip-icon.svg` and `pip-icon-maskable.svg` as the app-icon artwork.
+- `apps/web/public/` — the rasterized outputs: `favicon.svg` (one-ink mark on a cream disc), `apple-touch-icon.png`, `pwa-192.png`, `pwa-512.png`, `pwa-maskable-512.png`. Regenerate with `sips -s format png --resampleWidth <n> <src>.svg --out <dest>.png`.
+- Fonts are self-hosted via `@fontsource/caprasimo` and `@fontsource-variable/figtree`, imported in `apps/web/src/index.css`. No Google Fonts request at runtime. Icons come from `lucide-react`.
+
+The PWA manifest (`apps/web/vite.config.ts`) and `index.html` carry the Pip name, the cream/dark theme colours and these icons.
+
 ## Bucket model
 
 Three buckets, defined once in `packages/shared/src/buckets.ts`:

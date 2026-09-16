@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Pip">
+  <rect width="512" height="512" fill="#ebddc5" />
+  <g transform="translate(128 128) scale(4.57)">
+    <circle cx="19" cy="20" r="13" fill="#7a8a5e" />
+    <circle cx="36.5" cy="25" r="10" fill="#c67139" />
+    <circle cx="27" cy="41.5" r="6.5" fill="#c0392c" />
+  </g>
+</svg>

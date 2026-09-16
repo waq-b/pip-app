@@ -8,6 +8,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Phase 1 — Base UI + auth
 
 - Added: `docs/phases/phase-1.md` — Phase 1 plan from the Claude Design handover (Pip), with scope decisions, hard-line design corrections and a 20-task breakdown (#3226664834)
+- Added: design assets — `docs/design/Pip.dc.html` reference, logo mark SVGs in `apps/web/src/assets/brand/`, favicon and PWA/apple-touch icons, self-hosted Caprasimo + Figtree via `@fontsource`, `lucide-react` (#3226676914)
+- Changed: `index.html` and the PWA manifest now carry the Pip name, description and cream/dark theme colours (#3226676914)
+- Removed: unreferenced `apps/web/public/icons.svg` left over from the Phase 0 scaffold (#3226676914)
 
 ### Phase 0 — Scaffold
 

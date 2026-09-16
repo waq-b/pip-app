@@ -1,1 +1,6 @@
 @import "tailwindcss";
+
+/* Brand faces, self-hosted (docs/DESIGN.md): Caprasimo for headings and big
+   numbers, Figtree for everything else. */
+@import "@fontsource/caprasimo/400.css";
+@import "@fontsource-variable/figtree";
