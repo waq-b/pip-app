@@ -2,7 +2,7 @@
 
 The developer's translation of the Claude Design handover. Once signed off, this file — not the prototype — is the visual source of truth. Where the two disagree, this file wins and the prototype is treated as an earlier draft.
 
-Reference prototype: `docs/design/Pip.dc.html` (built on the Organic design system). Last updated: Phase 1, task 2.
+Reference prototype: `docs/design/Pip.dc.html` (built on the Organic design system). Last updated: Phase 1, second handover (desktop, icon cuts, amber).
 
 ---
 
@@ -14,7 +14,7 @@ Tagline: **Three pots. One number. No homework.**
 
 **Voice:** a mate who's good with money and bad at jargon. Leads with pounds, never percentages alone. Tells you when to do nothing — which is most days.
 
-**Jargon is banned.** Use the right-hand column everywhere, including in code comments and API field names where it reads naturally:
+**Jargon is banned.** Use the right-hand column everywhere:
 
 | Never say    | Say                      |
 | ------------ | ------------------------ |
@@ -31,60 +31,66 @@ Tagline: **Three pots. One number. No homework.**
 
 Display names are UI-only. Internal IDs stay `Base`, `Medium`, `Degen` (CLAUDE.md s1), mapped through `BUCKET_META` in `packages/shared`.
 
-| ID       | Display name   | Colour     | Character                                                                                                            | Provider             |
-| -------- | -------------- | ---------- | -------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| `Base`   | **Foundation** | Sage       | Autopilot. Calm type, generous air, no red unless something genuinely matters. The pot you're meant to forget.       | Trading 212 (ISA)    |
-| `Medium` | **Handpicked** | Terracotta | Yours. Warm and faintly proud — shows real company names, because these are ones you've heard of.                    | Trading 212 (Invest) |
-| `Degen`  | **Side Bet**   | Hot clay   | Capped. Always drawn inside a hatched fence with a hard border, so it reads as "the risky bit" from across the room. | Kraken               |
+| ID       | Display name   | Colour     | Character                                                                                                 | Provider             |
+| -------- | -------------- | ---------- | --------------------------------------------------------------------------------------------------------- | -------------------- |
+| `Base`   | **Foundation** | Sage       | Autopilot. Calm type, generous air. The pot you're meant to forget.                                       | Trading 212 (ISA)    |
+| `Medium` | **Handpicked** | Terracotta | Yours. Warm and faintly proud — shows real company names.                                                 | Trading 212 (Invest) |
+| `Degen`  | **Side Bet**   | Hot clay   | Capped. Always inside a hatched fence with a hard border, so it reads as "the risky bit" across the room. | Kraken               |
 
-**Side Bet is never allowed to look like the other two.** Wherever it appears it carries a 1.5px accent border and the hatch fill. It is the only thing in the app that can turn anything red.
+**Side Bet is never allowed to look like the other two**, at any breakpoint. It is the only thing in the app that can turn anything red.
 
 ---
 
 ## 3. Brand
 
-### Logo
+### Logo — two cuts
 
-Three circles, fixed geometry, on a 56×56 viewBox: sage `r13` at (19,20), terracotta `r10` at (36.5,25), hot clay `r6.5` at (27,41.5). **The mark never rearranges; only the colour changes.** Four variants live in `apps/web/src/assets/brand/` (see ARCHITECTURE.md for the full asset list).
+Three circles on a 56×56 viewBox. **The mark never rearranges and nothing is ever dropped; only the geometry and the colour change.**
+
+| Cut          | Use         | Radii           | Centres                     |
+| ------------ | ----------- | --------------- | --------------------------- |
+| **Standard** | 48px and up | 13 / 10 / 6.5   | (19,20) (36.5,25) (27,41.5) |
+| **Small**    | 16–48px     | 13.5 / 11.5 / 9 | (18,19) (38,24.5) (27,43)   |
+
+Below 48px the third seed falls under two device pixels and the gaps close up, so the small cut compresses the size contrast and pushes the centres out by 1.5–2 units. The big seed still reads biggest; at 16px the three read as three warm dots. **Switch cuts at 48px.** The one-ink favicon uses the small cut.
+
+**Maskable (Android):** full-bleed terracotta plate, small-cut mark reversed in cream at 52% of the canvas, dead centre — inside the 80% safe circle whatever the launcher crops to. The reversed mark keeps opacity steps 100 / 78 / 56 so the seeds stay distinguishable in one ink.
+
+Variants live in `apps/web/src/assets/brand/` (see ARCHITECTURE.md for the asset list).
 
 ### Type
 
 Two faces, no exceptions.
 
-- **Caprasimo** (`--font-heading`, weight 400) — every big number and every heading. Nothing else, ever.
-- **Figtree** (`--font-body`) — all interface copy, labels and small print. 400 for prose, 600 for emphasis, 700–800 for figures and buttons.
+- **Caprasimo** (weight 400) — every big number and every heading. Nothing else, ever.
+- **Figtree** — all interface copy, labels and small print. 400 prose, 600 emphasis, 700–800 figures and buttons.
 
-Both self-hosted via `@fontsource`. The scale, as used in the prototype:
+Self-hosted via `@fontsource`. Phone sizes, with the desktop step where it differs:
 
-| Role                              | Size                              | Face      |
-| --------------------------------- | --------------------------------- | --------- |
-| Hero total ("Everything you own") | 47px, `-.025em`, decimals at 16px | Caprasimo |
-| Pot / instrument value            | 42px, `-.025em`                   | Caprasimo |
-| Screen title                      | 29px, `-.02em`                    | Caprasimo |
-| Pot name, card heading            | 18–24px                           | Caprasimo |
-| Body, list rows                   | 13.5–15px, line-height 1.5–1.6    | Figtree   |
-| Meta, captions                    | 11.5–12.5px                       | Figtree   |
-| Section label                     | 11px, uppercase, `.12em`, 700     | Figtree   |
+| Role                              | Phone                         | Desktop           |
+| --------------------------------- | ----------------------------- | ----------------- |
+| Hero total                        | 47px, `-.025em`               | 72px, `-.03em`    |
+| Pot / instrument value            | 42px                          | 58–60px, `-.03em` |
+| Screen title                      | 29px                          | 30–32px           |
+| Verdict line ("Up £41 this week") | 28px                          | 30px, one line    |
+| Pot name, card heading            | 18–24px                       | 19–21px           |
+| Body, list rows                   | 13.5–15px                     | 13–15px           |
+| Meta, captions                    | 11.5–12.5px                   | 11–12px           |
+| Section label                     | 11px, uppercase, `.12em`, 700 | 11.5px            |
 
 ### Colour
 
-Every colour is a token. **No hex values in components.** Tokens are scoped: the theme sets the base, and a pot scope (`fnd` / `pick` / `bet`) overrides the accent trio inside it.
+Every colour is a token. **No hex values in components.** The theme sets the base; a pot scope (`fnd` / `pick` / `bet`) overrides the accent trio inside it.
 
 **Light**
 
-| Token                | Value                 | Use                             |
-| -------------------- | --------------------- | ------------------------------- |
-| `bg`                 | `#ebddc5`             | Screen ground                   |
-| `card`               | `#f5ead8`             | Card surface                    |
-| `sunk`               | `#e3d4ba`             | Track, inset, pill group ground |
-| `ink`                | `#201e1d`             | Primary text                    |
-| `ink2`               | `rgba(32,30,29,.80)`  | Secondary text                  |
-| `ink3`               | `rgba(32,30,29,.72)`  | Meta, captions                  |
-| `line`               | `rgba(32,30,29,.12)`  | Rules and borders               |
-| `up`                 | `#56633f`             | Gains                           |
-| `dn`                 | `#a33327`             | Losses                          |
-| `skel`               | `rgba(32,30,29,.10)`  | Skeleton fill                   |
-| `solid` / `solidInk` | `#8c491a` / `#fff4ea` | Primary button                  |
+| Token                   | Value                                                   | Use                         |
+| ----------------------- | ------------------------------------------------------- | --------------------------- |
+| `bg` / `card` / `sunk`  | `#ebddc5` / `#f5ead8` / `#e3d4ba`                       | Ground, card surface, track |
+| `ink` / `ink2` / `ink3` | `#201e1d` / `rgba(32,30,29,.80)` / `rgba(32,30,29,.72)` | Primary, secondary, meta    |
+| `line` / `skel`         | `rgba(32,30,29,.12)` / `rgba(32,30,29,.10)`             | Rules, skeleton fill        |
+| `up` / `dn`             | `#56633f` / `#a33327`                                   | Gains, losses               |
+| `solid` / `solidInk`    | `#8c491a` / `#fff4ea`                                   | Primary button              |
 
 **Dark**
 
@@ -96,24 +102,34 @@ Every colour is a token. **No hex values in components.** Tokens are scoped: the
 | `up` / `dn`             | `#aebf92` / `#f08a7e`                                         |
 | `solid` / `solidInk`    | `#f6a06b` / `#241a12`                                         |
 
-**Pot accents** (`acc` = accent, `tint` = tinted fill, `aink` = text on tint):
+**Pot accents** (`acc` accent, `tint` tinted fill, `aink` text on tint):
 
-| Scope  | Light `acc` / `tint` / `aink`     | Dark `acc` / `tint` / `aink`      |
+| Scope  | Light                             | Dark                              |
 | ------ | --------------------------------- | --------------------------------- |
 | `fnd`  | `#7a8a5e` / `#e1eecc` / `#3d472b` | `#aebf92` / `#2d3323` / `#ccdbb2` |
 | `pick` | `#c67139` / `#ffe1d0` / `#643312` | `#f6a06b` / `#3a2a1d` / `#ffc6a5` |
 | `bet`  | `#c0392c` / `#ffdcd6` / `#7a2418` | `#f08a7e` / `#3d211c` / `#ffc7bf` |
 
-Side Bet hatch: `repeating-linear-gradient(135deg, rgba(192,57,44,.07) 0 9px, transparent 9px 18px)`. On a track, the same at `.16`.
+**Amber — a state colour, never a pot colour** (see §5):
+
+| Token                 | Light     | Dark      |
+| --------------------- | --------- | --------- |
+| `amb` (ink)           | `#8a5a00` | `#f3c46a` |
+| `ambDot`              | `#d59217` | `#eab04a` |
+| `ambTint` (chip fill) | `#fbe6bd` | `#3a2c14` |
+| `ambLine`             | `#b8790a` | `#eab04a` |
+
+Amber is gold, deliberately ~60° away from every clay in the palette: nothing amber may be mistaken for Side Bet or for a loss. The amber ink is 5.2:1 on card, so it is body-copy safe.
+
+Side Bet hatch: `repeating-linear-gradient(135deg, rgba(192,57,44,.07) 0 9px, transparent 9px 18px)` — `.16` on a track, `rgba(240,138,126,.10)` on dark.
 
 Provider swatches: Trading 212 `#1f3a5f`, Kraken `#5741d9`.
 
 ### Shape, space, motion
 
-- Radii: 30px screen cards · 26px section cards · 22–24px inner blocks · 14–16px chips and inputs · `999px` every button, pill and track.
-- Nothing sharp, nothing hairline-only. Rounded shapes need air — don't crowd them.
-- Icons: **Lucide**, stroke-width **2.75**, 15–23px in interface, 26–42px in empty states.
-- Motion is minimal: a 1.5s skeleton pulse, a 1s spinner, a 120ms hover brightness shift. Nothing else animates.
+- Radii: 30px screen cards · 26px section cards · 22–24px inner blocks · 20px sidebar identity block · 14–18px chips and rail items · `999px` every button, pill and track.
+- Icons: **Lucide**, stroke-width **2.75**. 15–23px interface, 20–21px nav, 26–42px empty states.
+- Motion: a 1.5s skeleton pulse, a 1s spinner, a 120ms hover brightness shift. Nothing else animates.
 - Focus is never the browser default: `outline: 2px solid var(--acc); outline-offset: 3px`.
 - Tap targets are whole rows and whole cards, not chevrons.
 
@@ -121,129 +137,99 @@ Provider swatches: Trading 212 `#1f3a5f`, Kraken `#5741d9`.
 
 ## 4. Copy rules
 
-These are design rules, not suggestions. A screen that breaks one is wrong.
+1. **Pounds before percent.** Every percentage is followed by what it means in money. "Up 6%" alone is banned — including in the desktop table's fourth column.
+2. **One number is the hero.** Once per screen, bigger than anything else. The desktop sidebar exists partly so a top nav can't steal that position.
+3. **Silence is a result.** "Nothing needs you" is the most common state and is designed for.
+4. **No chart without a sentence.** Every chart carries a plain-English caption.
+5. **Read-only, said out loud.** Every screen ends with a line reminding you Pip can't trade. On desktop the sidebar also carries a permanent "Read-only access" badge.
+6. **Side Bet looks different.** Hatch, hard border, its own hot colour, at every breakpoint.
 
-1. **Pounds before percent.** Every percentage is followed by what it means in money. "Up 6%" on its own is banned.
-2. **One number is the hero.** Everything you own, once, at the top, bigger than anything else on the screen. Never two heroes.
-3. **Silence is a result.** "Nothing needs you" is the most common state, and it is designed for — not an empty screen.
-4. **No chart without a sentence.** Every chart carries a plain-English caption saying what it did.
-5. **Read-only, said out loud.** Every screen ends with a line reminding you Pip can't trade.
-6. **Side Bet looks different.** Hatch, hard border, its own hot colour, everywhere it appears.
-
-### Two patterns that travel with the data
-
-- **Price provenance.** Any screen showing a live figure carries one small line: a dot, then the source and age — "Sample prices · stub data" in Phase 1. Green when fresh, amber when a feed is over an hour stale, and when stale it names the affected pot. Never a badge, never a tooltip, never hidden behind an icon.
-- **Information, not advice.** Anything that reads like a suggestion carries an 11px uppercase label with an (i) glyph in muted ink. Statements of fact — your balance, today's change — never carry it, so the label keeps its meaning.
+**Information, not advice.** Anything that reads like a suggestion carries an 11px uppercase label with an (i) glyph in muted ink. Statements of fact never carry it, so the label keeps its meaning.
 
 ---
 
-## 5. Corrections to the prototype (CLAUDE.md hard lines)
+## 5. Price provenance and the staleness ladder
 
-The prototype breaks several hard lines. **Build these corrections, not the prototype.** Rationale is in `docs/phases/phase-1.md`.
+One small line on any screen showing a live figure: a dot, then the source and age. It is never a badge, never a tooltip, never hidden behind an icon. **It names the market-data source, never the trading APIs** (see §6.1).
 
-1. **Nothing says Pip moves money.** Cut "Pip has stopped putting new money in here", "Pip will nudge new money elsewhere", "Pip stopped topping it up", and "Where new money goes — split automatically". Rewrite each as a statement about the user's own setup at their provider, e.g. "Your Trading 212 auto-invest splits £200 like this". Hard line 1.
-2. **The over-cap banner has no buttons in Phase 1.** "Raise the cap" is rule editing (Phase 5); "Show me how to fix it" has no destination. The banner states the fact and carries the not-advice label. Hard line 1.
-3. **Prices never come from the trading APIs.** The provenance line never says "Prices from Trading 212 & Kraken" — it names the market-data source. Hard line 8.
-4. **Fixtures never cross pots.** The prototype's feed says "£60 of your ISA bought Rolls-Royce", but Rolls-Royce is Handpicked (Invest), not the ISA. Hard line 11.
-5. **No promises about emails.** The waitlist says "Waqar will let you know", not "we'll email you".
-6. **"Nudge me" is omitted** (notifications are Phase 7). Currency shows as fixed GBP.
-7. **Instrument explainers are hand-written stub text** in Phase 1, under the not-advice label. Their real source is the Phase 6 research module, and they stay generic for users other than Waqar. Hard line 12.
+Amber appears in exactly two places: **the provenance line** and **a small age chip beside an affected figure**. It never touches the hero number, never tints a card, never draws a border. It is a dot, a line of text, and a chip.
 
----
+| Age                                 | State                                                                                                                                                                                                                                                                       |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Under 1 hour**                    | Green. "updated 4 min ago". Silent, the default.                                                                                                                                                                                                                            |
+| **1–6 hours**                       | Amber line, naming each affected pot first, then reassuring about the rest: "Side Bet is 2 hours old · everything else updated 4 min ago". An age chip ("2H OLD") appears beside any figure that pot feeds. No card, no button, no tab-bar badge. The total stays undimmed. |
+| **Over 6 hours, or a failed fetch** | Red stale-data card with a Try again. **The amber line stands down — one voice at a time.** The figure itself drops to 60% opacity, because the feed is gone rather than late.                                                                                              |
+| **Markets closed**                  | Green, always. A Saturday price isn't stale, it's Saturday: "Prices from Friday's close."                                                                                                                                                                                   |
 
-## 6. Data display system
-
-Seven blocks, each with one job. All seven take their colour from the pot scope they sit in, so none needs a per-context variant.
-
-| Block                             | Job                                  | Rules                                                                                                                                                      | Used on                  |
-| --------------------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
-| **Big number**                    | "How much have I got"                | One per screen. Money before percent, decimals shrunk so the pounds carry the weight.                                                                      | Home, pot, instrument    |
-| **Sparkline**                     | Shape of the trend at a glance       | No axes, no numbers, never tappable on its own. It's punctuation beside a figure, not a chart.                                                             | Pot cards, holdings rows |
-| **Line chart**                    | Value or price over a chosen span    | No gridlines, no y-axis. Caption underneath in words. Always carries the provenance line.                                                                  | Pot, instrument          |
-| **Bar chart**                     | Compare discrete things or months    | Value labels above the bars, so nobody reads a scale. A zero month is a stub at 40% opacity, never a gap.                                                  | Pot ("Money in")         |
-| **Allocation ring + stacked bar** | How the whole splits, against target | Ring for the three-way split across pots; stacked bar for what's inside one pot. Target stated in words underneath — never a second faint ring.            | Home, pot                |
-| **Holdings table**                | The full list, sortable              | Three columns is the phone limit; a plain-English sub-line replaces a fourth. Whole rows are the tap target.                                               | Pot                      |
-| **Progress + cap bar**            | Where you are against a line you set | Fill is where you are, the ink tick is your line. Over the line, the track picks up the Side Bet hatch and the figure turns red — the only red in the app. | Home, rules              |
-
-Charts are hand-rolled SVG, as in the prototype. No chart library.
-
-Supporting pieces: **skeleton** (`sk`, pulsing tinted block), **provenance line**, **not-advice label**.
+Two pots stale is still one line. Three pots stale becomes "All prices are 2 hours old", at which point the red card takes over. The number never disappears at any rung.
 
 ---
 
-## 7. Screens
+## 6. Corrections to the prototype (CLAUDE.md hard lines)
 
-Tab bar, three tabs: **Pots** · **Rules** · **Setup**. A red dot on Rules is the over-cap warning — the only red chrome in the app, and only Side Bet can cause it.
+**Build these corrections, not the prototype.** The second handover adopted two earlier corrections (the "Where your new money goes" card and the Side Bet empty state now describe the user's own setup). These five still stand, and were re-checked against the new file:
 
-### Sign-in
+1. **Prices never come from the trading APIs.** The prototype still reads "Prices from Trading 212 & Kraken", on the phone, on every new desktop screen and in the amber examples. It must name the market-data source — in Phase 1, "Sample prices · stub data". Hard line 8.
+2. **Rules is display-only in Phase 1.** The desktop Rules screen still shows +/− steppers and the banner still carries "Show me how to fix it" and "Raise the cap". Phase 1 renders the banner with neither button and no steppers; both arrive in Phase 5. Hard line 1.
+3. **Nothing says Pip moves money.** Any remaining copy implying Pip routes money is rewritten as a statement about the user's own setup at their broker. Hard line 1.
+4. **Fixtures never cross pots.** The feed still says "£60 of your ISA bought Rolls-Royce", but Rolls-Royce is Handpicked (Invest), not the ISA. Hard line 11.
+5. **"Nudge me" is omitted** (notifications are Phase 7) — it reappears in the desktop Setup screen. Currency shows as fixed GBP.
 
-One button, no passwords. Invite-only, so the door has to say no kindly.
-
-- **Sign in** — mark, the tagline as a three-line heading, "Pip shows you your money in plain English. It can look, never touch.", a "Continue with Google" button, and a line saying Pip reads your name and email and nothing else.
-- **Checking** — spinner, "Checking you're on the list", "Two seconds. Pip is only asking Google who you are."
-- **Not on the list** — dashed-outline mark, "You're not on the list — yet", the signed-in email named back, a "Put me on the waiting list" button and a "Try a different account" link. No queue position, no countdown.
-
-### Pots (home)
-
-Header (mark, wordmark, sync chip) · hero card ("Your week" → one-line verdict, then the hero total with today's change) · provenance line · timeframe pills (Today / This month / All time — these change every figure on the screen) · three pot cards (name, blurb, value, change, sparkline, progress-and-target bar, share of your money) · "How it splits" (ring + legend + target sentence) · "What changed" feed for the last 7 days, ending "That's the lot. Quiet week." · read-only footer.
-
-- **Loading** — skeletons in the shape of the numbers, never a spinner where a figure will be. "Counting your money…"
-- **Empty (first run)** — "Three empty pots, waiting for you." and a connect button.
-- **Error (stale)** — the last good total stays on screen, marked "Roughly — one pot is stale", with a banner naming the pot and a "Try again".
-
-### Pot detail
-
-Back to your pots · header card (name, badge, blurb, value, change, plain-English line; Side Bet hatched and bordered) · "How it's gone" line chart with caption · "Money in" bar chart with caption · "What's inside" (stacked bar, sortable holdings table) · footer: "Read-only. To buy or sell, use {provider} — Pip just keeps score."
-
-- **Loading** — skeleton cards.
-- **Empty** — for Side Bet: "Nothing in here, which is a perfectly good place to leave it", the cap explained in pounds, a connect button, and "You don't need this pot. It's just allowed to exist."
-- **Error (no history)** — the value stays correct and visible; only the chart is replaced, with "The value above is correct — it's only the history that's missing. Nothing's wrong with your money."
-
-### Instrument detail
-
-Back to pot · header (pot chip, ticker chip, name, quantity and unit price, value, today and since-you-bought) · price chart with Day/Month/Year/All pills and the provenance line · "In plain English" explainer under the not-advice label · read-only footer.
-
-- **Loading** — the name and pot are known instantly; only the numbers wait.
-- **Empty (bought today)** — "No history yet — come back tomorrow" and "One day is not a trend, so Pip won't draw you one."
-- **Error (stale price)** — the figure dims, "Price is 2 hours old", and an explanation that the holding hasn't changed, only what Pip can see of it.
-
-### Rules — display only in Phase 1
-
-"Your rules. You set the shape once. Pip nags you if the shape drifts."
-
-Over-cap banner (when over) → three rule cards (name, kind badge — Target or Hard cap — the target figure, the progress-and-cap bar, a plain-English line) → "Where new money goes" (corrected per §5.1) → footer: "Changing a rule changes what Pip tells you — it never moves your money."
-
-- **Loading** — skeleton cards.
-- **Error (couldn't save)** — "That change didn't stick", the old value still shown as what's running, "nothing's been half-applied".
-- The +/− steppers, saving and the "no rules yet — use 70/25/5" empty state are **Phase 5**.
-
-### Setup
-
-"Where Pip reads your numbers from."
-
-Connection rows (provider swatch, name, what it feeds, status badge) and "Connect another account" · Appearance (Light/Dark, follows your phone) · "Hide the numbers" (blurs totals until you tap; per-device, localStorage) · Currency (£ GBP, fixed) · footer: "Pip uses read-only keys. Even if someone took your phone, they couldn't trade."
-
-**Connect flow** — pasting a key is the least friendly thing Pip asks, so it gets the most hand-holding:
-
-- **Not connected** — numbered steps, "generate a key with read-only ticked, nothing else", the key field, and "Your key is stored encrypted and only ever used to read balances."
-- **Connected** — what it feeds, holdings seen, last read, and a shield line: "This key cannot place orders. Pip checked."
-- **Invalid key** — "Kraken doesn't recognise that key", the likely cause, and "Nothing is connected, and nothing was changed."
-- **Too much access** — "That key can do too much", a permission checklist (query funds needed; create/cancel orders and withdraw must be off), and a refusal to store it. This is a **hard requirement**, not a warning (CLAUDE.md s13).
-
-Other Setup states: loading (per-row spinner while checking keys), empty ("Nothing plugged in yet"), error ("access expired" — the stale £0 is explained, not shown as real).
+Instrument explainers are hand-written stub text in Phase 1 under the not-advice label. Their real source is the Phase 6 research module, and they stay generic for users other than Waqar. Hard line 12.
 
 ---
 
-## 8. Layout
+## 7. Data display system
 
-Mobile-first, 390×844 as the reference frame. On desktop the phone layout is centred at a max width of ~440px — the handover has no desktop design, so anything wider needs a design decision, not an improvised one.
+Seven blocks, each with one job. All take their colour from the pot scope they sit in.
 
-Safe areas are respected (the tab bar carries bottom padding for the home indicator). Content scrolls under a fixed tab bar.
+| Block                             | Job                                  | Rules                                                                                                                                        |
+| --------------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Big number**                    | "How much have I got"                | One per screen. Money before percent, decimals shrunk.                                                                                       |
+| **Sparkline**                     | Shape of the trend                   | No axes, no numbers, never tappable alone. On desktop it gets its own gutter in the table rather than being squeezed.                        |
+| **Line chart**                    | Value or price over a span           | No gridlines, no y-axis. Caption underneath. Always carries the provenance line. Taller on desktop (150px in a pot, 330px on an instrument). |
+| **Bar chart**                     | Compare months                       | Value labels above the bars. A zero month is a stub at 40% opacity, never a gap.                                                             |
+| **Allocation ring + stacked bar** | How the whole splits, against target | Ring for the three-way split, stacked bar for inside one pot. Target in words underneath, never a second faint ring.                         |
+| **Holdings table**                | The full list, sortable              | Three columns on phone, **four on desktop** (see §8). Whole rows are the tap target.                                                         |
+| **Progress + cap bar**            | Where you are against your line      | Fill is where you are, ink tick is your line. Over the line, the track picks up the hatch and the figure turns red.                          |
+
+Charts are hand-rolled SVG. No chart library. Supporting pieces: **skeleton**, **provenance line**, **age chip**, **not-advice label**.
 
 ---
 
-## 9. Open questions
+## 8. Layout and breakpoints
 
-- **Desktop.** Centred phone column is the Phase 1 answer. A real desktop layout is undesigned.
-- **App icon at small sizes.** The mark is rasterized on the cream ground; there's no separately drawn small-size version.
-- **Amber provenance state.** The handover describes it but never draws it. Built from the tokens as the accent tint until designed.
+Three layouts, one set of components. Nothing is invented for desktop — the same blocks, re-laid.
+
+| Breakpoint           | Navigation                                                                                            | Content                                                                                                 |
+| -------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| **< 768 — phone**    | Three-tab bar at the bottom (Pots · Rules · Setup), red dot on Rules                                  | One column, 390 reference frame                                                                         |
+| **≥ 768 — tablet**   | Tab bar becomes a **76px icon rail** on the left; 48px rounded items, label under each icon           | Still one column, capped at 640, ground either side. Tablet buys air, not density.                      |
+| **≥ 1120 — desktop** | Rail expands to a **232px sidebar** with labels, plus who you're signed in as and the read-only badge | Max **1080**, two- or three-track grid. Either side is plain ground — no widgets, no ticker, no filler. |
+
+**Sidebar, not top nav:** a horizontal band above the hero would cost the hero number its place as the first thing you see. The sidebar keeps the top-left of the content area free.
+
+**The fourth column — desktop only.** The phone table stops at three columns because 390px is the limit, not because three is right. Desktop restores the column the phone folds into the subtitle: **Holding · Value · Today · Since you bought**, sparkline in its own gutter. That is the ceiling: no weight, no cost basis, no day range — those belong at the broker.
+
+### Desktop screen layouts
+
+- **Pots (home)** — verdict line and timeframe pills on one row; hero card split (big number and provenance on the left, allocation ring and legend on the right, divided by a rule); three pot cards side by side; bottom row of "What changed" (wider) beside "The shape you asked for" (narrower).
+- **Pot detail** — sidebar gains a pot sub-nav (Foundation / Handpicked / Side Bet, current one pill-highlighted). Header card split: name, value and change on the left; the blurb, plain-English line and provenance on the right. Below: chart and "Money in" stacked in a narrower left column, "What's inside" with the four-column table in a wider right column.
+- **Instrument detail** — breadcrumb (Pots › Handpicked › Nvidia). A 400px info card on the left (chips, name, quantity, hero value, today and since-you-bought, the plain-English note, not-advice label); the price chart takes the rest, tall, with the range pills inline in its header.
+- **Rules** — 1048 content area. Header row with "Last changed" on the right. Over-cap banner runs horizontally. Three rule cards in a row.
+- **Setup** — 700px, two columns: connections on the left, preferences on the right.
+- **Sign-in** — the one screen with no sidebar and no hero number. Keeps the phone's proportions and gains a second column: the promise on the left, the sign-in card on the right, centred vertically, flush left inside its own half.
+- **Tablet** — pot cards compress to single rows (dot, name, value, change) rather than the phone's full cards.
+
+Copy shifts with the pointer: "Tap any holding" becomes "Click any holding", "Blur totals until you tap" becomes "until you click", "Follows your phone" becomes "Follows your computer", and "took your phone" becomes "took your laptop".
+
+Safe areas are respected; the phone tab bar carries bottom padding for the home indicator.
+
+---
+
+## 9. Still undesigned
+
+Everything from the first round has been answered. Outstanding:
+
+- **Loading, empty and error states at tablet and desktop.** The handover draws all of them at phone width only. They'll be built from the phone states in the desktop grid.
+- **The desktop connect-account flow.** Only phone cards exist for it.

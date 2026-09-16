@@ -13,6 +13,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Removed: unreferenced `apps/web/public/icons.svg` left over from the Phase 0 scaffold (#3226676914)
 - Added: `docs/DESIGN.md` — product voice, pot identities, brand tokens (light/dark/per-pot), type scale, copy rules, the seven data blocks, screen inventory with every state, and the hard-line corrections to the prototype (#3226691677)
 - Changed: `.prettierignore` now covers `docs/design/`, so the design handover is never reformatted
+- Changed: second design handover — `docs/design/Pip.dc.html` updated with desktop/tablet layouts, the mark at icon sizes and the amber staleness state (#3226676914)
+- Added: small-cut logo `pip-mark-small.svg` (16–48px geometry); favicon rebuilt on it; maskable icon rebuilt as the terracotta plate with the reversed mark (#3226676914)
+- Changed: `docs/DESIGN.md` rewritten — amber state tokens and the staleness ladder, three breakpoints with the sidebar/rail navigation, the desktop four-column table, and both icon cuts (#3226691677)
+- Changed: `docs/phases/phase-1.md` replanned for the second handover — responsive work folded in, task list now 22 items (#3226664834)
 
 ### Phase 0 — Scaffold
 

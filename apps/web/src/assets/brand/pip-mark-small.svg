@@ -1,0 +1,7 @@
+<!-- Small cut: use below 48px. Radii compress (13.5/11.5/9) and centres push
+     out so the third seed survives a 16px grid. See DESIGN.md §3. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56" width="56" height="56" role="img" aria-label="Pip">
+  <circle cx="18" cy="19" r="13.5" fill="#7a8a5e" />
+  <circle cx="38" cy="24.5" r="11.5" fill="#c67139" />
+  <circle cx="27" cy="43" r="9" fill="#c0392c" />
+</svg>

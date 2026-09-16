@@ -1,8 +1,12 @@
+<!-- Maskable (Android): full-bleed terracotta plate, small-cut mark reversed in
+     cream at 52% of the canvas, dead centre — inside the 80% safe circle
+     whatever shape the launcher crops to. Opacity steps 100/78/56 keep the
+     three seeds readable in one ink. See DESIGN.md §3. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Pip">
-  <rect width="512" height="512" fill="#ebddc5" />
-  <g transform="translate(128 128) scale(4.57)">
-    <circle cx="19" cy="20" r="13" fill="#7a8a5e" />
-    <circle cx="36.5" cy="25" r="10" fill="#c67139" />
-    <circle cx="27" cy="41.5" r="6.5" fill="#c0392c" />
+  <rect width="512" height="512" fill="#c67139" />
+  <g transform="translate(123 123) scale(4.75)">
+    <circle cx="18" cy="19" r="13.5" fill="#f5ead8" />
+    <circle cx="38" cy="24.5" r="11.5" fill="#f5ead8" opacity=".78" />
+    <circle cx="27" cy="43" r="9" fill="#f5ead8" opacity=".56" />
   </g>
 </svg>
