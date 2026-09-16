@@ -19,6 +19,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Changed: `docs/phases/phase-1.md` replanned for the second handover — responsive work folded in, task list now 22 items (#3226664834)
 - Added: `BUCKET_META` in `packages/shared` — display name, accent scope and provider per bucket id, so UI names never reach the API or database (#3226691676)
 - Added: `packages/shared/src/api.ts` — response types for portfolio, bucket detail, instrument detail, rules, activity, connections and the connect flow, with money as integer pence and per-pot `PriceFreshness` (#3226691676)
+- Added: `docker-compose.yml` — local Postgres 17 for development, serving the `DATABASE_URL` in `.env.example` (#3226691746)
+- Added: Auth.js tables (`accounts`, `sessions`, `verification_tokens`) and `waitlist` to the Drizzle schema; `users` gains the profile columns Auth.js expects (#3226691746)
+- Added: first generated migration in `apps/api/drizzle/`, plus `db:generate` / `db:migrate` / `db:studio` scripts (#3226691746)
 
 ### Phase 0 — Scaffold
 
