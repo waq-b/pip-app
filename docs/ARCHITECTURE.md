@@ -41,7 +41,7 @@ finance-app-personal/
 │           ├── logging.ts   ← pino redaction paths
 │           ├── crypto/      ← secret box (AES-256-GCM), credential contexts, re-seal job
 │           ├── auth/       ← Supabase JWT verification, allowlist, guard, /me, waitlist
-│           ├── db/
+│           ├── db/          ← schema, client, asUser (RLS scope)
 │           │   ├── client.ts   ← lazy Drizzle/Postgres client (getDb())
 │           │   └── schema.ts   ← users (the allowlist), waitlist
 │           ├── fixtures/   ← the design's sample words and numbers
@@ -296,7 +296,11 @@ Postgres via Drizzle ORM, on Supabase. Single `DATABASE_URL` env var, nothing el
 - **"Own rows"** means `user_id = private.current_app_user_id()`: a `SECURITY DEFINER` function mapping `auth.uid()` to the caller's allowlist row. It lives in a `private` schema (`0004`) because Supabase exposes `public` functions over REST.
 - **Checked twice.** `db/rls.test.ts` reads the migrations and fails if a table lacks RLS, a user-owned table (any table with `user_id`) lacks an own-rows policy using the private helper, or the sealed credential columns are ever granted. And the policies were probed on the dev database as two throwaway users in a rolled-back transaction: each saw only their own rows; sealed columns, writes and `source_usage` were refused; shared instruments were visible. Supabase's security advisor reports nothing beyond the intended "RLS enabled, no policy" on the server-only tables.
 
-Auth and route tests use in-memory stores, so CI stays databaseless.
+**Reading as the user** (`db/user-scope.ts`). User-facing reads run inside `asUser(db, authUserId, work)`: one transaction that sets the verified Supabase user id as `request.jwt.claims` and `SET LOCAL ROLE authenticated`, so the policies above decide what `work` can see. Both settings are transaction-local, so nothing leaks into the next request on a pooled connection. `authUserId` always comes from the verified token (`request.authUser`), and `asUser` refuses anything that isn't a uuid. The guard links an allowlist row to its Supabase identity on first contact (not only on `/me`), because the policies find a user's rows through that link — an unlinked user sees nothing. Scheduled jobs and credential writes use the privileged connection directly.
+
+**Testing RLS without a network.** `test-support/pglite.ts` starts an in-process Postgres (PGlite), recreates the bits of Supabase the migrations rely on (`anon`, `authenticated`, `auth.uid()`), and applies every real migration in journal order. `db/user-scope.test.ts` seeds two users and proves — below the route layer, with queries that have no `where` clause — that each sees only their own rows, can't read sealed columns, can't write, can read shared market data, and that the role doesn't survive the transaction. `asUser` was also checked against the Supabase dev project through the session pooler.
+
+Auth and route tests otherwise use in-memory stores, and CI never talks to Supabase.
 
 ## Env flags
 

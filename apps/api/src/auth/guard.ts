@@ -51,8 +51,15 @@ export function registerAuthGuard(app: FastifyInstance, options: AuthGuardOption
 
     if (SIGNED_IN_ONLY_PATHS.includes(path)) return;
 
-    const allowed = await options.allowlist.find(user.email);
+    let allowed = await options.allowlist.find(user.email);
     if (!allowed) return refuse(reply, 403, "not_on_the_list");
+
+    // Row Level Security finds a user's rows through this link, so make sure
+    // it exists before any route reads as them — not only when /me is called.
+    if (allowed.authUserId === null) {
+      await options.allowlist.linkAuthUser(allowed.id, user.authUserId);
+      allowed = { ...allowed, authUserId: user.authUserId };
+    }
     request.allowedUser = allowed;
   });
 }

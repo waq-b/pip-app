@@ -76,6 +76,20 @@ describe("the two walls", () => {
     expect(response.json()).toEqual({ email: "test@example.com" });
   });
 
+  it("links the allowlist row to the sign-in on first contact, so the database knows whose rows are whose", async () => {
+    const { app, auth } = setup();
+    const before = [...auth.allowlistStore.rows.values()][0]!;
+    expect(before.authUserId).toBeNull();
+
+    await app.inject({
+      method: "GET",
+      url: "/protected",
+      headers: auth.headersFor("test@example.com"),
+    });
+
+    expect([...auth.allowlistStore.rows.values()][0]!.authUserId).toBe("auth-test@example.com");
+  });
+
   it("guards a query string the same as a bare path", async () => {
     const { app } = setup();
     expect((await app.inject({ method: "GET", url: "/protected?tf=day" })).statusCode).toBe(401);
