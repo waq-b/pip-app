@@ -230,7 +230,8 @@ export function londonDay(at: Date): string {
  * rebuilt from order history can't know past cash reliably, so neither side
  * counts it and the chart never jumps where the two meet. Cash is shown at its
  * current amount instead. A pot with a holding that has no price isn't
- * snapshotted rather than snapshotted wrong.
+ * snapshotted rather than snapshotted wrong. A holding whose cost isn't known
+ * yet counts its value as its cost, so no gain or loss is invented.
  */
 export async function snapshotDailyValues(db: Db, userId: string, day: string) {
   const credentials = await db
@@ -277,8 +278,14 @@ export async function snapshotDailyValues(db: Db, userId: string, day: string) {
       for (const row of held) {
         const price = byKey.get(row.instrumentId);
         if (!price) throw new MissingPriceError(row.instrumentId);
-        value += toPencePounds(Number(row.quantity), Number(price.price), row.currency, fx);
-        cost += row.totalCostPence;
+        const heldValue = toPencePounds(
+          Number(row.quantity),
+          Number(price.price),
+          row.currency,
+          fx,
+        );
+        value += heldValue;
+        cost += row.totalCostPence ?? heldValue;
       }
       const snapshot = {
         userId,

@@ -94,7 +94,8 @@ interface HeldInstrument {
   currency: string;
   workingScheduleId: number | null;
   quantity: number;
-  totalCostPence: number;
+  /** Null until known (Kraken, before its history is rebuilt). */
+  totalCostPence: number | null;
   price?: typeof prices.$inferSelect;
   /** Pence of pounds per unit now, and at the previous close. */
   unitPence?: number;
@@ -113,6 +114,8 @@ interface Pot {
   cashPence: number;
   investedPence: number;
   costPence: number;
+  /** Every holding's cost is known, so "all time" can be stated. */
+  costKnown: boolean;
   todayPence: number;
   previousInvestedPence: number;
   /** Every holding has a price. */
@@ -234,7 +237,7 @@ export function liveReadModel(options: LiveReadOptions): ReadModel {
           bucket,
           value: heldValue,
           today: toChange(heldValue - previous, previous),
-          sinceBought: toChange(heldValue - held.totalCostPence, held.totalCostPence),
+          ...sinceBought(heldValue, held.totalCostPence),
           shareOfBucket: value === 0 ? 0 : round2((heldValue / value) * 100),
           series:
             perUnit === undefined
@@ -302,7 +305,7 @@ export function liveReadModel(options: LiveReadOptions): ReadModel {
         price: held.unitPence === undefined ? 0 : Math.round(held.unitPence),
         value,
         today: toChange(value - previous, previous),
-        sinceBought: toChange(value - held.totalCostPence, held.totalCostPence),
+        ...sinceBought(value, held.totalCostPence),
         note: "",
         range,
         series: await instrumentSeries(options, user, held, range, at),
@@ -432,6 +435,7 @@ async function loadAsUser(tx: UserTx, at: Date): Promise<Snapshot> {
         cashPence: 0,
         investedPence: 0,
         costPence: 0,
+        costKnown: true,
         todayPence: 0,
         previousInvestedPence: 0,
         priced: true,
@@ -479,15 +483,17 @@ async function loadAsUser(tx: UserTx, at: Date): Promise<Snapshot> {
         pot.priced = false;
       } else {
         const value = Math.round(held.quantity * held.unitPence);
-        const previous = boughtToday.has(held.instrumentId)
-          ? held.totalCostPence
-          : Math.round(held.quantity * (held.previousUnitPence ?? held.unitPence));
+        const previous =
+          boughtToday.has(held.instrumentId) && held.totalCostPence !== null
+            ? held.totalCostPence
+            : Math.round(held.quantity * (held.previousUnitPence ?? held.unitPence));
         held.previousValuePence = previous;
         pot.investedPence += value;
         pot.previousInvestedPence += previous;
         pot.todayPence += value - previous;
       }
-      pot.costPence += held.totalCostPence;
+      if (held.totalCostPence === null) pot.costKnown = false;
+      else pot.costPence += held.totalCostPence;
       pot.held.push(held);
     }
   }
@@ -589,6 +595,13 @@ async function instrumentSeries(
 
 // ─── Figures ──────────────────────────────────────────────────────────────────
 
+/** "Since bought", or a flat change marked unavailable when what was paid isn't known. */
+function sinceBought(value: number, costPence: number | null) {
+  return costPence === null
+    ? { sinceBought: flat(), sinceBoughtUnavailable: true }
+    : { sinceBought: toChange(value - costPence, costPence) };
+}
+
 /** A pot's change for a timeframe, or null when there isn't the history to say. */
 function changeFor(
   pot: Pot,
@@ -598,8 +611,10 @@ function changeFor(
 ): { amount: number; base: number } | null {
   if (!pot.priced) return null;
   if (timeframe === "day") return { amount: pot.todayPence, base: pot.previousInvestedPence };
-  if (timeframe === "all")
+  if (timeframe === "all") {
+    if (!pot.costKnown) return null;
     return { amount: pot.investedPence - pot.costPence, base: pot.costPence };
+  }
 
   // This month: against the pot's invested value at the close a month ago.
   const monthAgo = new Date(at);

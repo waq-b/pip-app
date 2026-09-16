@@ -101,6 +101,8 @@ export interface Holding {
   value: Pence;
   today: Change;
   sinceBought: Change;
+  /** What was paid isn't known yet (a Kraken coin before its history is rebuilt); `sinceBought` is flat. */
+  sinceBoughtUnavailable?: boolean;
   shareOfBucket: Percent;
   series: SeriesPoint[];
   /** False for rows with no page of their own, like cash. Absent means true. */
@@ -149,6 +151,8 @@ export interface InstrumentDetail {
   value: Pence;
   today: Change;
   sinceBought: Change;
+  /** As on `Holding`: what was paid isn't known yet, so `sinceBought` is flat. */
+  sinceBoughtUnavailable?: boolean;
   /**
    * The "in plain English" note. Hand-written stub text in Phase 1, under the
    * not-advice label; the Phase 5 research module owns it later.

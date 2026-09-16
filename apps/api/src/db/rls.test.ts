@@ -70,7 +70,7 @@ describe("user-owned tables", () => {
     expect(statements.length).toBeGreaterThan(0);
     expect(statements.at(-1)![1]).toBe("private");
     const policy = new RegExp(
-      `CREATE POLICY "[^"]+" ON "${table}" FOR SELECT TO authenticated\\s+USING \\("user_id" = public\\.current_app_user_id\\(\\)\\)`,
+      `CREATE POLICY "[^"]+" ON "${table}" FOR SELECT TO authenticated\\s+USING \\("user_id" = (public|private)\\.current_app_user_id\\(\\)\\)`,
     );
     expect(migrations).toMatch(policy);
   });

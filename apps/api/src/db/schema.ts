@@ -64,9 +64,9 @@ export const providerCredentials = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    /** `trading212` in Phase 2. */
+    /** `trading212` (Phase 2) or `kraken` (Phase 3). */
     provider: text("provider").notNull(),
-    /** `isa` → Foundation, `invest` → Handpicked. Asked in Setup; T212 can't tell us. */
+    /** `isa` → Foundation, `invest` → Handpicked (asked in Setup; T212 can't tell us); `spot` → Side Bet (Kraken). */
     accountKind: text("account_kind").notNull(),
     sealedKey: text("sealed_key").notNull(),
     sealedSecret: text("sealed_secret").notNull(),
@@ -168,10 +168,15 @@ export const holdings = pgTable(
       .notNull()
       .references(() => instruments.id),
     quantity: numeric("quantity").notNull(),
-    /** In instrument currency, as T212 states it. */
-    averagePricePaid: numeric("average_price_paid").notNull(),
-    /** What was paid, in pence of pounds — a fact about the purchase, not a price. */
-    totalCostPence: bigint("total_cost_pence", { mode: "number" }).notNull(),
+    /** In instrument currency, as T212 states it. Null when the provider doesn't say (Kraken). */
+    averagePricePaid: numeric("average_price_paid"),
+    /**
+     * What was paid, in pence of pounds — a fact about the purchase, not a price.
+     * Null until it's known: Kraken's comes from the rebuilt ledger history.
+     */
+    totalCostPence: bigint("total_cost_pence", { mode: "number" }),
+    /** Part of `quantity` that is staked or earning rewards (Kraken `.S`, `.F`, `.B`…). */
+    stakedQuantity: numeric("staked_quantity"),
     polledAt: timestamp("polled_at", { withTimezone: true }).notNull(),
   },
   (table) => [primaryKey({ columns: [table.credentialId, table.instrumentId] })],
@@ -218,6 +223,34 @@ export const trades = pgTable(
     filledAt: timestamp("filled_at", { withTimezone: true }).notNull(),
   },
   (table) => [primaryKey({ columns: [table.credentialId, table.fillId] })],
+);
+
+/**
+ * Kraken ledger entries — every change to every asset balance, with the balance
+ * after it. Kept so history can be rebuilt and cost worked out without reading
+ * the whole ledger again; keyed by Kraken's entry id so a re-read never doubles.
+ */
+export const krakenLedger = pgTable(
+  "kraken_ledger",
+  {
+    credentialId: uuid("credential_id")
+      .notNull()
+      .references(() => providerCredentials.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    entryId: text("entry_id").notNull(),
+    refid: text("refid").notNull(),
+    at: timestamp("at", { withTimezone: true }).notNull(),
+    type: text("type").notNull(),
+    subtype: text("subtype").notNull(),
+    /** Kraken's asset name as written in the ledger (`XXBT`, `DOT.S`). */
+    asset: text("asset").notNull(),
+    amount: numeric("amount").notNull(),
+    fee: numeric("fee").notNull(),
+    balance: numeric("balance").notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.credentialId, table.entryId] })],
 );
 
 /**
