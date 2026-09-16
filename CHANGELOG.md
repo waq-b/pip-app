@@ -21,6 +21,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added: read-only Trading 212 client, practice environment only — HTTP Basic key:secret, GET to allowlisted paths only, cursor-paged order history, rate limits paced from T212's headers, typed errors incl. the missing permission behind a bare 403, and shape checks that fail loudly if the beta API changes (#3228259891)
 - Added: T212 → stored rows (holdings, cash, instruments, trades) in pence with full-precision quantities, dropping T212's prices and values; non-GBP accounts refused (#3228259891)
 - Added: T212 ticker → Yahoo / Alpha Vantage symbols by exchange (#3228259891)
+- Added: Yahoo Finance (primary) and Alpha Vantage (fallback) price sources — quotes, today's intraday points (Yahoo), daily closes by exchange day, GBP→USD/EUR — with pence normalised to `GBX`, blocked/not-found/unavailable errors, and a fallback that reports which source answered (#3228256875)
+- Added: market hours from Trading 212's working schedules — regular session only, holidays closed (#3228256875)
 - Added: recorded, anonymised responses from a Trading 212 practice ISA, Yahoo's chart endpoint and Alpha Vantage in `apps/api/fixtures/recorded/`, for tests to replay (#3228269249)
 - Changed: CLAUDE.md s13 rewritten from real calls — T212 key + secret auth, current endpoints, bare-403 missing permissions, no account type, pence prices, ticker-not-ISIN mapping, rate limits; Yahoo and Alpha Vantage facts; Supabase free-tier facts (#3228269249)
 - Added: task 1 findings in `docs/phases/phase-2.md` — map by ticker, market hours from T212 exchange schedules, ISA vs Invest must be asked (#3228269249)

@@ -241,6 +241,16 @@ interface MarketData {
 
 `market/stub` is the only implementation so far. It generates prices from a small deterministic PRNG seeded by the instrument id, so the same holding always draws the same chart and fixtures, tests and screenshots agree. It also takes per-pot staleness overrides — an age in hours, an outright failure, or markets-closed — which is how the green/amber/red ladder gets exercised end to end without a real feed ever having to break. It also takes per-holding **series anchors** (`market/stub/anchors.ts`, built from the stub positions and fixtures in `app.ts` and `server.ts`): the "All" series starts at the average price paid and the "Day" series at this morning's price, the walk blending between its two ends. Without them an invented chart captioned "since you bought" could contradict "+24% since you bought" beside it. `server.ts` reads them from `STUB_STALENESS` (`market/stub/staleness-env.ts`), so the dev server can be put on any rung.
 
+### Real sources (Phase 2, `market/sources/`)
+
+The stub above still drives stub mode. Real prices come from two sources behind one small interface, `PriceSource` — `quote(target)` and `dailyCloses(target, from)` — where a target is a listing (by that source's symbol, plus T212's currency for it) or GBP→USD/EUR. Prices stay in the listing's currency here; pence and FX happen when a holding is valued.
+
+- **`yahoo.ts`** — the unofficial chart endpoint, primary (Waqar's call; against Yahoo's terms; re-decided before anyone else uses Pip). One call gives the quote and today's 5-minute points. Daily closes are keyed by the exchange's own calendar day. `GBp` becomes `GBX`. A 429 is `blocked`, an unknown symbol `not_found`.
+- **`alpha-vantage.ts`** — the free tier, fallback: `GLOBAL_QUOTE`, `CURRENCY_EXCHANGE_RATE`, `TIME_SERIES_DAILY` / `FX_DAILY` compact (100 trading days). No intraday; latest data is the previous trading day, stamped at 21:00 UTC that day. AV never says a listing's currency, so the instrument's T212 currency is used. Its 200-with-a-message rate limit is `blocked`, and the key never appears in an error.
+- **`fallback.ts`** — `withFallback` asks each source in order (skipping one with no symbol for the target) and returns the answer **with the source that gave it**, so the provenance line always names the source a price really came from.
+- **`hours.ts`** — "is this market open" from T212's working schedules: open from an `OPEN` event until the next event of any kind, so US pre-market, after-hours and overnight don't count, and a holiday (no `OPEN`) is closed. `scheduleCovers` says when the published schedule has run out rather than guessing.
+- Tests replay `fixtures/recorded/{yahoo,alpha-vantage}` and T212's recorded schedules; both sources were also run live once (Yahoo quote, intraday, daily closes, FX; Alpha Vantage answering as the fallback).
+
 ## Auth
 
 Supabase Auth, emailed magic links for now (Google later), proves someone owns an email. A row in our own `users` table is what lets them in (CLAUDE.md s3, hard line 4). Sign-in itself happens between the browser and Supabase; the API never sees a password or an OAuth callback.
