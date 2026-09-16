@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Phase 2 — T212 paper + market data
+
+- Added: recorded, anonymised responses from a Trading 212 practice ISA, Yahoo's chart endpoint and Alpha Vantage in `apps/api/fixtures/recorded/`, for tests to replay (#3228269249)
+- Changed: CLAUDE.md s13 rewritten from real calls — T212 key + secret auth, current endpoints, bare-403 missing permissions, no account type, pence prices, ticker-not-ISIN mapping, rate limits; Yahoo and Alpha Vantage facts; Supabase free-tier facts (#3228269249)
+- Added: task 1 findings in `docs/phases/phase-2.md` — map by ticker, market hours from T212 exchange schedules, ISA vs Invest must be asked (#3228269249)
+
 ### Docs
 
 - Added: `docs/phases/phase-2.md` — Phase 2 plan, signed off: T212 practice account, Yahoo + Alpha Vantage market data, own encryption, per-request RLS, history backfill, scheduled refresh with keep-alive, deploy to Render; 15 tasks on the board (#3226664942)

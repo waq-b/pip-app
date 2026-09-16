@@ -1,0 +1,86 @@
+[
+  {
+    "instrument": {
+      "ticker": "NVDA_US_EQ",
+      "name": "Nvidia",
+      "isin": "US67066G1040",
+      "currency": "USD"
+    },
+    "createdAt": "2026-09-16T17:52:48.194+03:00",
+    "quantity": 12.49015855,
+    "quantityAvailableForTrading": 12.49015855,
+    "quantityInPies": 0,
+    "currentPrice": 215.3,
+    "averagePricePaid": 215.19983027,
+    "walletImpact": {
+      "currency": "GBP",
+      "totalCost": 1997,
+      "currentValue": 1997.96,
+      "unrealizedProfitLoss": 0.96,
+      "fxImpact": 0.03
+    }
+  },
+  {
+    "instrument": {
+      "ticker": "GRGl_EQ",
+      "name": "Greggs",
+      "isin": "GB00B63QSB39",
+      "currency": "GBX"
+    },
+    "createdAt": "2026-09-16T17:54:01.661+03:00",
+    "quantity": 56.85714285,
+    "quantityAvailableForTrading": 56.85714285,
+    "quantityInPies": 0,
+    "currentPrice": 1748.7,
+    "averagePricePaid": 1750.00000022,
+    "walletImpact": {
+      "currency": "GBP",
+      "totalCost": 995,
+      "currentValue": 994.26,
+      "unrealizedProfitLoss": -0.74,
+      "fxImpact": null
+    }
+  },
+  {
+    "instrument": {
+      "ticker": "ASMLa_EQ",
+      "name": "ASML",
+      "isin": "NL0010273215",
+      "currency": "EUR"
+    },
+    "createdAt": "2026-09-16T17:54:12.080+03:00",
+    "quantity": 0.83273192,
+    "quantityAvailableForTrading": 0.83273192,
+    "quantityInPies": 0,
+    "currentPrice": 1397.9,
+    "averagePricePaid": 1398.80551234,
+    "walletImpact": {
+      "currency": "GBP",
+      "totalCost": 998.5,
+      "currentValue": 997.86,
+      "unrealizedProfitLoss": -0.64,
+      "fxImpact": 0.01
+    }
+  },
+  {
+    "instrument": {
+      "ticker": "VWRLl_EQ",
+      "name": "Vanguard FTSE All-World (Dist)",
+      "isin": "IE00B3RBWM25",
+      "currency": "GBP"
+    },
+    "createdAt": "2026-09-16T17:53:41.329+03:00",
+    "quantity": 7.24270297,
+    "quantityAvailableForTrading": 7.24270297,
+    "quantityInPies": 0,
+    "currentPrice": 138.04,
+    "averagePricePaid": 138.07000013,
+    "walletImpact": {
+      "currency": "GBP",
+      "totalCost": 1000,
+      "currentValue": 999.78,
+      "unrealizedProfitLoss": -0.22,
+      "fxImpact": null
+    }
+  }
+]

@@ -1,0 +1,122 @@
+[
+  {
+    "ticker": "AAPL_US_EQ",
+    "type": "STOCK",
+    "workingScheduleId": 71,
+    "isin": "US0378331005",
+    "currencyCode": "USD",
+    "name": "Apple",
+    "shortName": "AAPL",
+    "maxOpenQuantity": 36958,
+    "extendedHours": true,
+    "addedOn": "2018-07-12T07:10:11.000+03:00"
+  },
+  {
+    "ticker": "GRGl_EQ",
+    "type": "STOCK",
+    "workingScheduleId": 55,
+    "isin": "GB00B63QSB39",
+    "currencyCode": "GBX",
+    "name": "Greggs",
+    "shortName": "GRG",
+    "maxOpenQuantity": 24686,
+    "extendedHours": false,
+    "addedOn": "2018-07-12T07:10:07.000+03:00"
+  },
+  {
+    "ticker": "VGWLd_EQ",
+    "type": "ETF",
+    "workingScheduleId": 166,
+    "isin": "IE00B3RBWM25",
+    "currencyCode": "EUR",
+    "name": "Vanguard FTSE All-World (Dist)",
+    "shortName": "VGWL",
+    "maxOpenQuantity": 29013,
+    "extendedHours": false,
+    "addedOn": "2021-03-26T14:42:58.000+02:00"
+  },
+  {
+    "ticker": "RRl_EQ",
+    "type": "STOCK",
+    "workingScheduleId": 55,
+    "isin": "GB00B63H8491",
+    "currencyCode": "GBX",
+    "name": "Rolls-Royce",
+    "shortName": "RR",
+    "maxOpenQuantity": 525240,
+    "extendedHours": false,
+    "addedOn": "2018-07-12T07:10:10.000+03:00"
+  },
+  {
+    "ticker": "VWRLs_EQ",
+    "type": "ETF",
+    "workingScheduleId": 158,
+    "isin": "IE00B3RBWM25",
+    "currencyCode": "CHF",
+    "name": "Vanguard FTSE All-World (Dist)",
+    "shortName": "VWRL",
+    "maxOpenQuantity": 29029,
+    "extendedHours": false,
+    "addedOn": "2025-01-17T13:09:51.000+02:00"
+  },
+  {
+    "ticker": "VWRDl_EQ",
+    "type": "ETF",
+    "workingScheduleId": 154,
+    "isin": "IE00B3RBWM25",
+    "currencyCode": "USD",
+    "name": "Vanguard FTSE All-World (Dist)",
+    "shortName": "VWRD",
+    "maxOpenQuantity": 28974,
+    "extendedHours": false,
+    "addedOn": "2020-01-07T18:26:10.000+02:00"
+  },
+  {
+    "ticker": "VWRLl_EQ",
+    "type": "ETF",
+    "workingScheduleId": 70,
+    "isin": "IE00B3RBWM25",
+    "currencyCode": "GBP",
+    "name": "Vanguard FTSE All-World (Dist)",
+    "shortName": "VWRL",
+    "maxOpenQuantity": 50000000,
+    "extendedHours": false,
+    "addedOn": "2019-11-25T11:06:04.000+02:00"
+  },
+  {
+    "ticker": "ASML_US_EQ",
+    "type": "STOCK",
+    "workingScheduleId": 71,
+    "isin": "USN070592100",
+    "currencyCode": "USD",
+    "name": "ASML",
+    "shortName": "ASML",
+    "maxOpenQuantity": 6774,
+    "extendedHours": true,
+    "addedOn": "2020-01-16T17:37:20.000+02:00"
+  },
+  {
+    "ticker": "ASMLa_EQ",
+    "type": "STOCK",
+    "workingScheduleId": 57,
+    "isin": "NL0010273215",
+    "currencyCode": "EUR",
+    "name": "ASML",
+    "shortName": "ASML",
+    "maxOpenQuantity": 6693,
+    "extendedHours": false,
+    "addedOn": "2018-07-12T07:10:22.000+03:00"
+  },
+  {
+    "ticker": "NVDA_US_EQ",
+    "type": "STOCK",
+    "workingScheduleId": 71,
+    "isin": "US67066G1040",
+    "currencyCode": "USD",
+    "name": "Nvidia",
+    "shortName": "NVDA",
+    "maxOpenQuantity": 52724,
+    "extendedHours": true,
+    "addedOn": "2018-07-12T07:10:17.000+03:00"
+  }
+]

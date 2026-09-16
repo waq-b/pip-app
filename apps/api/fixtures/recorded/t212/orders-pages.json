@@ -1,0 +1,203 @@
+[
+  {
+    "path": "/api/v0/equity/history/orders?limit=1",
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "order": {
+            "id": 90000001,
+            "strategy": "VALUE",
+            "type": "MARKET",
+            "ticker": "ASMLa_EQ",
+            "status": "FILLED",
+            "value": 1000,
+            "filledValue": 1000,
+            "currency": "GBP",
+            "extendedHours": false,
+            "initiatedFrom": "WEB",
+            "side": "BUY",
+            "createdAt": "2026-09-16T14:54:11.000Z",
+            "instrument": {
+              "ticker": "ASMLa_EQ",
+              "name": "ASML",
+              "isin": "NL0010273215",
+              "currency": "EUR"
+            }
+          },
+          "fill": {
+            "id": 90000002,
+            "quantity": 0.83273192,
+            "price": 1398.8,
+            "type": "TRADE",
+            "tradingMethod": "OTC",
+            "filledAt": "2026-09-16T14:54:12.000Z",
+            "walletImpact": {
+              "currency": "GBP",
+              "netValue": 1000,
+              "fxRate": 1.16657527,
+              "taxes": [
+                {
+                  "name": "CURRENCY_CONVERSION_FEE",
+                  "quantity": -1.5,
+                  "currency": "GBP",
+                  "chargedAt": "2026-09-16T14:54:12.189Z"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "nextPagePath": "/api/v0/equity/history/orders?cursor=CURSOR&limit=1"
+    }
+  },
+  {
+    "path": "/api/v0/equity/history/orders?cursor=CURSOR&limit=1",
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "order": {
+            "id": 90000003,
+            "strategy": "VALUE",
+            "type": "MARKET",
+            "ticker": "GRGl_EQ",
+            "status": "FILLED",
+            "value": 1000,
+            "filledValue": 1000,
+            "currency": "GBP",
+            "extendedHours": false,
+            "initiatedFrom": "WEB",
+            "side": "BUY",
+            "createdAt": "2026-09-16T14:53:11.000Z",
+            "instrument": {
+              "ticker": "GRGl_EQ",
+              "name": "Greggs",
+              "isin": "GB00B63QSB39",
+              "currency": "GBX"
+            }
+          },
+          "fill": {
+            "id": 90000004,
+            "quantity": 56.85714285,
+            "price": 1750,
+            "type": "TRADE",
+            "tradingMethod": "OTC",
+            "filledAt": "2026-09-16T14:54:01.000Z",
+            "walletImpact": {
+              "currency": "GBP",
+              "netValue": 1000,
+              "fxRate": 100,
+              "taxes": [
+                {
+                  "name": "STAMP_DUTY_RESERVE_TAX",
+                  "quantity": -5,
+                  "currency": "GBP",
+                  "chargedAt": "2026-09-16T14:54:01.765Z"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "nextPagePath": "/api/v0/equity/history/orders?cursor=CURSOR&limit=1"
+    }
+  },
+  {
+    "path": "/api/v0/equity/history/orders?cursor=CURSOR&limit=1",
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "order": {
+            "id": 90000005,
+            "strategy": "VALUE",
+            "type": "MARKET",
+            "ticker": "VWRLl_EQ",
+            "status": "FILLED",
+            "value": 1000,
+            "filledValue": 1000,
+            "currency": "GBP",
+            "extendedHours": false,
+            "initiatedFrom": "WEB",
+            "side": "BUY",
+            "createdAt": "2026-09-16T14:53:39.000Z",
+            "instrument": {
+              "ticker": "VWRLl_EQ",
+              "name": "Vanguard FTSE All-World (Dist)",
+              "isin": "IE00B3RBWM25",
+              "currency": "GBP"
+            }
+          },
+          "fill": {
+            "id": 90000006,
+            "quantity": 7.24270297,
+            "price": 138.07,
+            "type": "TRADE",
+            "tradingMethod": "OTC",
+            "filledAt": "2026-09-16T14:53:41.000Z",
+            "walletImpact": {
+              "currency": "GBP",
+              "netValue": 1000,
+              "fxRate": 1,
+              "taxes": []
+            }
+          }
+        }
+      ],
+      "nextPagePath": "/api/v0/equity/history/orders?cursor=CURSOR&limit=1"
+    }
+  },
+  {
+    "path": "/api/v0/equity/history/orders?cursor=CURSOR&limit=1",
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "order": {
+            "id": 90000007,
+            "strategy": "VALUE",
+            "type": "MARKET",
+            "ticker": "NVDA_US_EQ",
+            "status": "FILLED",
+            "value": 2000,
+            "filledValue": 2000,
+            "currency": "GBP",
+            "extendedHours": false,
+            "initiatedFrom": "WEB",
+            "side": "BUY",
+            "createdAt": "2026-09-16T14:52:47.000Z",
+            "instrument": {
+              "ticker": "NVDA_US_EQ",
+              "name": "Nvidia",
+              "isin": "US67066G1040",
+              "currency": "USD"
+            }
+          },
+          "fill": {
+            "id": 90000008,
+            "quantity": 12.49015855,
+            "price": 215.2,
+            "type": "TRADE",
+            "tradingMethod": "OTC",
+            "filledAt": "2026-09-16T14:52:48.000Z",
+            "walletImpact": {
+              "currency": "GBP",
+              "netValue": 2000,
+              "fxRate": 1.34595999,
+              "taxes": [
+                {
+                  "name": "CURRENCY_CONVERSION_FEE",
+                  "quantity": -3,
+                  "currency": "GBP",
+                  "chargedAt": "2026-09-16T14:52:48.300Z"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "nextPagePath": null
+    }
+  }
+]

@@ -27,10 +27,13 @@ finance-app-personal/
 │   ├── design/            ← the Claude Design prototype, verbatim
 │   └── phases/
 │       ├── phase-0.md
-│       └── phase-1.md
+│       ├── phase-1.md
+│       ├── phase-2-inputs.md
+│       └── phase-2.md
 ├── apps/
 │   ├── web/                ← React frontend (Vite + TS + Tailwind v4 + PWA)
 │   └── api/                ← Fastify backend
+│       ├── fixtures/recorded/  ← real T212 practice / Yahoo / Alpha Vantage responses, anonymised, for tests to replay
 │       └── src/
 │           ├── app.ts       ← Fastify instance: guard, then routes
 │           ├── server.ts    ← process entrypoint, listens on PORT
