@@ -5,6 +5,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Phase 3 — Kraken (read-only)
+
+- Added: Kraken and CoinGecko verified with real calls — `GetApiKeyInfo` reports a read-only key's permissions, CoinGecko GBP prices and its 365-day history cap, Kraken public daily OHLC; anonymised recordings in `apps/api/fixtures/recorded/{kraken,coingecko}`, facts in CLAUDE.md s13 (#3229045898)
+
 ### Roadmap
 
 - Changed: phases reordered (Waqar) — Kraken 3, rules 4, research 5, notifications 6, T212 live 7; the drafted live plan moved to `docs/phases/phase-7.md`, and phase numbers in docs, code comments and tests follow (#3226664941)
