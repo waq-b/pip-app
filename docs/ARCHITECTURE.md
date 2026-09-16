@@ -251,6 +251,18 @@ The stub above still drives stub mode. Real prices come from two sources behind 
 - **`hours.ts`** — "is this market open" from T212's working schedules: open from an `OPEN` event until the next event of any kind, so US pre-market, after-hours and overnight don't count, and a holiday (no `OPEN`) is closed. `scheduleCovers` says when the published schedule has run out rather than guessing.
 - Tests replay `fixtures/recorded/{yahoo,alpha-vantage}` and T212's recorded schedules; both sources were also run live once (Yahoo quote, intraday, daily closes, FX; Alpha Vantage answering as the fallback).
 
+### The shared price cache (`market/refresh.ts`, `budget.ts`, `live.ts`)
+
+- **One refresh per instrument or FX pair for everyone**, on the privileged connection, into `prices`, `intraday_series` and `daily_closes`. Read routes (refresh-on-read) and the scheduled job both call `refreshDue(db, market, instrumentIds)`; whoever gets there first does the work.
+- **When a price is due** (`isDue`): nothing cached → now. Market open (T212 schedule) → every 15 min. Market closed → once after the close, then nothing until it opens. Schedule unknown or run out → hourly. FX → every 30 min. After a failure → leave it 5 min.
+- **Failures never throw out of a refresh.** The last good price stays; `last_failed_at` is set (a placeholder row with an empty `source` if there was never a price — `cachedPrices` ignores those), and the staleness ladder reports the real age.
+- **FX** pairs are refreshed for whatever currencies the instruments need (USD, EUR; GBP and GBX need none).
+- **`ensureDailyCloses`** fetches only the missing part of an instrument's or pair's daily history, for backfill and longer charts.
+- **Daily call budgets** (`withBudget`) are counted atomically in `source_usage` — a single upsert that only increments while under the limit — so concurrent refreshes can't overspend: Alpha Vantage 22/day (of its 25), Yahoo 1,500/day. Over budget, the source reports itself `blocked` and the fallback moves on.
+- **`liveMarket(db, { alphaVantageKey })`** builds Yahoo → Alpha Vantage with budgets and each instrument's own symbols.
+- `market_schedules` stores T212's working schedules per schedule id (saved when a credential polls metadata; shared, readable when signed in).
+- Tested on PGlite: refresh timing, once-only refresh, fallback source naming, last-good-price on failure, budget exhaustion, and daily-close gap filling.
+
 ## Auth
 
 Supabase Auth, emailed magic links for now (Google later), proves someone owns an email. A row in our own `users` table is what lets them in (CLAUDE.md s3, hard line 4). Sign-in itself happens between the browser and Supabase; the API never sees a password or an OAuth callback.

@@ -250,3 +250,16 @@ export const sourceUsage = pgTable(
   },
   (table) => [primaryKey({ columns: [table.source, table.day] })],
 );
+
+/**
+ * Trading 212 working schedules (open/close events per schedule id), saved when
+ * a credential polls instrument metadata. Drives "markets closed" and refresh
+ * timing. Shared, readable by signed-in users.
+ */
+export const marketSchedules = pgTable("market_schedules", {
+  scheduleId: integer("schedule_id").primaryKey(),
+  exchangeName: text("exchange_name").notNull(),
+  /** `[{ date: ISO timestamp, type: "OPEN" | "CLOSE" | … }]` */
+  events: jsonb("events").notNull(),
+  fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull().defaultNow(),
+});
