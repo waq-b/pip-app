@@ -18,6 +18,8 @@ import {
 import type { ReadModel } from "./read/model.js";
 import { stubReadModel } from "./read/stub.js";
 import { registerReadRoutes } from "./routes/read.js";
+import { registerRulesRoutes } from "./routes/rules.js";
+import { memoryRulesStore, type RulesStore } from "./rules/store.js";
 
 export interface BuildAppOptions {
   /**
@@ -34,6 +36,8 @@ export interface BuildAppOptions {
   readModel?: ReadModel;
   /** Stub mode stores nothing; Trading 212 mode seals keys (`sync/connections.ts`). */
   connections?: ConnectionService;
+  /** Where a user's rules are kept. Stub mode keeps them in memory; real accounts in Postgres. */
+  rulesStore?: RulesStore;
   /** The scheduled refresh (Trading 212 mode). */
   refreshJob?: { run(): Promise<unknown> };
   /** From `JOB_SECRET`; job routes refuse everyone without it. */
@@ -75,6 +79,7 @@ export function buildApp(options: BuildAppOptions = {}) {
       options.readModel ??
       stubReadModel(options.marketData ?? createStubMarketData({ anchors: stubSeriesAnchors() })),
   });
+  registerRulesRoutes(app, { store: options.rulesStore ?? memoryRulesStore() });
   registerJobRoutes(app, { refresh: options.refreshJob });
   registerConnectionRoutes(app, { service: options.connections ?? stubConnectionService });
 

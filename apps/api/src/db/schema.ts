@@ -1,6 +1,8 @@
+import { sql } from "drizzle-orm";
 import {
   bigint,
   boolean,
+  check,
   date,
   integer,
   jsonb,
@@ -251,6 +253,28 @@ export const krakenLedger = pgTable(
     balance: numeric("balance").notNull(),
   },
   (table) => [primaryKey({ columns: [table.credentialId, table.entryId] })],
+);
+
+/**
+ * The shape a user has set (Phase 4): Handpicked's target and Side Bet's cap in
+ * whole percent; Foundation is the rest. No row means the defaults. The limits
+ * are checked by the API and again here.
+ */
+export const userRules = pgTable(
+  "user_rules",
+  {
+    userId: uuid("user_id")
+      .primaryKey()
+      .references(() => users.id, { onDelete: "cascade" }),
+    handpickedTarget: integer("handpicked_target").notNull(),
+    sideBetCap: integer("side_bet_cap").notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    check("user_rules_cap_range", sql`${table.sideBetCap} between 0 and 20`),
+    check("user_rules_target_range", sql`${table.handpickedTarget} between 0 and 100`),
+    check("user_rules_shape", sql`${table.handpickedTarget} + ${table.sideBetCap} <= 100`),
+  ],
 );
 
 /**

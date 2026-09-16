@@ -8,6 +8,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Phase 4 — Rules engine
 
 - Added: rules engine — pure `evaluateRules` for drift (named 5-point threshold), Side Bet's cap (broken at any amount over, compared in pence), targets scaled over connected pots, over-by in points and pounds, and the two fix-it amounts; shared rule constants (defaults 70/25/5, cap max 20, FCA note above 10); 13 tests incl. edges and determinism (#3229114698)
+- Added: saving rules — `PUT /rules` with server-side limits (whole numbers, cap 0–20, shape ≤ 100), `user_rules` with own-row RLS and matching `CHECK` constraints (migration 0011, applied), database and in-memory stores; 15 tests (#3229114873)
 
 ## [0.3.0] — 2026-09-16
 

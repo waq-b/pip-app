@@ -18,6 +18,7 @@ import type { CoinDirectory } from "./sync/kraken.js";
 import { liveReadModel } from "./read/live.js";
 import { backfillHistory } from "./sync/backfill.js";
 import { backfillKrakenHistory } from "./sync/kraken-history.js";
+import { dbRulesStore } from "./rules/store.js";
 import { liveConnectionService } from "./sync/connections.js";
 
 const config = loadConfig();
@@ -60,6 +61,7 @@ function realAccounts(): Partial<BuildAppOptions> {
     : undefined;
 
   return {
+    rulesStore: dbRulesStore(db),
     readModel: liveReadModel({ db, marketFor }),
     connections: liveConnectionService({
       db,
