@@ -326,6 +326,18 @@ The guard is an `onRequest` hook on the root instance — deliberately not added
 
 **Env vars** (see `.env.example`): `SUPABASE_URL` for the API — the server won't start without it. The web app needs `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`; without them it shows "Pip isn't configured" rather than a blank page. The publishable key is public by design — which is exactly why every table has RLS on.
 
+## Deploy (Render, Phase 2)
+
+One **Render free web service**, `pip` — https://pip-old.example.net — in Frankfurt (nearest to Supabase's eu-west-1), deploying `main` automatically on every push.
+
+- **Build:** `pnpm install --frozen-lockfile`, then `web` build (needs `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` at build time), then `api` build.
+- **Start:** `cd apps/api && node --import tsx dist/server.js`. `tsx` is a runtime dependency because `@finance-app/shared` is TypeScript source; plain Node can't resolve it.
+- **One origin** (`web.ts`): with `WEB_DIST_DIR=../web/dist`, Fastify's `rewriteUrl` sends `/api/*` to the API's own routes and everything else to `/app/*`, served from the built app — a real file, or `index.html` so a reload of `/rules` works. Fingerprinted `assets/` are cached for a year as immutable; `index.html` is `no-cache`; the shell gets `nosniff`, `same-origin` referrer and `DENY` framing. The static app is public (sign-in screen and code, no data); the guard exempts `/app/*` only when serving it. Health check: `/api/health`.
+- **Non-secret env** set on the service: `NODE_VERSION=24`, `NODE_ENV=production`, `PROVIDER_MODE=t212`, `T212_ENV=demo`, `WEB_DIST_DIR`, `LOG_LEVEL`, `MASTER_KEY_VERSION`, `SUPABASE_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`.
+- **Secrets, set only in Render's dashboard** (never through chat or git): `DATABASE_URL`, `MASTER_KEY`, `JOB_SECRET`, `AV_ACCESS_KEY`. The dev and production app share the one Supabase project, so `MASTER_KEY` must be the same key that sealed the stored credentials. `JOB_SECRET` must match the `private.job_settings` row, which already points `pg_cron` at `https://pip-old.example.net/api/jobs/refresh`.
+- **Supabase Auth** must list `https://pip-old.example.net` in its redirect URLs, or magic links sign into the wrong place.
+- **Free hours are shared** across the Render workspace (750/month). The scheduled refresh runs only in weekday market hours so Pip sleeps otherwise; other services in the workspace draw on the same hours.
+
 ## Storage
 
 Postgres via Drizzle ORM, on Supabase. Single `DATABASE_URL` env var, nothing else host-specific (CLAUDE.md s3; never Render's free Postgres, it expires after 30 days).
@@ -372,6 +384,7 @@ Auth and route tests otherwise use in-memory stores, and CI never talks to Supab
 | `MASTER_KEY_VERSION`                                 | Which version `MASTER_KEY` is; stamped on every sealed value                                                                                    | `1`                                         |
 | `MASTER_KEY_PREVIOUS`, `MASTER_KEY_PREVIOUS_VERSION` | Only during a rotation: the old key, so old values can be opened and re-sealed                                                                  | none                                        |
 | `JOB_SECRET`                                         | Shared secret the scheduler sends as `x-job-secret` to `POST /jobs/refresh`. Render only, plus the `private.job_settings` row                   | none — job routes refuse everyone           |
+| `WEB_DIST_DIR`                                       | Production only: the built web app to serve from the same origin, with the API under `/api`                                                     | none — API only (dev uses Vite)             |
 | `LOG_LEVEL`                                          | pino level for the server                                                                                                                       | `info`                                      |
 | `DATABASE_URL`                                       | Postgres connection string                                                                                                                      | none — required once a route touches the DB |
 | `PORT`                                               | apps/api listen port                                                                                                                            | `3001`                                      |
