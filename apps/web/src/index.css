@@ -37,6 +37,15 @@
   --pip-tint: #ffe1d0;
   --pip-aink: #643312;
 
+  /* The mark's three seeds. Unlike the accent these never change with a pot
+     scope — the mark always shows all three — only with the theme. */
+  --pip-seed-fnd: #7a8a5e;
+  --pip-seed-pick: #c67139;
+  --pip-seed-bet: #c0392c;
+
+  /* The one red thing in the chrome: Side Bet's colour, whatever scope it's in. */
+  --pip-alert: #c0392c;
+
   --pip-hatch: repeating-linear-gradient(135deg, rgb(192 57 44 / 0.07) 0 9px, transparent 9px 18px);
 }
 
@@ -63,6 +72,11 @@
     --pip-acc: #f6a06b;
     --pip-tint: #3a2a1d;
     --pip-aink: #ffc6a5;
+
+    --pip-seed-fnd: #aebf92;
+    --pip-seed-pick: #f6a06b;
+    --pip-seed-bet: #f08a7e;
+    --pip-alert: #f08a7e;
 
     --pip-hatch: repeating-linear-gradient(
       135deg,
@@ -94,6 +108,11 @@
   --pip-acc: #f6a06b;
   --pip-tint: #3a2a1d;
   --pip-aink: #ffc6a5;
+
+  --pip-seed-fnd: #aebf92;
+  --pip-seed-pick: #f6a06b;
+  --pip-seed-bet: #f08a7e;
+  --pip-alert: #f08a7e;
 
   --pip-hatch: repeating-linear-gradient(
     135deg,
@@ -180,6 +199,7 @@
   --color-amber-dot: var(--pip-amber-dot);
   --color-amber-tint: var(--pip-amber-tint);
   --color-amber-line: var(--pip-amber-line);
+  --color-alert: var(--pip-alert);
 
   --font-heading: "Caprasimo", ui-serif, serif;
   --font-body: "Figtree Variable", "Figtree", ui-sans-serif, system-ui, sans-serif;

@@ -55,6 +55,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added: `pointerWords()` so screens say tap on a phone and click elsewhere, and phone/computer to match (#3227556742)
 - Added: a `matchMedia` stub in the web test setup, since jsdom has none (#3227556742)
 - Fixed: Pots went dark on pot and instrument detail — `NavLink` overwrote the `aria-current` it was given with its own route match; active state now comes from each destination's `matches` at every width (#3227556742)
+- Fixed: the mark and the Rules alert dot were hard-coded to light-mode hex values, so neither changed palette in dark mode; both now read `--pip-seed-*` and `--pip-alert` tokens (#3227556742)
+- Added: a test that fails if a hex colour appears in the shell's components, reading their source via Vite's `?raw` so it needs no Node APIs (#3227556742)
 
 ### Phase 0 — Scaffold
 

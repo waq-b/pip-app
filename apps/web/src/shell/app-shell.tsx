@@ -208,7 +208,7 @@ function AlertDot({ className = "absolute top-0.5 right-2.5" }: { className?: st
     <span
       role="status"
       aria-label="A rule needs a look"
-      className={`h-2.5 w-2.5 rounded-full bg-[#c0392c] ${className}`}
+      className={`bg-alert h-2.5 w-2.5 rounded-full ${className}`}
     />
   );
 }

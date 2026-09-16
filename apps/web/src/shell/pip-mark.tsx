@@ -3,17 +3,20 @@
  * (DESIGN.md §3): below 48px the radii compress and the centres push out, or
  * the third seed dissolves. The SVG files remain the source of truth for
  * favicons and app icons.
+ *
+ * Colours are theme variables, not hex, so the mark switches to its dark-ground
+ * palette with everything else.
  */
 const STANDARD = [
-  { cx: 19, cy: 20, r: 13, fill: "#7a8a5e" },
-  { cx: 36.5, cy: 25, r: 10, fill: "#c67139" },
-  { cx: 27, cy: 41.5, r: 6.5, fill: "#c0392c" },
+  { cx: 19, cy: 20, r: 13, fill: "var(--pip-seed-fnd)" },
+  { cx: 36.5, cy: 25, r: 10, fill: "var(--pip-seed-pick)" },
+  { cx: 27, cy: 41.5, r: 6.5, fill: "var(--pip-seed-bet)" },
 ];
 
 const SMALL = [
-  { cx: 18, cy: 19, r: 13.5, fill: "#7a8a5e" },
-  { cx: 38, cy: 24.5, r: 11.5, fill: "#c67139" },
-  { cx: 27, cy: 43, r: 9, fill: "#c0392c" },
+  { cx: 18, cy: 19, r: 13.5, fill: "var(--pip-seed-fnd)" },
+  { cx: 38, cy: 24.5, r: 11.5, fill: "var(--pip-seed-pick)" },
+  { cx: 27, cy: 43, r: 9, fill: "var(--pip-seed-bet)" },
 ];
 
 export const SMALL_CUT_BELOW = 48;
