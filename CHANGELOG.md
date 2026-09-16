@@ -63,6 +63,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Changed: the holdings table shows pounds before every percentage, stricter than the design prototype, which showed bare percentages there (#3226676977)
 - Added: `components/no-hex.test.ts` globs the whole folder, so new components are held to the token rule without being listed (#3226676977)
 
+#### Docs
+
+- Changed: Supabase adopted for Postgres and Auth (Waqar, 2026-09-16). CLAUDE.md s3 now records Supabase Auth with Google only, Fastify as the backend and the wall, RLS as a second wall, `pg_cron` for scheduling, Realtime and Storage skipped, and Render free + Supabase free with no $25 tier on either. Folder tree and provider facts updated to match (#3226664942)
+- Added: `docs/ARCHITECTURE.md` platform section recording the decision, while the rest of the doc still describes the Auth.js build that exists today (#3226664942)
+- Added: Phase 1 rework table in `docs/phases/phase-1.md` — tasks 5–8 and 15 were built against Auth.js and are superseded (#3226664942)
+- Added: `docs/phases/phase-2-inputs.md` — decisions carried into Phase 2 planning, the Vault-versus-own-encryption recommendation, the scheduling split, and the free-tier pause mitigation (#3226664942)
+
 ### Phase 0 — Scaffold
 
 - Added: pnpm workspace root — `pnpm-workspace.yaml`, root `package.json`, shared `tsconfig.base.json`, ESLint 9 flat config, Prettier, `.gitignore`, `.env.example` (#3226662417)

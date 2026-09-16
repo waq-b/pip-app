@@ -2,6 +2,20 @@
 
 Living doc. Reflects what's actually built, not what's planned — check `docs/phases/phase-N.md` for what's coming. Last updated: Phase 1, through the stub API.
 
+## Platform decision: Supabase (decided 2026-09-16 — not yet built)
+
+This section records a decision. **Everything below it still describes what is actually built**, which for auth is Auth.js.
+
+Waqar has moved the platform to Supabase for Postgres and Auth, with Fastify kept as the backend and the wall (CLAUDE.md s3). Once built:
+
+- **Auth.** Supabase Auth, Google only, replaces the Auth.js implementation described under Auth below. The frontend signs in with the Supabase client; the API verifies the Supabase JWT on every route, then checks our own `users` allowlist. The Auth.js mount, database sessions and Auth.js tables are superseded. Sessions stop being server-side: Supabase issues short-lived JWTs held by the browser.
+- **The waitlist gets simpler.** Someone refused by the allowlist is still signed in to Supabase, so asking for the waiting list becomes an ordinary JWT-verified request. The session-free `/waitlist` exemption and its signed token go away, leaving `/health` as the only unauthenticated route besides the sign-in flow itself.
+- **Row Level Security** on every user-owned table, as a second wall. It is only a wall if the API queries as a role that doesn't bypass RLS — `postgres` and `service_role` both do — so each request switches role and sets the verified user's claims inside a transaction.
+- **Scheduled work** runs from `pg_cron`. Price refresh, which touches no user secret, may run in an Edge Function. Anything that uses a provider key is triggered by `pg_cron` but executed by Fastify, because provider keys are never decrypted outside it (hard line 6).
+- **Not used:** Realtime, Storage.
+
+The Phase 1 rework is set out in `docs/phases/phase-1.md`. Decisions carried into Phase 2 — Vault versus our own key encryption, scheduling, the free-tier pause — are in `docs/phases/phase-2-inputs.md`.
+
 ## Monorepo layout
 
 ```
@@ -230,7 +244,7 @@ Being on the waiting list grants nothing. Access still comes from the allowlist,
 
 Postgres via Drizzle ORM. Single `DATABASE_URL` env var — works against local Docker Postgres, Neon, or Supabase, nothing host-specific (see CLAUDE.md section 3; never Render's free Postgres, it expires after 30 days).
 
-- **The database is hosted in every environment** — Neon or Supabase, with a separate database for development. There is no local Postgres and no Docker: one `DATABASE_URL` is the whole story, which is also what keeps the app portable (CLAUDE.md s3). Nothing in the test suite or CI ever talks to it.
+- **The database is hosted in every environment** — on Supabase, with a separate project for development. There is no local Postgres and no Docker: one `DATABASE_URL` is the whole story, which is also what keeps the app portable (CLAUDE.md s3). Nothing in the test suite or CI ever talks to it.
 - `apps/api/drizzle.config.ts` — drizzle-kit config, points at `DATABASE_URL`
 - `apps/api/drizzle/` — generated migration SQL, committed. `pnpm --filter api db:generate` writes a new one from the schema; `db:migrate` applies it.
 - `apps/api/src/db/schema.ts` — current tables:
