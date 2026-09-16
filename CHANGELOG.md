@@ -5,6 +5,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-09-16
+
 ### Phase 2 — T212 paper + market data
 
 - Added: secret box for provider keys — AES-256-GCM with `MASTER_KEY`, random IV per value, sealed values bound to user + provider + account + field, key version stamped for rotation; vague failures; 13 tests incl. tampering, wrong key and a value moved between rows (#3228268479)
@@ -59,6 +61,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added: `docs/phases/phase-2.md` — Phase 2 plan, signed off: T212 practice account, Yahoo + Alpha Vantage market data, own encryption, per-request RLS, history backfill, scheduled refresh with keep-alive, deploy to Render; 15 tasks on the board (#3226664942)
 - Changed: CLAUDE.md s3 records the Phase 2 market-data decision; `.env.example` gains `AV_ACCESS_KEY` (#3226664942)
 - Added: a Release column on the board with a `Pre POC release` label, documented in CLAUDE.md s7; the first two items are rotating the database password and scaling sign-in emails (#3228228974, #3228232318)
+- Changed: Phase 2 docs pass — ARCHITECTURE layout, data flow and stub-mode sections describe both modes; FEATURES opens with where Pip is now; the Phase 2 plan records what shipped against its definition of done (#3228256569)
 
 ## [0.1.0] — 2026-09-16
 

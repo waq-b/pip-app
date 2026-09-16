@@ -1,12 +1,16 @@
 # Features
 
-Living doc. Every screen, rule, alert, and state the app has — written for a human, not a compiler. Last updated: end of Phase 1 (0.1.0).
+Living doc. Every screen, rule, alert, and state the app has — written for a human, not a compiler. Last updated: end of Phase 2 (0.2.0).
 
-## Where Pip is: every screen, on sample data
+## Where Pip is: live, on a Trading 212 practice account
 
-**Pip** — "Three pots. One number. No homework." — has every screen from the signed-off design (`docs/DESIGN.md`) built at phone, tablet and desktop sizes, in light and dark, behind a real sign-in. The numbers are sample data: no broker is connected, no key is stored, and nothing Pip shows can move money. Real Trading 212 data arrives in Phase 2.
+**Pip** — "Three pots. One number. No homework." — is live at https://pip-old.example.net. Every screen from the signed-off design (`docs/DESIGN.md`) is built at phone, tablet and desktop sizes, in light and dark, behind a real sign-in (emailed magic link).
 
-The API also answers `GET /health` (`{ status: "ok" }`) with no sign-in, for uptime checks.
+Connect a Trading 212 **practice** account and Pip shows what it really holds, valued with market prices, with history rebuilt from its orders — see "Real accounts" below. Real-money accounts connect in Phase 3; Kraken (Side Bet) in Phase 4. Nothing Pip does can move money: it has no code that places an order.
+
+Locally, `PROVIDER_MODE=stub` still runs the whole app on the design's sample data, which is what the screen descriptions below mostly describe.
+
+The API also answers `GET /api/health` (`{ status: "ok" }`) with no sign-in, for uptime checks.
 
 ## Getting in
 

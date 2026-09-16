@@ -1,6 +1,6 @@
 # Architecture
 
-Living doc. Reflects what's actually built, not what's planned — check `docs/phases/phase-N.md` for what's coming. Last updated: Phase 1, through the stub API.
+Living doc. Reflects what's actually built, not what's planned — check `docs/phases/phase-N.md` for what's coming. Last updated: end of Phase 2 (0.2.0) — Trading 212 practice accounts, market data, deployed on Render.
 
 ## Platform: Supabase (decided 2026-09-16)
 
@@ -43,15 +43,27 @@ finance-app-personal/
 │           ├── auth/       ← Supabase JWT verification, allowlist, guard, /me, waitlist
 │           ├── db/          ← schema, client, asUser (RLS scope)
 │           │   ├── client.ts   ← lazy Drizzle/Postgres client (getDb())
-│           │   └── schema.ts   ← users (the allowlist), waitlist
+│           │   ├── schema.ts   ← allowlist, waitlist, credentials, holdings, prices, daily values…
+│           │   └── user-scope.ts ← asUser: queries as the signed-in user so RLS applies
+│           ├── dev/         ← local-only tools (sign-in link without email)
 │           ├── fixtures/   ← the design's sample words and numbers
+│           ├── jobs/        ← scheduled refresh: job-secret route + the job
 │           ├── market/     ← MARKET DATA: what it's worth, what it's done
-│           │   ├── market.ts   ← common market-data interface
-│           │   └── stub/       ← deterministic fake prices
+│           │   ├── market.ts   ← stub-mode market interface
+│           │   ├── stub/       ← deterministic fake prices
+│           │   ├── sources/    ← Yahoo, Alpha Vantage, fallback
+│           │   ├── refresh.ts  ← shared price cache and when prices are due
+│           │   ├── budget.ts   ← daily call budgets per source
+│           │   └── hours.ts    ← market open/closed from T212 schedules
 │           ├── providers/  ← TRADING: what is held, how much cash
-│           │   ├── provider.ts ← common trading-provider interface
-│           │   └── stub/       ← fake holdings, used in tests and Phase 0/1
-│           └── routes/     ← read routes composing the two layers
+│           │   ├── provider.ts ← stub-mode trading interface
+│           │   ├── stub/       ← fake holdings, used in stub mode and tests
+│           │   └── t212/       ← read-only practice client, rows, ticker → symbols
+│           ├── read/        ← read models: stub sample data, live real accounts
+│           ├── routes/     ← thin routes: read, connections
+│           ├── sync/        ← connect, poll, history backfill, daily snapshots
+│           ├── valuation/   ← holdings → pounds, one place
+│           └── web.ts       ← production: web app + API on one origin
 └── packages/
     └── shared/              ← types shared between web and api
         └── src/
@@ -168,15 +180,20 @@ apps/web/src/
 
 `components/no-hex.test.ts` globs every file in the folder via `import.meta.glob(..., { query: "?raw" })`, so a component added later is covered by the no-hex rule without anyone listing it, and the test fails if the glob ever finds nothing.
 
-## Data flow (current — stub only)
+## Data flow
 
 ```
-apps/web  →  apps/api/routes  →  providers/stub   (what is held)
-                              →  market/stub      (what it's worth, what it's done)
-                              →  fixtures/        (the words around the numbers)
+                                   PROVIDER_MODE=stub
+apps/web  →  /api  →  routes  →  read/stub.ts  →  providers/stub, market/stub, fixtures/
+
+                                   PROVIDER_MODE=t212
+apps/web  →  /api  →  routes  →  read/live.ts  →  Postgres, read as the user (RLS)
+                                      │               ↑ holdings, cash, trades   ← sync/ ← providers/t212 (practice API)
+                                      │               ↑ prices, closes, series   ← market/ ← Yahoo → Alpha Vantage
+                                      └─ refresh-on-read (≤ 2 s)                  ↑ both also driven by jobs/ ← pg_cron
 ```
 
-The frontend never talks to a provider directly and never knows which provider backs a bucket — it only ever calls our own API, always under `/api` (`lib/api.ts`). In dev, Vite proxies `/api` to the Fastify server and strips the prefix, so the API's own paths stay `/rules`, `/portfolio` and so on. The prefix is not cosmetic: several API paths are also screens (`/rules`, `/instruments/:id`), and proxying the bare paths sent a page load or reload of those screens to the API. Test stubs are still keyed by the API's own path; `test/render-route.tsx` strips the prefix. That indirection is the point: Phase 2+ swaps `stub` for `t212`/`kraken` behind the same `Provider` interface with zero frontend changes.
+The frontend never talks to a provider directly and never knows which provider backs a bucket — it only ever calls our own API, always under `/api` (`lib/api.ts`). In dev, Vite proxies `/api` to the Fastify server and strips the prefix, so the API's own paths stay `/rules`, `/portfolio` and so on. The prefix is not cosmetic: several API paths are also screens (`/rules`, `/instruments/:id`), and proxying the bare paths sent a page load or reload of those screens to the API. Test stubs are still keyed by the API's own path; `test/render-route.tsx` strips the prefix. That indirection is the point: Phase 2 swapped real Trading 212 data in behind the same API, and the only web changes were new states (not connected, syncing, not enough history, coming soon).
 
 **The read routes** (`routes/read.ts`), all behind both auth walls:
 
@@ -383,7 +400,7 @@ Auth and route tests otherwise use in-memory stores, and CI never talks to Supab
 
 | Var                                                  | Purpose                                                                                                                                         | Default                                     |
 | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| `PROVIDER_MODE`                                      | `stub` (fake data) or `t212` (Trading 212, Phase 2+). `t212` needs `MASTER_KEY`, and until Phase 2 wires the read routes the server refuses it  | `stub`                                      |
+| `PROVIDER_MODE`                                      | `stub` (fake data) or `t212` (Trading 212, Phase 2+). `t212` needs `MASTER_KEY` (and `T212_ENV=demo` until Phase 3)                             | `stub`                                      |
 | `MASTER_KEY`                                         | 32 random bytes, base64 — seals provider keys. **Render only**; never in Supabase, git or chat. `pnpm --filter api master-key` makes one        | none — required for `t212`                  |
 | `MASTER_KEY_VERSION`                                 | Which version `MASTER_KEY` is; stamped on every sealed value                                                                                    | `1`                                         |
 | `MASTER_KEY_PREVIOUS`, `MASTER_KEY_PREVIOUS_VERSION` | Only during a rotation: the old key, so old values can be opened and re-sealed                                                                  | none                                        |
@@ -420,7 +437,7 @@ Never delete the old key before step 4 — anything still sealed with it becomes
 
 ## How stub mode works
 
-`StubProvider` is instantiated per bucket and returns constant fake positions/cash/history. It has no network calls, no filesystem access, no DB access — safe for unit tests and CI. `PROVIDER_MODE=stub` is the default everywhere except explicit live phases (2+).
+`StubProvider` is instantiated per bucket and returns constant fake positions/cash/history. It has no network calls, no filesystem access, no DB access — safe for unit tests and CI. `PROVIDER_MODE=stub` is the default locally and in CI; the deployed service runs `PROVIDER_MODE=t212` against the practice account. CI never touches a provider, market-data source or database: Trading 212, Yahoo and Alpha Vantage are replayed from `fixtures/recorded/`, and database tests run on PGlite.
 
 ## Testing
 
