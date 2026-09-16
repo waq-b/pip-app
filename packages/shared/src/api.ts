@@ -303,7 +303,9 @@ export type ConnectOutcome =
   | "missing_permission"
   | "not_pounds"
   | "unavailable"
-  | "not_available_yet";
+  | "not_available_yet"
+  /** The key belongs to an account already connected to another pot (hard line 11). */
+  | "same_account";
 
 export interface ConnectPermission {
   name: string;

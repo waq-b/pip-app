@@ -78,6 +78,7 @@ export async function pollCredential(
           lastVerifiedAt: now,
           lastPolledAt: now,
           accountCurrency: summary.currency,
+          providerAccountId: String(summary.id),
         })
         .where(eq(providerCredentials.id, credential.id));
     });

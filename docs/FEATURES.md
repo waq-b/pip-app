@@ -73,6 +73,7 @@ With `PROVIDER_MODE=t212`, Pip shows your own Trading 212 practice account inste
     - **not recognised** — the key shown back masked ("kr-live-9…8814"), nothing connected or changed, "Try that again";
     - **missing a permission** — "That key can't see your Account data", with what to tick, "Make a new key";
     - **not in pounds** — Pip only works in pounds for now, "Try a different account";
+    - **an account already feeding the other pot** — "That's the account already connected as Trading 212 ISA", because one account can only feed one pot, "Use a different key";
     - **Trading 212 not answering** — nothing connected, "Try that again";
     - **a key that can trade or withdraw** (where Pip can tell) — **refused on purpose**, "That key can do too much", listing what's needed and what must be off, with only "Make a read-only key".
       The pasted key and secret aren't kept on screen after they're sent. Connecting the same account again replaces its key.

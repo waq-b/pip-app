@@ -526,6 +526,7 @@ function Refused({
     invalid_key: "Couldn't connect",
     missing_permission: "Needs a different key",
     not_pounds: "Not in pounds",
+    same_account: "Already connected",
     unavailable: "Couldn't connect",
     not_available_yet: "Coming soon",
   };
@@ -533,6 +534,7 @@ function Refused({
     invalid_key: "Try that again",
     missing_permission: "Make a new key",
     not_pounds: "Try a different account",
+    same_account: "Use a different key",
     unavailable: "Try that again",
     not_available_yet: "Back",
   };

@@ -13,6 +13,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added: changing rules on the Rules screen — steppers for Handpicked's target and Side Bet's cap (Foundation is the rest), saved via `PUT /rules` with every screen refetched, a failed save says nothing changed, cap stepper stops at 20%, FCA restricted-investor line above 10%, "Last changed", a note when a pot is left out of the shape, target bars marking the scaled line; 8 web tests (#3229115872)
 - Added: a broken cap, from the engine — banner buttons "Show me how to fix it" (panel with the two fix-it amounts at equal weight, ending "You'd do either at your broker") and "Raise the cap" (focuses Side Bet's stepper, says it moves no money); red dot, pot cards and cap bars follow the engine's status rather than rounded percentages; the shape sentence names drifted pots calmly; 13 web tests (#3229114771)
 - Changed: rules are set with sliders instead of −/+ steppers, and saved with one Save rules button rather than on every change — far fewer API calls, and no waiting between taps (Waqar) (#3229115872)
+- Fixed: the same Trading 212 account can no longer be connected to both Foundation and Handpicked — Pip stores each account's id and refuses the second pot with "That's the account already connected as…" (migration 0012, applied); 3 tests (#3229114694)
 
 ## [0.3.0] — 2026-09-16
 

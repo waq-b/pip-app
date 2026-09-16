@@ -1,0 +1,1 @@
+ALTER TABLE "provider_credentials" ADD COLUMN "provider_account_id" text;

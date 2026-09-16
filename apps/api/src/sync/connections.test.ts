@@ -118,6 +118,40 @@ describe("connecting a Trading 212 account", () => {
     expect(client.positions).toHaveBeenCalledOnce();
   });
 
+  it("refuses the same Trading 212 account for a second pot, storing nothing", async () => {
+    const { connections } = service();
+    await connections.connect(user, "trading212", request);
+    const [isa] = await db.select().from(providerCredentials);
+    expect(isa!.providerAccountId).toBe(
+      String(recorded<T212AccountSummary>("account-summary.json").id),
+    );
+
+    const result = await connections.connect(user, "trading212", {
+      ...request,
+      accountKind: "invest",
+      key: "the-same-practice-key-again",
+    });
+
+    expect(result).toMatchObject({ outcome: "same_account", accountKind: "invest" });
+    expect(result.message).toContain("already connected as Trading 212 ISA");
+    const rows = await db.select().from(providerCredentials);
+    expect(rows.map((row) => row.accountKind)).toEqual(["isa"]);
+  });
+
+  it("connects a different Trading 212 account to the other pot", async () => {
+    const summary = recorded<T212AccountSummary>("account-summary.json");
+    await service().connections.connect(user, "trading212", request);
+    const invest = fakeClient({
+      accountSummary: vi.fn(async () => ({ ...summary, id: summary.id + 1 })),
+    });
+    const result = await service(invest).connections.connect(user, "trading212", {
+      ...request,
+      accountKind: "invest",
+    });
+    expect(result.outcome).toBe("connected");
+    expect(await db.select().from(providerCredentials)).toHaveLength(2);
+  });
+
   it("replaces the key when the same account is connected again", async () => {
     const { connections } = service();
     await connections.connect(user, "trading212", request);

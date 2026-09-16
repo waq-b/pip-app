@@ -1,5 +1,5 @@
 import type { AccountKind, Connection, ConnectResult } from "@finance-app/shared";
-import { and, count, eq } from "drizzle-orm";
+import { and, count, eq, ne } from "drizzle-orm";
 import { credentialContext } from "../crypto/reseal.js";
 import type { SecretBox } from "../crypto/secrets.js";
 import { dailyValues, holdings, providerCredentials } from "../db/schema.js";
@@ -140,6 +140,28 @@ export function liveConnectionService(options: LiveConnectionOptions): Connectio
         return failure(error, accountKind, name);
       }
 
+      // One account, one pot: the same Trading 212 account can't feed Foundation and Handpicked.
+      const [otherPot] = await options.db
+        .select({ accountKind: providerCredentials.accountKind })
+        .from(providerCredentials)
+        .where(
+          and(
+            eq(providerCredentials.userId, user.userId),
+            eq(providerCredentials.provider, "trading212"),
+            ne(providerCredentials.accountKind, accountKind),
+            eq(providerCredentials.providerAccountId, String(prefetched.summary.id)),
+          ),
+        );
+      if (otherPot) {
+        const other = DISPLAY[otherPot.accountKind as AccountKind];
+        return {
+          outcome: "same_account",
+          provider,
+          accountKind,
+          message: `That's the account already connected as ${other}. One account can only feed one pot, so Pip didn't connect it again. Use a key made in your Trading 212 ${accountKind === "isa" ? "Stocks ISA" : "Invest"} account instead.`,
+        };
+      }
+
       const credential = await store(
         options,
         user,
@@ -148,6 +170,8 @@ export function liveConnectionService(options: LiveConnectionOptions): Connectio
         request.secret,
         prefetched.summary.currency,
         now(),
+        "trading212",
+        String(prefetched.summary.id),
       );
       const polled = await pollCredential(
         options.db,
@@ -335,6 +359,7 @@ async function store(
   accountCurrency: string,
   at: Date,
   provider: "trading212" | "kraken" = "trading212",
+  providerAccountId: string | null = null,
 ): Promise<Credential> {
   const base = { userId: user.userId, provider, accountKind };
   const sealed = {
@@ -343,6 +368,7 @@ async function store(
     keyVersion: options.keyVersion,
     status: "live",
     accountCurrency,
+    providerAccountId,
     lastVerifiedAt: at,
     backfillStatus: "pending",
     historyStartsOn: null,

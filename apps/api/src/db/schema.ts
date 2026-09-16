@@ -77,6 +77,11 @@ export const providerCredentials = pgTable(
     /** `live` · `invalid` (rejected by the provider) · `error` (last call failed). */
     status: text("status").notNull(),
     accountCurrency: text("account_currency").notNull(),
+    /**
+     * The provider's own account id (Trading 212's summary `id`), so one account
+     * can't feed two pots (hard line 11). Filled on connect and on every poll.
+     */
+    providerAccountId: text("provider_account_id"),
     lastVerifiedAt: timestamp("last_verified_at", { withTimezone: true }),
     lastPolledAt: timestamp("last_polled_at", { withTimezone: true }),
     /** `pending` · `running` · `done` · `partial` · `failed`. */

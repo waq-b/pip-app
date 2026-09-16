@@ -334,6 +334,24 @@ describe("connecting a Trading 212 account", () => {
     fireEvent.click(screen.getByRole("button", { name: "Connect Trading 212 Invest" }));
   }
 
+  it("refuses a key for the account already connected to the other pot", async () => {
+    connectT212({
+      outcome: "same_account",
+      provider: "trading212",
+      accountKind: "invest",
+      message:
+        "That's the account already connected as Trading 212 ISA. One account can only feed one pot, so Pip didn't connect it again. Use a key made in your Trading 212 Invest account instead.",
+    });
+    await paste();
+    expect(await screen.findByText("Already connected")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        name: "That's the account already connected as Trading 212 ISA",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Use a different key" })).toBeInTheDocument();
+  });
+
   it("asks for the key and secret, says Pip can't check permissions, and sends which account", async () => {
     const bodies = connectT212({
       outcome: "connected",
