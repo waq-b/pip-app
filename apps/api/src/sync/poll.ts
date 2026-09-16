@@ -225,10 +225,12 @@ export function londonDay(at: Date): string {
 }
 
 /**
- * Writes each of a user's pots' value for `day` from their latest holdings,
- * cash and cached prices. Cash counts at face value in both value and cost, so
- * value − cost is what the investments made. A pot with a holding that has no
- * price isn't snapshotted rather than snapshotted wrong.
+ * Writes each of a user's pots' invested value and cost for `day` from their
+ * latest holdings and cached prices. **Investments only, not cash**: history
+ * rebuilt from order history can't know past cash reliably, so neither side
+ * counts it and the chart never jumps where the two meet. Cash is shown at its
+ * current amount instead. A pot with a holding that has no price isn't
+ * snapshotted rather than snapshotted wrong.
  */
 export async function snapshotDailyValues(db: Db, userId: string, day: string) {
   const credentials = await db
@@ -250,7 +252,6 @@ export async function snapshotDailyValues(db: Db, userId: string, day: string) {
       .from(holdings)
       .innerJoin(instruments, eq(instruments.id, holdings.instrumentId))
       .where(eq(holdings.credentialId, credential.id));
-    const [cashRowValue] = await db.select().from(cash).where(eq(cash.credentialId, credential.id));
 
     const fxNeeded = [
       ...new Set(held.map((row) => fxQuoteFor(row.currency)).filter((q) => q !== null)),
@@ -271,10 +272,8 @@ export async function snapshotDailyValues(db: Db, userId: string, day: string) {
     );
 
     try {
-      let value = cashRowValue
-        ? cashRowValue.availablePence + cashRowValue.reservedPence + cashRowValue.inPiesPence
-        : 0;
-      let cost = value;
+      let value = 0;
+      let cost = 0;
       for (const row of held) {
         const price = byKey.get(row.instrumentId);
         if (!price) throw new MissingPriceError(row.instrumentId);
