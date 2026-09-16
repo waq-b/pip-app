@@ -45,7 +45,7 @@ export function AuthProvider({ client, children }: { client: AuthClient; childre
   // every time the session changes.
   const actions = useMemo(
     () => ({
-      signInWithGoogle: () => client.signInWithGoogle(),
+      sendMagicLink: (email: string) => client.sendMagicLink(email),
       signOut: () => client.signOut(),
     }),
     [client],

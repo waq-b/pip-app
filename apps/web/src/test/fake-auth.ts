@@ -20,7 +20,7 @@ export function fakeAuthClient(initial: AuthSession | null = null) {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
-    signInWithGoogle: vi.fn(async () => {}),
+    sendMagicLink: vi.fn<(email: string) => Promise<void>>(async () => {}),
     signOut: vi.fn(async () => setSession(null)),
     setSession,
   } satisfies AuthClient & { setSession: typeof setSession };

@@ -6,7 +6,7 @@ export type AuthState =
 
 export interface AuthContextValue {
   state: AuthState;
-  signInWithGoogle(): Promise<void>;
+  sendMagicLink(email: string): Promise<void>;
   signOut(): Promise<void>;
 }
 

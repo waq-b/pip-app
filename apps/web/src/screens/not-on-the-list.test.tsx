@@ -55,13 +55,17 @@ describe("the not-on-the-list screen", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "Try a different account" }));
 
-    expect(await screen.findByRole("button", { name: /Continue with Google/ })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: "Email me a sign-in link" }),
+    ).toBeInTheDocument();
     expect(auth.signOut).toHaveBeenCalledOnce();
   });
 
   it("sends someone signed out to sign in instead", async () => {
     renderRoute("/not-on-the-list");
-    expect(await screen.findByRole("button", { name: /Continue with Google/ })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: "Email me a sign-in link" }),
+    ).toBeInTheDocument();
   });
 
   it("sends someone who is allowed on into the app", async () => {

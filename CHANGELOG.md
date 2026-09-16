@@ -97,7 +97,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Changed: provenance lines now read "<source> · updated N min ago" instead of "Prices: <source>" (#3227558097)
 - Added: `STUB_STALENESS` env flag puts the stub dev server on any rung of the ladder; unreadable values stop startup (#3227558097)
 
+- Changed: sign-in is an emailed magic link for now instead of Google (Waqar, 2026-09-16) — email field, "Check your email", "Use a different email", and a wait message when Supabase's email limit is hit; the Google button, "Checking you're on the list" state and Google mark are removed (#3228026929)
+- Added: the real Supabase project is wired for local use — migrations applied through Drizzle, Waqar on the allowlist, `api` and `web` dev scripts read their gitignored env files, `.claude/launch.json` starts both (#3228026929)
+
 #### Docs
+
+- Changed: CLAUDE.md s3 and the Phase 1 plan record magic-link sign-in as the one way in for now, Google later (#3228026929)
 
 - Changed: Supabase adopted for Postgres and Auth (Waqar, 2026-09-16). CLAUDE.md s3 now records Supabase Auth with Google only, Fastify as the backend and the wall, RLS as a second wall, `pg_cron` for scheduling, Realtime and Storage skipped, and Render free + Supabase free with no $25 tier on either. Folder tree and provider facts updated to match (#3226664942)
 - Added: `docs/ARCHITECTURE.md` platform section recording the decision, while the rest of the doc still describes the Auth.js build that exists today (#3226664942)

@@ -16,9 +16,20 @@ export interface AuthClient {
   getSession(): Promise<AuthSession | null>;
   /** Called on sign-in, sign-out and token refresh. Returns an unsubscribe. */
   onChange(listener: (session: AuthSession | null) => void): () => void;
-  /** Leaves the page for Google. */
-  signInWithGoogle(): Promise<void>;
+  /**
+   * Emails a one-time sign-in link that brings the browser back signed in.
+   * Throws `TooManyEmailsError` when Supabase's send limit is hit.
+   */
+  sendMagicLink(email: string): Promise<void>;
   signOut(): Promise<void>;
+}
+
+/** Supabase's built-in mailer only sends a few emails an hour. */
+export class TooManyEmailsError extends Error {
+  constructor() {
+    super("Too many sign-in emails");
+    this.name = "TooManyEmailsError";
+  }
 }
 
 export function supabaseAuthClient(
@@ -46,12 +57,18 @@ export function supabaseAuthClient(
       return () => data.subscription.unsubscribe();
     },
 
-    async signInWithGoogle() {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: `${window.location.origin}/` },
+    async sendMagicLink(email) {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        // Anyone can get a Supabase account; being let in is the API's
+        // allowlist decision, so this doesn't try to gate anything.
+        options: { emailRedirectTo: `${window.location.origin}/`, shouldCreateUser: true },
       });
-      if (error) throw error;
+      if (!error) return;
+      if (error.status === 429 || error.code === "over_email_send_rate_limit") {
+        throw new TooManyEmailsError();
+      }
+      throw error;
     },
 
     async signOut() {
