@@ -290,6 +290,14 @@ function krakenFailure(error: unknown): ConnectResult {
       ],
     };
   }
+  if (error instanceof KrakenPermissionError && error.permission === null) {
+    // Refused even the call that needs no permission: seen when the key's IP restriction shuts Pip out.
+    return {
+      outcome: "invalid_key",
+      provider,
+      message: `Kraken refused that key outright. Usually its IP restriction doesn't include Pip — check the addresses on the key, or switch the restriction off. Nothing is connected, and nothing was changed.`,
+    };
+  }
   if (error instanceof KrakenAuthError || outcome === "invalid_key") {
     return {
       outcome: "invalid_key",

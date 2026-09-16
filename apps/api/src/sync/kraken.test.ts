@@ -16,6 +16,7 @@ import {
 import type { Db } from "../db/user-scope.js";
 import {
   KrakenAuthError,
+  KrakenPermissionError,
   KrakenUnavailableError,
   type KrakenBalance,
   type KrakenClient,
@@ -344,6 +345,18 @@ describe("connecting Kraken", () => {
       outcome: "missing_permission",
       missingPermission: "Query ledger entries",
     });
+    expect(await db.select().from(providerCredentials)).toHaveLength(0);
+  });
+
+  it("points at the IP restriction when Kraken refuses the key outright", async () => {
+    const shutOut = fakeKraken({
+      keyInfo: async () => {
+        throw new KrakenPermissionError(null);
+      },
+    });
+    const result = await service(shutOut).connections.connect(user, "kraken", request);
+    expect(result.outcome).toBe("invalid_key");
+    expect(result.message).toContain("IP restriction");
     expect(await db.select().from(providerCredentials)).toHaveLength(0);
   });
 

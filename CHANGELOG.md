@@ -15,6 +15,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added: Side Bet history and cost from the Kraken ledger — balances per day valued at market closes into daily values, average cost per coin (pounds/dollars/euros paid, transfers and swaps at that day's price, rewards free, staking moves ignored, unknown kept unknown), a check that the ledger ends at current holdings, costs refreshed on every poll; rebuild on connect and in the refresh job; 10 tests (#3229045899)
 - Added: Side Bet live in the read model — counted in totals, split and rules once Kraken is connected, coins shown in coin units with staked amounts and "No price yet", "since bought" and all-time marked unavailable while cost is unknown, never "markets closed"; hourly crypto refresh outside market hours only while someone holds crypto (migration 0010, applied); 6 tests (#3229040481)
 - Added: Kraken in Setup — steps for a read-only Spot key, API key and hidden private-key fields, the permission-check note; offered whenever the server can price coins; Side Bet's not-connected page links to Setup; holdings and holding pages say "Cost not known yet" instead of a flat change; 4 web tests (#3229046122)
+- Fixed: a Kraken key refused outright (as its IP restriction does) now says to check the restriction, not to tick Query funds (#3229045414)
 
 ### Roadmap
 
