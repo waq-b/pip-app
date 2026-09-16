@@ -5,6 +5,7 @@ import type { Db } from "../db/user-scope.js";
 import { refreshDue, type PricedInstrument } from "../market/refresh.js";
 import type { withFallback } from "../market/sources/fallback.js";
 import { backfillHistory } from "../sync/backfill.js";
+import { pollKraken, type CoinDirectory, type KrakenClientFor } from "../sync/kraken.js";
 import {
   credentialsDue,
   londonDay,
@@ -31,6 +32,7 @@ export interface RefreshJobDeps {
   db: Db;
   box: SecretBox;
   clientFor: T212ClientFor;
+  kraken?: { clientFor: KrakenClientFor; directory: CoinDirectory };
   marketFor: (instrument: PricedInstrument | null) => Market;
   now?: () => Date;
 }
@@ -70,8 +72,20 @@ export function createRefreshJob(deps: RefreshJobDeps) {
 
     await step("poll", async () => {
       for (const credential of await credentialsDue(deps.db, at, POLL_EVERY_MS)) {
-        const outcome = await pollCredential(deps.db, deps.box, credential, deps.clientFor, at);
-        if (outcome.outcome === "polled") summary.polled += 1;
+        const outcome =
+          credential.provider === "kraken"
+            ? deps.kraken
+              ? await pollKraken(
+                  deps.db,
+                  deps.box,
+                  credential,
+                  deps.kraken.clientFor,
+                  deps.kraken.directory,
+                  at,
+                )
+              : null
+            : await pollCredential(deps.db, deps.box, credential, deps.clientFor, at);
+        if (outcome?.outcome === "polled") summary.polled += 1;
       }
     });
 
@@ -82,6 +96,7 @@ export function createRefreshJob(deps: RefreshJobDeps) {
         .where(
           and(
             eq(providerCredentials.status, "live"),
+            eq(providerCredentials.provider, "trading212"),
             eq(providerCredentials.backfillStatus, "pending"),
           ),
         )

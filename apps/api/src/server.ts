@@ -10,7 +10,11 @@ import { liveMarket } from "./market/live.js";
 import { stubSeriesAnchors } from "./market/stub/anchors.js";
 import { createStubMarketData } from "./market/stub/index.js";
 import { parseStubStaleness } from "./market/stub/staleness-env.js";
+import { krakenCoinIds, coinDetails } from "./market/sources/coingecko.js";
+import { krakenAltnames, krakenGbpPair } from "./market/sources/kraken-public.js";
+import { createKrakenClient } from "./providers/kraken/client.js";
 import { createT212Client } from "./providers/t212/client.js";
+import type { CoinDirectory } from "./sync/kraken.js";
 import { liveReadModel } from "./read/live.js";
 import { backfillHistory } from "./sync/backfill.js";
 import { liveConnectionService } from "./sync/connections.js";
@@ -40,6 +44,20 @@ function realAccounts(): Partial<BuildAppOptions> {
     coinGeckoKey: config.coinGeckoKey,
   });
 
+  // Kraken needs CoinGecko to name coins and find their prices; without the key it stays off.
+  const coinGeckoKey = config.coinGeckoKey;
+  const directory: CoinDirectory | undefined = coinGeckoKey
+    ? {
+        altnames: () => krakenAltnames(),
+        coinIds: () => krakenCoinIds({ apiKey: coinGeckoKey }),
+        details: (ids) => coinDetails({ apiKey: coinGeckoKey, ids }),
+        gbpPair: (altname) => krakenGbpPair(altname),
+      }
+    : undefined;
+  const kraken = directory
+    ? { clientFor: (key: string, secret: string) => createKrakenClient({ key, secret }), directory }
+    : undefined;
+
   return {
     readModel: liveReadModel({ db, marketFor }),
     connections: liveConnectionService({
@@ -47,12 +65,14 @@ function realAccounts(): Partial<BuildAppOptions> {
       box,
       keyVersion: config.masterKeyVersion,
       clientFor,
+      kraken,
       // Rebuild history in the background; the scheduled job retries anything left pending.
       onConnected: (credential) => {
+        if (credential.provider !== "trading212") return;
         void backfillHistory(db, box, credential, clientFor, marketFor).catch(() => undefined);
       },
     }),
-    refreshJob: createRefreshJob({ db, box, clientFor, marketFor }),
+    refreshJob: createRefreshJob({ db, box, clientFor, kraken, marketFor }),
   };
 }
 

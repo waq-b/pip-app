@@ -13,11 +13,20 @@ import {
 import { assertPounds, NotInPoundsError } from "../providers/t212/rows.js";
 import type { ConnectionService, ConnectionUser } from "../routes/connections.js";
 import { bucketForAccountKind } from "../valuation/value.js";
+import {
+  pollKraken,
+  type CoinDirectory,
+  type KrakenClientFor,
+  type KrakenPollOutcome,
+} from "./kraken.js";
 import { pollCredential, type Credential, type T212ClientFor } from "./poll.js";
+import { KrakenAuthError, KrakenPermissionError } from "../providers/kraken/client.js";
+import { checkKrakenPermissions, type PermissionCheck } from "../providers/kraken/permissions.js";
 
 /**
- * Connecting for real (Phase 2): Trading 212 accounts, validated against the
- * practice API, sealed at rest, polled straight away. Kraken arrives in Phase 3.
+ * Connecting for real: Trading 212 accounts (Phase 2), validated against the
+ * practice API, and Kraken (Phase 3), whose key must prove it can't move money
+ * — both sealed at rest and polled straight away.
  *
  * Nothing is stored unless the key works and can see what Pip needs. Writes go
  * through the privileged connection after the guard has verified the user;
@@ -34,6 +43,8 @@ export interface LiveConnectionOptions {
   box: SecretBox;
   keyVersion: number;
   clientFor: T212ClientFor;
+  /** Kraken, when configured. Setup offers it once the web side is ready (Phase 3 task 8). */
+  kraken?: { clientFor: KrakenClientFor; directory: CoinDirectory };
   /** Called after a successful connect — e.g. to start rebuilding history. Not awaited. */
   onConnected?: (credential: Credential) => void;
   now?: () => Date;
@@ -79,14 +90,17 @@ export function liveConnectionService(options: LiveConnectionOptions): Connectio
           permissionsVerified: false,
         };
       });
+      const kraken = rows.find((r) => r.provider === "kraken");
       return [
         ...accounts,
         {
           id: "kraken",
           provider: "kraken",
           displayName: "Kraken",
-          status: "not_connected",
+          status: kraken ? (kraken.status as Connection["status"]) : "not_connected",
           feeds: ["Degen"],
+          holdingsSeen: kraken ? kraken.held : undefined,
+          lastReadAt: kraken?.lastPolledAt?.toISOString(),
           available: false,
           permissionsVerified: true,
         },
@@ -94,12 +108,15 @@ export function liveConnectionService(options: LiveConnectionOptions): Connectio
     },
 
     async connect(user, provider, request): Promise<ConnectResult> {
-      if (provider !== "trading212") {
-        return {
-          outcome: "not_available_yet",
-          provider,
-          message: "Kraken isn't connected yet. Side Bet arrives in a later update.",
-        };
+      if (provider === "kraken") {
+        if (!options.kraken) {
+          return {
+            outcome: "not_available_yet",
+            provider,
+            message: "Kraken isn't connected yet. Side Bet arrives in a later update.",
+          };
+        }
+        return connectKraken(options, options.kraken, user, request.key, request.secret, now());
       }
       const accountKind = request.accountKind!;
       const name = DISPLAY[accountKind];
@@ -151,8 +168,9 @@ export function liveConnectionService(options: LiveConnectionOptions): Connectio
       };
     },
 
-    async disconnect(user, provider, accountKind) {
-      if (provider !== "trading212" || !accountKind) return;
+    async disconnect(user, provider, requestedKind) {
+      const accountKind = provider === "kraken" ? "spot" : requestedKind;
+      if (!accountKind) return;
       await options.db.transaction(async (tx) => {
         await tx
           .delete(providerCredentials)
@@ -177,16 +195,140 @@ export function liveConnectionService(options: LiveConnectionOptions): Connectio
   };
 }
 
+async function connectKraken(
+  options: LiveConnectionOptions,
+  kraken: NonNullable<LiveConnectionOptions["kraken"]>,
+  user: ConnectionUser,
+  key: string,
+  secret: string | undefined,
+  at: Date,
+): Promise<ConnectResult> {
+  const provider = "kraken";
+  if (!key || !secret) {
+    return {
+      outcome: "invalid_key",
+      provider,
+      message:
+        "Kraken needs both the API key and the private key. Nothing is connected, and nothing was changed.",
+    };
+  }
+
+  // Validate before storing anything: the key must exist and be unable to move money.
+  try {
+    const check = checkKrakenPermissions(
+      (await kraken.clientFor(key, secret).keyInfo()).permissions,
+    );
+    if (!check.ok)
+      return krakenFailure({
+        outcome: check.forbidden.length ? "too_much_access" : "missing_permission",
+        check,
+      } as KrakenPollOutcome);
+  } catch (error) {
+    return krakenFailure(error);
+  }
+
+  const credential = await store(options, user, "spot", key, secret, "GBP", at, "kraken");
+  const polled = await pollKraken(
+    options.db,
+    options.box,
+    credential,
+    kraken.clientFor,
+    kraken.directory,
+    at,
+  );
+  if (polled.outcome !== "polled") {
+    // Nothing half-connected is left behind.
+    await options.db.delete(providerCredentials).where(eq(providerCredentials.id, credential.id));
+    return krakenFailure(polled);
+  }
+  options.onConnected?.(credential);
+  return {
+    outcome: "connected",
+    provider,
+    message: "Connected. Pip checked: this key cannot place orders or withdraw.",
+  };
+}
+
+const KRAKEN_PERMISSION_NAMES: Record<string, string> = {
+  "query-funds": "Query funds",
+  "query-ledger": "Query ledger entries",
+  "query-open-trades": "Query open orders & trades",
+  "query-closed-trades": "Query closed orders & trades",
+  "export-data": "Export data",
+  "add-funds": "Deposit",
+  "withdraw-funds": "Withdraw",
+  "earn-funds": "Earn",
+  "modify-trades": "Create & modify orders",
+  "close-trades": "Cancel & close orders",
+  "create-ws-token": "WebSocket interface",
+  "add-withdraw-address": "Add withdrawal addresses",
+  "update-withdraw-address": "Update withdrawal addresses",
+};
+
+const permissionName = (id: string) => KRAKEN_PERMISSION_NAMES[id] ?? id;
+
+function krakenFailure(error: unknown): ConnectResult {
+  const provider = "kraken";
+  const outcome = isOutcome(error) ? error.outcome : undefined;
+  if (outcome === "too_much_access") {
+    const check = (error as { check: PermissionCheck }).check;
+    return {
+      outcome: "too_much_access",
+      provider,
+      message: `That key can do too much. Pip only accepts Kraken keys that can look, so it won't store this one. Make a key with only Query funds and Query ledger entries ticked.`,
+      permissions: [
+        ...["query-funds", "query-ledger"].map((id) => ({
+          name: permissionName(id),
+          granted: !check.missing.includes(id),
+          required: true,
+        })),
+        ...check.forbidden.map((id) => ({
+          name: permissionName(id),
+          granted: true,
+          required: false,
+        })),
+      ],
+    };
+  }
+  if (error instanceof KrakenAuthError || outcome === "invalid_key") {
+    return {
+      outcome: "invalid_key",
+      provider,
+      message: `Kraken doesn't recognise that key. Check the API key and private key are from the same key, with no stray spaces — and if the key has an IP restriction, that it allows Pip. Nothing is connected, and nothing was changed.`,
+    };
+  }
+  if (error instanceof KrakenPermissionError || outcome === "missing_permission") {
+    const missing =
+      outcome === "missing_permission" && "check" in (error as object)
+        ? permissionName((error as { check: PermissionCheck }).check.missing[0]!)
+        : error instanceof KrakenPermissionError
+          ? (error.permission ?? "Query funds")
+          : permissionName((error as { permission?: string }).permission ?? "query-funds");
+    return {
+      outcome: "missing_permission",
+      provider,
+      missingPermission: missing,
+      message: `That key can't see your ${missing}. Make a key with only Query funds and Query ledger entries ticked. Nothing is connected.`,
+    };
+  }
+  return {
+    outcome: "unavailable",
+    provider,
+    message: `Kraken isn't answering right now. Nothing is connected — try again in a minute.`,
+  };
+}
+
 async function store(
   options: LiveConnectionOptions,
   user: ConnectionUser,
-  accountKind: AccountKind,
+  accountKind: AccountKind | "spot",
   key: string,
   secret: string,
   accountCurrency: string,
   at: Date,
+  provider: "trading212" | "kraken" = "trading212",
 ): Promise<Credential> {
-  const base = { userId: user.userId, provider: "trading212", accountKind };
+  const base = { userId: user.userId, provider, accountKind };
   const sealed = {
     sealedKey: options.box.seal(key, credentialContext(base, "key")),
     sealedSecret: options.box.seal(secret, credentialContext(base, "secret")),
@@ -194,7 +336,8 @@ async function store(
     status: "live",
     accountCurrency,
     lastVerifiedAt: at,
-    backfillStatus: "pending",
+    // Kraken's history rebuild arrives with Phase 3 task 6; until then it has nothing to wait for.
+    backfillStatus: provider === "kraken" ? "done" : "pending",
     historyStartsOn: null,
   };
   const [row] = await options.db

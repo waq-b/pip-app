@@ -100,3 +100,46 @@ export function createKrakenPublicSource(
     },
   };
 }
+
+/**
+ * Kraken's internal asset names → the names people use (`XXBT` → `XBT`,
+ * `ZGBP` → `GBP`), from the public `Assets` list. One call.
+ */
+export async function krakenAltnames(options: { fetch?: typeof fetch } = {}) {
+  const doFetch = options.fetch ?? fetch;
+  let body: { error?: unknown; result?: Record<string, { altname?: unknown }> };
+  try {
+    body = (await (await doFetch(`${BASE}Assets`)).json()) as typeof body;
+  } catch {
+    throw new PriceSourceError("kraken", "unavailable", "Assets unreachable");
+  }
+  if (!body.result) throw new PriceSourceError("kraken", "unavailable", "Assets had no result");
+  return new Map(
+    Object.entries(body.result).flatMap(([name, asset]) =>
+      typeof asset.altname === "string" ? [[name, asset.altname] as const] : [],
+    ),
+  );
+}
+
+/** The pounds pair for a coin (`XBT` → `XBTGBP`), or null when Kraken has none. */
+export async function krakenGbpPair(
+  altname: string,
+  options: { fetch?: typeof fetch } = {},
+): Promise<string | null> {
+  const pair = `${altname}GBP`;
+  const doFetch = options.fetch ?? fetch;
+  let body: { error?: unknown; result?: unknown };
+  try {
+    body = (await (
+      await doFetch(`${BASE}AssetPairs?pair=${encodeURIComponent(pair)}`)
+    ).json()) as typeof body;
+  } catch {
+    throw new PriceSourceError("kraken", "unavailable", "AssetPairs unreachable");
+  }
+  const errors = Array.isArray(body.error) ? body.error.map(String) : [];
+  if (errors.some((e) => e.startsWith("EQuery:Unknown asset pair"))) return null;
+  if (errors.length || typeof body.result !== "object" || body.result === null) {
+    throw new PriceSourceError("kraken", "unavailable", errors[0] ?? "AssetPairs had no result");
+  }
+  return Object.keys(body.result).length ? pair : null;
+}

@@ -40,9 +40,10 @@ export function toPencePounds(
   return Math.round(quantity * price * poundsPerUnit(currency, fxRates) * 100);
 }
 
-/** T212 account kind → pot. Money never crosses pots (hard line 11). */
+/** Account kind → pot: T212 ISA and Invest, Kraken spot. Money never crosses pots (hard line 11). */
 export function bucketForAccountKind(accountKind: string): Bucket {
   if (accountKind === "isa") return "Base";
   if (accountKind === "invest") return "Medium";
+  if (accountKind === "spot") return "Degen";
   throw new Error(`Unknown account kind ${accountKind}`);
 }

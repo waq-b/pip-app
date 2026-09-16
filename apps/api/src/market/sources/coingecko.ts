@@ -149,3 +149,34 @@ export async function krakenCoinIds(options: {
   }
   return ids;
 }
+
+/** Names and ticker symbols for CoinGecko coin ids (`bitcoin` → Bitcoin, BTC). One call. */
+export async function coinDetails(options: {
+  apiKey: string;
+  ids: string[];
+  fetch?: typeof fetch;
+}): Promise<Map<string, { name: string; symbol: string }>> {
+  const details = new Map<string, { name: string; symbol: string }>();
+  if (options.ids.length === 0) return details;
+  const doFetch = options.fetch ?? fetch;
+  let response: Response;
+  try {
+    response = await doFetch(
+      `${BASE}coins/markets?vs_currency=gbp&ids=${options.ids.map(encodeURIComponent).join(",")}`,
+      { headers: { "x-cg-demo-api-key": options.apiKey, Accept: "application/json" } },
+    );
+  } catch {
+    throw new PriceSourceError("coingecko", "unavailable", "unreachable");
+  }
+  if (!response.ok) throw new PriceSourceError("coingecko", "unavailable", String(response.status));
+  const body = (await response.json()) as { id?: unknown; name?: unknown; symbol?: unknown }[];
+  for (const coin of Array.isArray(body) ? body : []) {
+    if (typeof coin.id === "string" && typeof coin.name === "string") {
+      details.set(coin.id, {
+        name: coin.name,
+        symbol: typeof coin.symbol === "string" ? coin.symbol.toUpperCase() : coin.id,
+      });
+    }
+  }
+  return details;
+}
