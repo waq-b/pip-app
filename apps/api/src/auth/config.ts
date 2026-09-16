@@ -2,6 +2,7 @@ import type { AuthConfig } from "@auth/core";
 import type { Adapter } from "@auth/core/adapters";
 import Google from "@auth/core/providers/google";
 import type { AllowlistStore } from "./allowlist.js";
+import { signWaitlistToken } from "./waitlist-token.js";
 
 /** Auth.js is mounted here; the web app proxies the same path in dev. */
 export const AUTH_BASE_PATH = "/auth";
@@ -61,7 +62,16 @@ export function buildAuthConfig(options: AuthConfigOptions): AuthConfig {
         // proves nothing about who this is.
         if (profile && profile.email_verified === false) return NOT_ALLOWED_PATH;
 
-        return (await options.store.isAllowed(email)) ? true : NOT_ALLOWED_PATH;
+        if (await options.store.isAllowed(email)) return true;
+
+        // Carry the verified address to the "not on the list" screen inside a
+        // signed, short-lived token, so the waitlist can accept it without a
+        // session and without trusting anything the browser types.
+        const token = signWaitlistToken(
+          { email, name: profile?.name ?? user.name ?? undefined },
+          options.secret,
+        );
+        return `${NOT_ALLOWED_PATH}?t=${encodeURIComponent(token)}`;
       },
     },
   };

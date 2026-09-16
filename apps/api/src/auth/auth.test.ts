@@ -1,16 +1,18 @@
-import { describe, expect, it } from "vitest";
 import type { Adapter } from "@auth/core/adapters";
+import { describe, expect, it } from "vitest";
 import { memoryAllowlistStore, normaliseEmail } from "./allowlist.js";
 import { buildAuthConfig, NOT_ALLOWED_PATH, SESSION_IDLE_SECONDS } from "./config.js";
 import { isLive, sessionCookieName } from "./session.js";
+import { verifyWaitlistToken } from "./waitlist-token.js";
 
+const SECRET = "test-secret-at-least-32-characters-long";
 const adapter = {} as Adapter;
 
 function configWith(allowed: string[]) {
   return buildAuthConfig({
     store: memoryAllowlistStore(allowed),
     adapter,
-    secret: "test-secret",
+    secret: SECRET,
     googleClientId: "id",
     googleClientSecret: "secret",
     useSecureCookies: false,
@@ -18,10 +20,15 @@ function configWith(allowed: string[]) {
 }
 
 /** Calls the signIn callback the way Auth.js does. */
-function signIn(config: ReturnType<typeof configWith>, email: string, emailVerified = true) {
+function signIn(
+  config: ReturnType<typeof configWith>,
+  email: string,
+  emailVerified = true,
+  name?: string,
+) {
   return config.callbacks!.signIn!({
     user: { id: "user-1", email },
-    profile: { email, email_verified: emailVerified },
+    profile: { email, email_verified: emailVerified, name },
   });
 }
 
@@ -45,15 +52,35 @@ describe("the allowlist gate", () => {
   });
 
   it("sends anyone else to the not-on-the-list screen", async () => {
-    await expect(signIn(configWith(["test@example.com"]), "stranger@example.com")).resolves.toBe(
-      NOT_ALLOWED_PATH,
-    );
+    const result = await signIn(configWith(["test@example.com"]), "stranger@example.com");
+    expect(result).toMatch(new RegExp(`^${NOT_ALLOWED_PATH}\\?t=`));
+  });
+
+  it("carries the verified address to that screen in a signed token", async () => {
+    const result = (await signIn(
+      configWith(["test@example.com"]),
+      "stranger@example.com",
+      true,
+      "Sam Okoro",
+    )) as string;
+
+    const token = decodeURIComponent(new URLSearchParams(result.split("?")[1]).get("t")!);
+    expect(verifyWaitlistToken(token, SECRET)).toMatchObject({
+      email: "stranger@example.com",
+      name: "Sam Okoro",
+    });
   });
 
   it("refuses an address Google has not verified, even if it is allowlisted", async () => {
     await expect(
       signIn(configWith(["test@example.com"]), "test@example.com", false),
     ).resolves.toBe(NOT_ALLOWED_PATH);
+  });
+
+  it("offers no waitlist token for an address Google has not verified", async () => {
+    // We only ever vouch for an address Google confirmed is theirs.
+    const result = await signIn(configWith([]), "stranger@example.com", false);
+    expect(result).toBe(NOT_ALLOWED_PATH);
   });
 
   it("refuses when no email comes back at all", async () => {
@@ -64,7 +91,9 @@ describe("the allowlist gate", () => {
   });
 
   it("closes the default: an empty allowlist admits nobody", async () => {
-    await expect(signIn(configWith([]), "test@example.com")).resolves.toBe(NOT_ALLOWED_PATH);
+    const result = await signIn(configWith([]), "test@example.com");
+    expect(result).not.toBe(true);
+    expect(result).toMatch(new RegExp(`^${NOT_ALLOWED_PATH}\\?t=`));
   });
 });
 

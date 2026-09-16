@@ -31,6 +31,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added: global session guard — an `onRequest` hook on the root instance, so every route is protected by existing; only `/health` and `/auth/*` are exempt (#3226677090)
 - Added: route-coverage test that walks the real route table and asserts every non-exempt route answers 401 without a session, failing rather than passing vacuously if the table is empty (#3226677090)
 - Added: `useSecureCookiesFromEnv()` so the guard and the Auth.js config can't disagree about the cookie name (#3226677090)
+- Added: waitlist signup — a rejected sign-in mints a 15-minute HMAC token carrying the Google-verified address, and `POST /waitlist` takes the email from inside that token rather than the request body (#3226682602)
+- Added: `WaitlistStore` with Postgres and in-memory implementations; asking twice is idempotent and keeps the first ask (#3226682602)
+- Changed: `/waitlist` joins `/health` and `/auth/*` as a session-free path, gated by its own signed token; the route is not registered at all when no `AUTH_SECRET` is configured (#3226682602)
 
 ### Phase 0 — Scaffold
 

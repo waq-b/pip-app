@@ -10,11 +10,12 @@ declare module "fastify" {
 
 /**
  * The only paths that answer without a session (CLAUDE.md hard line 4):
- * `/health` for ops, and the login flow itself. Everything else is 401 until
- * proven otherwise — a new route is protected by existing, not by anyone
- * remembering to protect it.
+ * `/health` for ops, the login flow itself, and `/waitlist` — which is part of
+ * that login flow and enforces its own signed token instead. Everything else is
+ * 401 until proven otherwise: a new route is protected by existing, not by
+ * anyone remembering to protect it.
  */
-export const PUBLIC_PATHS = ["/health"];
+export const PUBLIC_PATHS = ["/health", "/waitlist"];
 
 export function isPublicPath(path: string): boolean {
   if (PUBLIC_PATHS.includes(path)) return true;

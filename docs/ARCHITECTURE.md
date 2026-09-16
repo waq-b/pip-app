@@ -109,7 +109,11 @@ Google is the only way in, and being known to Google is not the same as being al
 
 **Admin.** `pnpm --filter api allowlist <list|add|remove> [email]` is the only way to grant access. Removing an address stops the next sign-in; existing sessions live out their span.
 
-**Route protection.** `registerSessionGuard` (in `auth/guard.ts`) adds an `onRequest` hook to the root instance — deliberately not via `register`, which would encapsulate it into a child scope and quietly leave sibling routes open. It runs before every route, including ones added later, so **a route is protected by existing**. Only `/health` and `/auth/*` are exempt. A request with no cookie is refused without touching the store, so refusing an unauthenticated caller never needs a database.
+**Route protection.** `registerSessionGuard` (in `auth/guard.ts`) adds an `onRequest` hook to the root instance — deliberately not via `register`, which would encapsulate it into a child scope and quietly leave sibling routes open. It runs before every route, including ones added later, so **a route is protected by existing**. Only `/health`, `/auth/*` and `/waitlist` are exempt. A request with no cookie is refused without touching the store, so refusing an unauthenticated caller never needs a database.
+
+**The waitlist exemption.** `/waitlist` has no session by definition — the person asking has just been refused one. It is not open, though: the rejected sign-in mints a token (`auth/waitlist-token.ts`) carrying the address Google has just verified, signed with `AUTH_SECRET` and valid for 15 minutes, and the route takes the email from **inside** the token rather than from the request body. So nobody can add an address to the waiting list without first proving to Google that it's theirs, and a body that says otherwise is ignored. Signature comparison is constant-time, and a length mismatch returns false rather than throwing. If no secret is configured the route isn't registered at all — a route that can't verify its own token shouldn't exist.
+
+Being on the waiting list grants nothing. Access still comes from the allowlist, by hand.
 
 `guard.test.ts` enforces that rather than trusting it: it walks the app's real route table via the `onRoute` hook and asserts every non-exempt route answers 401 without a session. Adding an unprotected route fails the suite without anyone having to add a case, and the test fails rather than passing vacuously if the table is ever empty.
 

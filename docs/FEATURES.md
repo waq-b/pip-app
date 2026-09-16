@@ -26,6 +26,8 @@ What does work, all of it server-side:
 - **Unverified addresses are refused**, even if the same address is on the allowlist.
 - **Staying signed in.** Sessions live in the database, not in a token. One goes stale 12 hours after you stop using it, and dies outright 7 days after it began however much you use it.
 - **Everything is shut by default.** Every API route answers 401 without a session. The only exceptions are the health check and the sign-in flow itself, and a test walks the real route table to prove no other route has slipped through.
+- **Asking to be let in.** Someone turned away can put themselves on the waiting list. Pip already knows the address — Google just verified it — so there's no form to fill in and no way to submit somebody else's. The ask expires if it isn't made within 15 minutes of being turned away, and asking twice is harmless.
+- **No promises are made.** No queue position, no countdown, no "we'll email you" — there is no email system. Waqar grants access by hand.
 - **Access is granted by hand**, with `pnpm --filter api allowlist add <email>`. There is no self-service sign-up, by design.
 
 Still to come in Phase 1: every screen, the three-pot data on stub providers, and the staleness ladder. Nothing here touches real money or a real broker.

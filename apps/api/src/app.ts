@@ -1,8 +1,10 @@
 import type { AuthConfig } from "@auth/core";
 import Fastify from "fastify";
-import { dbSessionStore, type SessionStore } from "./auth/session.js";
 import { registerSessionGuard } from "./auth/guard.js";
 import { authPlugin } from "./auth/plugin.js";
+import { dbSessionStore, type SessionStore } from "./auth/session.js";
+import { registerWaitlistRoute } from "./auth/waitlist-route.js";
+import { dbWaitlistStore, type WaitlistStore } from "./auth/waitlist.js";
 
 export interface BuildAppOptions {
   /**
@@ -10,8 +12,15 @@ export interface BuildAppOptions {
    * database. `server.ts` always passes one.
    */
   authConfig?: AuthConfig;
-  /** Tests inject an in-memory store; production reads sessions from Postgres. */
+  /** Tests inject in-memory stores; production reads from Postgres. */
   sessionStore?: SessionStore;
+  waitlistStore?: WaitlistStore;
+  /**
+   * Signs and verifies waitlist tokens. Without it the waitlist route is not
+   * registered at all — a route that can't verify its own token shouldn't
+   * exist.
+   */
+  authSecret?: string;
   useSecureCookies?: boolean;
 }
 
@@ -26,8 +35,16 @@ export function buildApp(options: BuildAppOptions = {}) {
     useSecureCookies: options.useSecureCookies ?? false,
   });
 
-  // One of the two exemptions; the other is the login flow itself.
+  // One of the three exemptions; the others are the login flow and the
+  // token-gated waitlist below.
   app.get("/health", async () => ({ status: "ok" }));
+
+  if (options.authSecret) {
+    registerWaitlistRoute(app, {
+      store: options.waitlistStore ?? dbWaitlistStore,
+      secret: options.authSecret,
+    });
+  }
 
   if (options.authConfig) {
     void app.register(authPlugin, { config: options.authConfig });
