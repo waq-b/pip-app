@@ -28,6 +28,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added: 12h idle session expiry plus a 7-day absolute cap via a new `sessions.created_at` column and `isLive()` (#3226677189)
 - Added: `pnpm --filter api allowlist <list|add|remove>` CLI, the only way to grant access (#3226677189)
 - Fixed: `apps/api` ran every test suite twice, the second time against stale compiled output in `dist/`; vitest now excludes it (#3226677189)
+- Added: global session guard — an `onRequest` hook on the root instance, so every route is protected by existing; only `/health` and `/auth/*` are exempt (#3226677090)
+- Added: route-coverage test that walks the real route table and asserts every non-exempt route answers 401 without a session, failing rather than passing vacuously if the table is empty (#3226677090)
+- Added: `useSecureCookiesFromEnv()` so the guard and the Auth.js config can't disagree about the cookie name (#3226677090)
 
 ### Phase 0 — Scaffold
 

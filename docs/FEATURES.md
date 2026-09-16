@@ -16,4 +16,16 @@ Phase 0 is scaffold only. `apps/web` renders a single placeholder screen:
 
 - **`GET /health`** — returns `{ status: "ok" }`. No auth, no DB call. Used by CI/ops to confirm the server boots; will also be the target of Phase 7's ntfy health-check alerting.
 
-Nothing else exists yet. Real screens (Dashboard, bucket detail, rules, settings), Google sign-in, and every rule/alert described in CLAUDE.md arrive starting Phase 1 — see `docs/phases/phase-1.md` once it's written, and `docs/DESIGN.md` once Claude Design has handed over screens.
+## Phase 1 so far: a locked door, no rooms yet
+
+The product has a name and a signed-off design — **Pip**, "Three pots. One number. No homework." See `docs/DESIGN.md` for what every screen will look like and `docs/phases/phase-1.md` for the order they arrive in. None of them are built yet.
+
+What does work, all of it server-side:
+
+- **Sign in with Google.** One button, no passwords. Google proves who you are; the `allowlist` table decides whether you may come in. An address nobody has allowlisted is turned away — politely, to a "not on the list" destination — and an empty allowlist admits nobody at all.
+- **Unverified addresses are refused**, even if the same address is on the allowlist.
+- **Staying signed in.** Sessions live in the database, not in a token. One goes stale 12 hours after you stop using it, and dies outright 7 days after it began however much you use it.
+- **Everything is shut by default.** Every API route answers 401 without a session. The only exceptions are the health check and the sign-in flow itself, and a test walks the real route table to prove no other route has slipped through.
+- **Access is granted by hand**, with `pnpm --filter api allowlist add <email>`. There is no self-service sign-up, by design.
+
+Still to come in Phase 1: every screen, the three-pot data on stub providers, and the staleness ladder. Nothing here touches real money or a real broker.

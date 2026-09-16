@@ -79,8 +79,16 @@ export function authConfigFromEnv(store: AllowlistStore, adapter: Adapter): Auth
     secret,
     googleClientId,
     googleClientSecret,
-    useSecureCookies: (process.env.AUTH_URL ?? "").startsWith("https://"),
+    useSecureCookies: useSecureCookiesFromEnv(),
   });
+}
+
+/**
+ * The cookie name changes with the `__Secure-` prefix, so the guard and the
+ * Auth.js config must agree on this — hence one function, read by both.
+ */
+export function useSecureCookiesFromEnv(): boolean {
+  return (process.env.AUTH_URL ?? "").startsWith("https://");
 }
 
 function required(name: string): string {

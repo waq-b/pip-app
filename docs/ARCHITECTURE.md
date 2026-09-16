@@ -109,6 +109,10 @@ Google is the only way in, and being known to Google is not the same as being al
 
 **Admin.** `pnpm --filter api allowlist <list|add|remove> [email]` is the only way to grant access. Removing an address stops the next sign-in; existing sessions live out their span.
 
+**Route protection.** `registerSessionGuard` (in `auth/guard.ts`) adds an `onRequest` hook to the root instance — deliberately not via `register`, which would encapsulate it into a child scope and quietly leave sibling routes open. It runs before every route, including ones added later, so **a route is protected by existing**. Only `/health` and `/auth/*` are exempt. A request with no cookie is refused without touching the store, so refusing an unauthenticated caller never needs a database.
+
+`guard.test.ts` enforces that rather than trusting it: it walks the app's real route table via the `onRoute` hook and asserts every non-exempt route answers 401 without a session. Adding an unprotected route fails the suite without anyone having to add a case, and the test fails rather than passing vacuously if the table is ever empty.
+
 **Env vars** (see `.env.example`): `AUTH_SECRET`, `AUTH_URL`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`. All four are required for the server to boot — `authConfigFromEnv` throws rather than starting half-configured. Cookies are only marked `Secure` when `AUTH_URL` is https.
 
 ## Storage
