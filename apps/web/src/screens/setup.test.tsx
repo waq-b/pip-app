@@ -206,6 +206,9 @@ describe("connecting an account", () => {
   async function pasteKey(key: string) {
     fireEvent.click(await screen.findByRole("button", { name: "Kraken" }));
     fireEvent.change(screen.getByLabelText("API key"), { target: { value: key } });
+    fireEvent.change(screen.getByLabelText("Private key"), {
+      target: { value: "kraken-private-key-base64==" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Connect Kraken" }));
   }
 
@@ -220,7 +223,9 @@ describe("connecting an account", () => {
     expect(
       await screen.findByText("This key cannot place orders. Pip checked."),
     ).toBeInTheDocument();
-    expect(bodies).toEqual([{ key: "kr-live-readonly-9f2c8814" }]);
+    expect(bodies).toEqual([
+      { key: "kr-live-readonly-9f2c8814", secret: "kraken-private-key-base64==" },
+    ]);
     expect(screen.getByRole("button", { name: /Kraken/ })).toHaveTextContent("Live");
   });
 
@@ -272,6 +277,23 @@ describe("connecting an account", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Make a read-only key" }));
     expect(screen.getByRole("button", { name: "Connect Kraken" })).toBeInTheDocument();
+  });
+
+  it("asks for Kraken's private key and won't send without it", async () => {
+    const bodies = connectWith({ outcome: "connected", provider: "kraken", message: "Connected." });
+    fireEvent.click(await screen.findByRole("button", { name: "Kraken" }));
+    expect(
+      screen.getByText(/Tick only Funds: Query and Data: Query ledger entries/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Pip checks this key can't trade, withdraw or deposit/),
+    ).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("API key"), {
+      target: { value: "kr-live-readonly-9f2c8814" },
+    });
+    expect(screen.getByLabelText("Private key")).toHaveAttribute("type", "password");
+    expect(screen.getByRole("button", { name: "Connect Kraken" })).toBeDisabled();
+    expect(bodies).toEqual([]);
   });
 
   it("says nothing was connected when Pip can't be reached", async () => {

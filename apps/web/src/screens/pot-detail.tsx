@@ -269,17 +269,15 @@ function PotNotConnected({ bucket }: { bucket: Bucket }) {
       <p className="font-heading m-0 text-[21px] leading-tight">Not connected yet</p>
       <p className="text-ink2 m-0 mt-2.5 text-[13.5px] leading-normal font-medium">
         {isSideBet
-          ? "Side Bet arrives in a later update. When Kraken is connected, it'll show here — capped and fenced off like always. Nothing is counted in the meantime."
+          ? "Connect your Kraken account with a read-only key and Side Bet will show here — capped and fenced off like always. Nothing is counted in the meantime."
           : `Connect your ${provider} account and Pip will fill this pot in.`}
       </p>
-      {isSideBet ? null : (
-        <Link
-          to="/setup"
-          className="bg-solid text-solid-ink mt-4 inline-block rounded-full px-[18px] py-[11px] text-[13.5px] font-bold no-underline"
-        >
-          Connect {provider}
-        </Link>
-      )}
+      <Link
+        to="/setup"
+        className="bg-solid text-solid-ink mt-4 inline-block rounded-full px-[18px] py-[11px] text-[13.5px] font-bold no-underline"
+      >
+        Connect {provider}
+      </Link>
     </section>
   );
 }

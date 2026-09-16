@@ -440,14 +440,14 @@ function ConnectCard({ connection }: { connection: Connection }) {
         {info.needsSecret ? (
           <>
             <div className="mt-3">
-              <FieldLabel htmlFor={secretId}>API secret</FieldLabel>
+              <FieldLabel htmlFor={secretId}>{info.secretLabel}</FieldLabel>
             </div>
             <input
               id={secretId}
               type="password"
               value={secret}
               onChange={(event) => setSecret(event.target.value)}
-              placeholder="Paste the secret shown with it"
+              placeholder={info.secretPlaceholder}
               autoComplete="off"
               autoCapitalize="off"
               spellCheck={false}

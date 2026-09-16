@@ -7,7 +7,15 @@ const KEY = ["connections"] as const;
 /** What Setup says about connecting each provider. The list of accounts comes from the API. */
 export const PROVIDER_INFO: Record<
   ProviderId,
-  { initial: string; steps: string[]; needsSecret: boolean; permissionNote?: string }
+  {
+    initial: string;
+    steps: string[];
+    needsSecret: boolean;
+    /** What the provider calls the second half of the key. */
+    secretLabel: string;
+    secretPlaceholder: string;
+    permissionNote?: string;
+  }
 > = {
   trading212: {
     initial: "T",
@@ -17,17 +25,23 @@ export const PROVIDER_INFO: Record<
       "Paste the key and the secret below",
     ],
     needsSecret: true,
+    secretLabel: "API secret",
+    secretPlaceholder: "Paste the secret shown with it",
     permissionNote:
       "Pip can't check a Trading 212 key's permissions, and it has no code that can place an order either way.",
   },
   kraken: {
     initial: "K",
     steps: [
-      "Open Kraken → Settings → API",
-      "Generate a key with read-only ticked, nothing else",
-      "Paste it below",
+      "Open Kraken → Settings → API → Spot trading API, and create a key",
+      "Tick only Funds: Query and Data: Query ledger entries — no key password",
+      "Paste the API key and the private key below",
     ],
-    needsSecret: false,
+    needsSecret: true,
+    secretLabel: "Private key",
+    secretPlaceholder: "Paste the private key",
+    permissionNote:
+      "Pip checks this key can't trade, withdraw or deposit before storing it, and refuses it if it can.",
   },
 };
 

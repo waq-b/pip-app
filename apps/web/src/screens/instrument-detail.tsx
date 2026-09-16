@@ -121,7 +121,16 @@ function InstrumentLoaded({
 
       <div className="mt-3 flex flex-wrap gap-6">
         <Movement label="Today" change={instrument.today} />
-        <Movement label="Since you bought" change={instrument.sinceBought} />
+        {instrument.sinceBoughtUnavailable ? (
+          <div>
+            <div className="text-ink3 text-[11px] font-bold tracking-[0.05em] uppercase">
+              Since you bought
+            </div>
+            <div className="text-ink2 mt-0.5 text-[15px] font-semibold">Cost not known yet</div>
+          </div>
+        ) : (
+          <Movement label="Since you bought" change={instrument.sinceBought} />
+        )}
       </div>
 
       {isDesktop && instrument.note ? (

@@ -306,7 +306,13 @@ describe("connecting Kraken", () => {
     expect(await db.select().from(holdings)).toHaveLength(3);
 
     const kraken = (await connections.list(user)).find((c) => c.provider === "kraken");
-    expect(kraken).toMatchObject({ status: "live", holdingsSeen: 3, feeds: ["Degen"] });
+    expect(kraken).toMatchObject({
+      status: "live",
+      holdingsSeen: 3,
+      feeds: ["Degen"],
+      available: true,
+      permissionsVerified: true,
+    });
   });
 
   it("refuses a key that can trade or withdraw, stores nothing, and says what to untick", async () => {
@@ -379,5 +385,7 @@ describe("connecting Kraken", () => {
   it("says Kraken isn't available when it isn't configured", async () => {
     const connections = liveConnectionService({ db, box, keyVersion: 1, clientFor: vi.fn() });
     expect((await connections.connect(user, "kraken", request)).outcome).toBe("not_available_yet");
+    const kraken = (await connections.list(user)).find((c) => c.provider === "kraken");
+    expect(kraken!.available).toBe(false);
   });
 });

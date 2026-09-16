@@ -60,7 +60,7 @@ function portfolio(overrides: Partial<PortfolioSummary> = {}): PortfolioSummary 
         change: flat,
         shareOfTotal: 0,
         targetPercent: 5,
-        blurb: "Side Bet arrives in a later update",
+        blurb: "Your Kraken account",
       }),
     ],
     freshness: (["Base", "Medium", "Degen"] as const).map((bucket) => ({ bucket, freshness })),
@@ -83,7 +83,7 @@ describe("Pots with real accounts", () => {
       },
     });
 
-    const sideBet = (await screen.findByText("Side Bet arrives in a later update")).closest("a")!;
+    const sideBet = (await screen.findByText("Your Kraken account")).closest("a")!;
     expect(sideBet).toHaveTextContent("Not connected yet");
     expect(sideBet).not.toHaveTextContent("+£0");
     expect(screen.getByText("Your Invest account").closest("a")).toHaveTextContent(
@@ -188,7 +188,7 @@ describe("a pot with a real account", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows Side Bet as not connected yet, with no sample money and no connect button", async () => {
+  it("shows Side Bet as not connected yet, with no sample money, pointing to Kraken", async () => {
     const sideBet = bucketDetail({
       bucket: "Degen",
       status: "not_connected",
@@ -202,8 +202,10 @@ describe("a pot with a real account", () => {
     });
 
     expect(await screen.findByText("Not connected yet")).toBeInTheDocument();
-    expect(screen.getByText(/Side Bet arrives in a later update/)).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /Connect/ })).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/Connect your Kraken account with a read-only key/),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Connect Kraken" })).toHaveAttribute("href", "/setup");
     expect(screen.queryByText("£0")).not.toBeInTheDocument();
   });
 
@@ -249,6 +251,78 @@ describe("a real holding", () => {
 
     expect(await screen.findByRole("heading", { name: "Greggs" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "In plain English" })).not.toBeInTheDocument();
+  });
+});
+
+describe("Side Bet from Kraken", () => {
+  const coins = bucketDetail({
+    bucket: "Degen",
+    value: 57_000,
+    blurb: "Your Kraken account",
+    freshness: { ...freshness, source: "CoinGecko" },
+    holdings: [
+      {
+        id: "kraken:DOT",
+        name: "Polkadot",
+        subtitle: "DOT · incl. 13 staked",
+        bucket: "Degen",
+        value: 6_000,
+        today: flat,
+        sinceBought: flat,
+        sinceBoughtUnavailable: true,
+        shareOfBucket: 10.5,
+        series: [],
+      },
+      {
+        id: "kraken:XBT",
+        name: "Bitcoin",
+        subtitle: "BTC",
+        bucket: "Degen",
+        value: 50_000,
+        today: flat,
+        sinceBought: { amount: 10_000, percent: 25, direction: "up" },
+        shareOfBucket: 87.7,
+        series: [],
+      },
+    ],
+  });
+
+  it("lists coins with what's staked, and says when a cost isn't known yet", async () => {
+    renderRoute("/pots/Degen", {
+      session: WAQAR,
+      api: { ...ME_ALLOWED, "/buckets/Degen": { body: coins } },
+    });
+    const polkadot = (await screen.findByText("Polkadot")).closest("a")!;
+    expect(polkadot).toHaveTextContent("DOT · incl. 13 staked");
+    expect(polkadot).toHaveTextContent("Cost not known yet");
+    expect(polkadot).not.toHaveTextContent("+£0.00");
+    expect(screen.getByText("Bitcoin").closest("a")).toHaveTextContent("+£100.00");
+  });
+
+  it("says a coin's cost isn't known yet on its own page", async () => {
+    const detail: InstrumentDetail = {
+      id: "kraken:DOT",
+      name: "Polkadot",
+      ticker: "DOT",
+      bucket: "Degen",
+      quantity: "15 DOT",
+      price: 400,
+      value: 6_000,
+      today: flat,
+      sinceBought: flat,
+      sinceBoughtUnavailable: true,
+      note: "",
+      range: "all",
+      series: [],
+      freshness: { ...freshness, source: "CoinGecko" },
+    };
+    renderRoute("/instruments/kraken:DOT", {
+      session: WAQAR,
+      api: { ...ME_ALLOWED, "/instruments/kraken%3ADOT": { body: detail } },
+    });
+    expect(await screen.findByRole("heading", { name: "Polkadot" })).toBeInTheDocument();
+    expect(screen.getByText(/15 DOT · £4\.00 each/)).toBeInTheDocument();
+    expect(screen.getByText("Cost not known yet")).toBeInTheDocument();
   });
 });
 

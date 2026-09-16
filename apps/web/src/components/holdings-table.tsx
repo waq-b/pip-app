@@ -107,7 +107,7 @@ export function HoldingsTable({
                   <div className="flex items-center justify-end gap-3">
                     <Sparkline series={holding.series} width={56} height={20} strokeWidth={1.75} />
                     <span className="text-[13px] font-bold">
-                      <ChangeText change={holding.sinceBought} />
+                      <SinceBought holding={holding} />
                     </span>
                   </div>
                 </>
@@ -118,7 +118,7 @@ export function HoldingsTable({
                     <div className="min-w-[62px] text-right">
                       <div className="text-sm font-bold">{formatPounds(holding.value)}</div>
                       <div className="mt-px text-[11.5px] font-semibold">
-                        <ChangeText change={holding.sinceBought} />
+                        <SinceBought holding={holding} />
                       </div>
                     </div>
                     {holding.linkable === false ? (
@@ -180,6 +180,14 @@ function SortButton({
 }
 
 /** Pounds first, then the percentage — never a bare percent (DESIGN.md §4.1). */
+/** "Since bought", or a plain "Cost not known yet" while Pip is still working it out. */
+function SinceBought({ holding }: { holding: Holding }) {
+  if (holding.sinceBoughtUnavailable) {
+    return <span className="text-ink3 font-semibold">Cost not known yet</span>;
+  }
+  return <ChangeText change={holding.sinceBought} />;
+}
+
 function ChangeText({ change }: { change: Change }) {
   return (
     <>

@@ -43,7 +43,7 @@ export interface LiveConnectionOptions {
   box: SecretBox;
   keyVersion: number;
   clientFor: T212ClientFor;
-  /** Kraken, when configured. Setup offers it once the web side is ready (Phase 3 task 8). */
+  /** Kraken, when configured (it needs `COINGECKO_KEY` to name and price coins). Setup offers it only then. */
   kraken?: { clientFor: KrakenClientFor; directory: CoinDirectory };
   /** Called after a successful connect — e.g. to start rebuilding history. Not awaited. */
   onConnected?: (credential: Credential) => void;
@@ -101,7 +101,7 @@ export function liveConnectionService(options: LiveConnectionOptions): Connectio
           feeds: ["Degen"],
           holdingsSeen: kraken ? kraken.held : undefined,
           lastReadAt: kraken?.lastPolledAt?.toISOString(),
-          available: false,
+          available: options.kraken !== undefined,
           permissionsVerified: true,
         },
       ];
