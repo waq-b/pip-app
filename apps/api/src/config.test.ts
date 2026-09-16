@@ -4,7 +4,7 @@ import { generateMasterKey } from "./crypto/secrets.js";
 
 describe("server config", () => {
   it("defaults to stub mode, which needs no master key", () => {
-    expect(loadConfig({})).toEqual({ providerMode: "stub", secretBox: undefined });
+    expect(loadConfig({})).toMatchObject({ providerMode: "stub", secretBox: undefined });
   });
 
   it("refuses to run against real providers without a master key", () => {
@@ -15,6 +15,16 @@ describe("server config", () => {
     const config = loadConfig({ PROVIDER_MODE: "t212", MASTER_KEY: generateMasterKey() });
     expect(config.providerMode).toBe("t212");
     expect(config.secretBox).toBeDefined();
+  });
+
+  it("refuses the live Trading 212 environment until Phase 3", () => {
+    expect(() =>
+      loadConfig({ PROVIDER_MODE: "t212", MASTER_KEY: generateMasterKey(), T212_ENV: "live" }),
+    ).toThrow(/until Phase 3/);
+  });
+
+  it("refuses a short job secret", () => {
+    expect(() => loadConfig({ JOB_SECRET: "short" })).toThrow(/at least 32/);
   });
 
   it("rejects an unknown mode", () => {

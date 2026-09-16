@@ -55,9 +55,19 @@ export interface SeriesPoint {
   value: Pence;
 }
 
+/**
+ * Whether a pot has a source. `not_connected`: no account feeds it yet (Side
+ * Bet until Kraken arrives). `syncing`: connected, first read or history
+ * rebuild still running. Absent means live.
+ */
+export type BucketStatus = "live" | "not_connected" | "syncing";
+
 /** A pot as it appears on the home screen. */
 export interface BucketSummary {
   bucket: Bucket;
+  status?: BucketStatus;
+  /** True when there isn't enough history to state `change` for the timeframe asked. */
+  changeUnavailable?: boolean;
   value: Pence;
   change: Change;
   /** Short line under the pot name. */
@@ -76,6 +86,10 @@ export interface PortfolioSummary {
   verdict: string;
   buckets: BucketSummary[];
   freshness: BucketFreshness[];
+  /** True when there isn't enough history to state `change` for the timeframe asked. */
+  changeUnavailable?: boolean;
+  /** "What changed" isn't built from real accounts yet (Phase 2 decision 4). */
+  activityComingSoon?: boolean;
 }
 
 export interface Holding {
@@ -89,6 +103,8 @@ export interface Holding {
   sinceBought: Change;
   shareOfBucket: Percent;
   series: SeriesPoint[];
+  /** False for rows with no page of their own, like cash. Absent means true. */
+  linkable?: boolean;
 }
 
 /** One bar of "Money in". A zero month is a stub, never a gap. */
@@ -99,6 +115,8 @@ export interface MonthlyContribution {
 
 export interface BucketDetail {
   bucket: Bucket;
+  status?: BucketStatus;
+  changeUnavailable?: boolean;
   value: Pence;
   change: Change;
   blurb: string;
@@ -113,6 +131,8 @@ export interface BucketDetail {
   moneyIn: {
     months: MonthlyContribution[];
     caption: string;
+    /** Not built from real accounts yet (Phase 2 decision 4). */
+    comingSoon?: boolean;
   };
   holdings: Holding[];
   freshness: PriceFreshness;
@@ -149,6 +169,8 @@ export interface BucketRule {
   actualPercent: Percent;
   /** Plain-English explanation of where this pot sits against its line. */
   plain: string;
+  /** False when the pot has no source yet; its actual is then meaningless. Absent means true. */
+  available?: boolean;
   /** Degen only, and only when it is over: drives the one red thing in the app. */
   overBy?: {
     percent: Percent;
@@ -162,6 +184,8 @@ export interface RulesView {
   monthlySplit: {
     total: Pence;
     perBucket: { bucket: Bucket; amount: Pence; percent: Percent }[];
+    /** Not read from real accounts yet (Phase 2 decision 4). */
+    comingSoon?: boolean;
   };
 }
 

@@ -14,6 +14,8 @@ import {
   stubConnectionService,
   type ConnectionService,
 } from "./routes/connections.js";
+import type { ReadModel } from "./read/model.js";
+import { stubReadModel } from "./read/stub.js";
 import { registerReadRoutes } from "./routes/read.js";
 
 export interface BuildAppOptions {
@@ -25,8 +27,10 @@ export interface BuildAppOptions {
   /** Tests inject in-memory stores; production reads from Postgres. */
   allowlistStore?: AllowlistStore;
   waitlistStore?: WaitlistStore;
-  /** Prices, history and freshness. Phase 1 has only the stub. */
+  /** Stub-mode prices, history and freshness. */
   marketData?: MarketData;
+  /** Real accounts (Trading 212 mode). Defaults to the stub sample data. */
+  readModel?: ReadModel;
   /** Stub mode stores nothing; Trading 212 mode seals keys (`sync/connections.ts`). */
   connections?: ConnectionService;
   /** The scheduled refresh (Trading 212 mode). */
@@ -56,7 +60,9 @@ export function buildApp(options: BuildAppOptions = {}) {
   registerMeRoute(app, { allowlist });
   registerWaitlistRoute(app, { store: options.waitlistStore ?? dbWaitlistStore });
   registerReadRoutes(app, {
-    market: options.marketData ?? createStubMarketData({ anchors: stubSeriesAnchors() }),
+    model:
+      options.readModel ??
+      stubReadModel(options.marketData ?? createStubMarketData({ anchors: stubSeriesAnchors() })),
   });
   registerJobRoutes(app, { refresh: options.refreshJob });
   registerConnectionRoutes(app, { service: options.connections ?? stubConnectionService });

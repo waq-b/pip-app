@@ -14,6 +14,7 @@ export type {
   BucketDetail,
   BucketFreshness,
   BucketRule,
+  BucketStatus,
   BucketSummary,
   Change,
   Connection,

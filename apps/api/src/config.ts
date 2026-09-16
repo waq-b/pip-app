@@ -8,6 +8,10 @@ export type ProviderMode = "stub" | "t212";
 
 export interface ServerConfig {
   providerMode: ProviderMode;
+  /** Master key version stamped on new seals. */
+  masterKeyVersion: number;
+  jobSecret?: string;
+  alphaVantageKey?: string;
   /** Present whenever real provider keys can be stored or used. */
   secretBox?: SecretBox;
 }
@@ -34,5 +38,20 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     );
   }
 
-  return { providerMode: mode, secretBox };
+  // Hard line 3: practice before live. Live arrives, read-only, in Phase 3.
+  const t212Env = env.T212_ENV ?? "demo";
+  if (mode === "t212" && t212Env !== "demo") {
+    throw new ConfigError(`T212_ENV must be "demo" until Phase 3, not "${t212Env}"`);
+  }
+  if (env.JOB_SECRET !== undefined && env.JOB_SECRET.length > 0 && env.JOB_SECRET.length < 32) {
+    throw new ConfigError("JOB_SECRET must be at least 32 characters");
+  }
+
+  return {
+    providerMode: mode,
+    secretBox,
+    masterKeyVersion: Number(env.MASTER_KEY_VERSION ?? 1),
+    jobSecret: env.JOB_SECRET || undefined,
+    alphaVantageKey: env.AV_ACCESS_KEY || undefined,
+  };
 }

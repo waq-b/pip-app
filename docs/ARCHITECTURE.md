@@ -191,6 +191,20 @@ The frontend never talks to a provider directly and never knows which provider b
 
 An unknown pot or holding is a 404; an unrecognised timeframe or range is a 400 rather than a silent fallback. Composition is deliberately one-way: routes ask the trading layer what is held and the market layer what it is worth, and never the reverse.
 
+**Read models** (`read/`). The routes validate input and call a `ReadModel` — `portfolio`, `bucket`, `instrument` (null → 404), `rules`, `activity` — for the signed-in user. `stubReadModel` (stub mode) is Phase 1's sample data, unchanged. `liveReadModel` (Trading 212 mode):
+
+- **Refresh first, briefly.** Due prices for what the user holds are refreshed (shared, privileged) but a read waits at most 3.5 s; a slow source keeps refreshing in the background and the staleness ladder reports the real age.
+- **Reads as the user** (`asUser`), so RLS decides what's visible: credentials, holdings, cash, trades, daily values, shared prices and schedules.
+- **Values** are quantity × market price × pounds per unit, in pence (`valuation/value.ts`); a pot's value is its invested value plus cash. **Today** is measured from the previous close — except for something first bought today (per order history), where it's measured from what was paid, because the rise before buying wasn't the user's. **All time** is invested value − cost (T212's fee-exclusive basis). **This month** compares invested value with the pot's daily value at the close a month ago; without one, `changeUnavailable` is set rather than inventing a number. A pot with an unpriced holding also can't state a change.
+- **Pot status**: `not_connected` with no credential (Side Bet always, until Phase 4) — excluded from totals, shares and rules; `syncing` until the first poll and history rebuild finish; otherwise `live`.
+- **Charts** come from `daily_values` (investments only), captioned from the line itself ("Your investments here are up £50.00 since 10 Sep, not counting cash."); pot sparklines are the last 31 days. A holding's chart is intraday points for Day and daily closes for Month / Year / All (All from the first trade), gap-filled on demand through the budgeted sources; sparklines use the last month of closes.
+- **Cash** is a holding row named "Cash", `linkable: false`.
+- **Freshness** per pot: sources that actually priced it, oldest `asOf`, `failed` if a holding has no price or its last refresh failed, `marketsClosed` if every holding's T212 schedule says closed.
+- **Not built from real data yet, and saying so**: `activityComingSoon`, `moneyIn.comingSoon`, `monthlySplit.comingSoon`, empty instrument `note` (Phase 6), Side Bet's rule `available: false`. Verdicts are "Up/Down £X today. Nothing needs you." — no rules engine until Phase 5.
+- Tested on PGlite (values, today/all/month, bought-today, Side Bet, freshness, a second user seeing nothing, cash row, chart caption, intraday, 404, rules) and run against the practice ISA: £5,003.07 across four holdings on Yahoo prices.
+
+**The server** (`server.ts`) builds the stub or real set from `PROVIDER_MODE`. In `t212` mode: `liveReadModel`, `liveConnectionService` (starting history rebuild in the background on connect), `createRefreshJob`, all on the privileged `getDb()` with `liveMarket`; `T212_ENV` must be `demo` until Phase 3; `JOB_SECRET` must be at least 32 characters when set.
+
 **Connecting an account** (`routes/connections.ts`) — `GET /connections`, `POST /connections/:provider` (body `{ accountKind?, key, secret? }`) and `DELETE /connections/:provider?accountKind=`, all behind the guard. The routes parse and hand over to a `ConnectionService`; which one depends on the mode.
 
 - **One row per account.** `Connection` has an `id` (`trading212:isa`, `trading212:invest`, `kraken`), `accountKind`, `available` (false for Kraken until Phase 4) and `permissionsVerified` (Kraken true; Trading 212 false, because T212 can't report a key's permissions). A Trading 212 request without `accountKind` is a 400.
