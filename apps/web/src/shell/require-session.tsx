@@ -3,6 +3,7 @@ import { Navigate } from "react-router";
 import { UnauthenticatedError } from "../lib/api";
 import { useAuth } from "../lib/auth-context";
 import { useMe } from "../lib/me";
+import { someRuleNeedsALook, useRules } from "../lib/rules";
 import { AppShell } from "./app-shell";
 
 /**
@@ -16,6 +17,9 @@ import { AppShell } from "./app-shell";
 export function RequireSession() {
   const { state, signOut } = useAuth();
   const me = useMe(state.status === "signedIn");
+  const allowed = me.data?.allowed === true;
+  // Only asked once someone is in; a failure here just means no dot.
+  const rules = useRules(allowed);
   const rejected = me.error instanceof UnauthenticatedError;
 
   // The browser holds a session the API won't accept — revoked, or expired
@@ -32,7 +36,12 @@ export function RequireSession() {
   if (!me.data) return <Waiting />;
   if (!me.data.allowed) return <Navigate to="/not-on-the-list" replace />;
 
-  return <AppShell userName={me.data.name ?? state.session.name ?? undefined} />;
+  return (
+    <AppShell
+      userName={me.data.name ?? state.session.name ?? undefined}
+      rulesNeedAttention={someRuleNeedsALook(rules.data)}
+    />
+  );
 }
 
 function Waiting() {

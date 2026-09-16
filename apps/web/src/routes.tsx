@@ -4,6 +4,7 @@ import { NotOnTheListScreen } from "./screens/not-on-the-list";
 import { Placeholder } from "./screens/placeholder";
 import { PotDetailScreen } from "./screens/pot-detail";
 import { PotsScreen } from "./screens/pots";
+import { RulesScreen } from "./screens/rules";
 import { SignInScreen } from "./screens/sign-in";
 import { RequireSession } from "./shell/require-session";
 
@@ -20,7 +21,7 @@ export const routes: RouteObject[] = [
       { index: true, element: <PotsScreen /> },
       { path: "pots/:bucket", element: <PotDetailScreen /> },
       { path: "instruments/:id", element: <InstrumentDetailScreen /> },
-      { path: "rules", element: <Placeholder name="Your rules" /> },
+      { path: "rules", element: <RulesScreen /> },
       { path: "setup", element: <Placeholder name="Setup" /> },
     ],
   },

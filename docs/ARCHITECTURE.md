@@ -117,7 +117,7 @@ apps/web/src/
 │   ├── pip-mark.tsx     ← the mark, choosing its own cut by size
 │   ├── auth-provider.tsx
 │   └── require-session.tsx ← routes by the two walls
-└── screens/             ← sign-in, not-on-the-list, pots (home), pot detail, holding detail; Rules and Setup arrive in tasks 19–20
+└── screens/             ← sign-in, not-on-the-list, pots (home), pot detail, holding detail, rules; Setup arrives in task 20
 ```
 
 **Tokens.** `index.css` declares every colour as a `--pip-*` variable for light, overrides them for dark, and maps them into Tailwind with `@theme inline` — so `bg-card` resolves to the live variable and dark mode is a variable swap, never a second set of classes. Pot scopes (`.pot-fnd`, `.pot-pick`, `.pot-bet`) override only the accent trio, so anything inside one paints itself in that pot's colour without knowing which pot it is. No component carries a hex value — and `shell/pip-mark.test.tsx` enforces that rather than trusting it, because two slipped through before the test existed and both broke dark mode. The mark's seeds and the alert dot have their own tokens (`--pip-seed-fnd/pick/bet`, `--pip-alert`), separate from the accent, because they must not change when a pot scope does. The one deliberate exception is Google's "G" on the sign-in button (`screens/google-mark.tsx`): Google's branding rules require it in its own colours, so it lives in its own file, outside the folders the no-hex tests cover.
@@ -135,6 +135,8 @@ apps/web/src/
 | 1120+     | 232px labelled sidebar, with the read-only badge | 1080        |
 
 **Active state comes from `nav.ts`, not from the router.** Each destination has its own `matches(pathname)`, and every layout uses it. This isn't a style choice: React Router's `NavLink` computes `aria-current` from its own path matching and overwrites the prop you pass, so with `end` on the Pots link it went dark the moment you opened a pot. Pot detail and instrument detail live under Pots, so Pots has to stay lit there.
+
+**The Rules dot is fed by `RequireSession`.** Once `/me` says you're allowed, it also asks `GET /rules` (`lib/rules.ts`) and passes `rulesNeedAttention` to the shell when any rule carries `overBy`. It shares the `["rules"]` query with the Rules screen, so opening Rules costs no second request. A failure there just means no dot — it never blocks the app.
 
 **The mark** is a component rather than an imported SVG so it can pick its cut: below 48px it draws the small cut (DESIGN.md §3), which the rail and sidebar need at 26–27px. The SVG files remain the source for favicons and app icons.
 
