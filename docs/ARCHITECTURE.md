@@ -224,6 +224,14 @@ interface Provider {
 - **`symbols.ts`** — T212 ticker → Yahoo and Alpha Vantage symbols from the exchange the ticker encodes (`GRGl_EQ` → `GRG.L` / `GRG.LON`, `ASMLa_EQ` → `ASML.AS` / `ASML.AMS`, `NVDA_US_EQ` → `NVDA`). Unknown formats give null, for a manual override.
 - Tests replay `fixtures/recorded/t212/`; the client was also run once against the practice account (summary, 4 holdings, 4 fills across pages, 17 exchanges).
 
+## Syncing provider accounts (`sync/`, `valuation/`, Phase 2)
+
+- **`pollCredential(db, box, credential, clientFor)`** opens a credential's sealed key and secret in memory, hands them straight to a T212 client, reads the account summary and positions, and replaces that account's `holdings` and `cash` in one transaction (so a sold holding disappears). Instruments it hasn't seen are fetched from T212's metadata with their working schedules into `instruments` and `market_schedules`; metadata is otherwise refetched at most daily. Outcomes: `polled`, `invalid_key` (status → `invalid`), `missing_permission` (→ `error`, names the permission), `not_pounds` (→ `error`), `unavailable` (nothing changed; try later). Runs on the privileged connection.
+- **`credentialsDue`** lists `live`/`error` credentials not polled recently, for the scheduled job.
+- **`snapshotDailyValues(db, userId, day)`** writes each pot's value and cost for the day into `daily_values` (`source: snapshot`) from the latest holdings, cash and cached prices. Cash counts at face value in both value and cost, so value − cost is what the investments made. A pot with an unpriced holding is skipped, never written wrong. Days are London calendar days (`londonDay`).
+- **`valuation/value.ts`** — the one place a holding becomes pounds: quantity × market price × pounds per unit (GBP 1, GBX 1/100, USD/EUR ÷ the GBP rate), rounded to pence. A missing rate throws rather than guesses. `bucketForAccountKind`: `isa` → Foundation, `invest` → Handpicked.
+- Tested on PGlite with recorded T212 responses: the practice ISA snapshots within 0.2% of Trading 212's own total.
+
 ## Market data layer
 
 `apps/api/src/market/market.ts` is the other provider interface, and it answers a different question: _what is it worth, and what has it done?_ Trading providers only ever answer _what is held, and how much cash?_ Keeping the two apart is how hard line 8 stays true — every price and every chart in the app comes from here, and nothing reads a price from a trading API.
