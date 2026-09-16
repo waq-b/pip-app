@@ -5,6 +5,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Phase 4 — Rules engine
+
+- Added: rules engine — pure `evaluateRules` for drift (named 5-point threshold), Side Bet's cap (broken at any amount over, compared in pence), targets scaled over connected pots, over-by in points and pounds, and the two fix-it amounts; shared rule constants (defaults 70/25/5, cap max 20, FCA note above 10); 13 tests incl. edges and determinism (#3229114698)
+
 ## [0.3.0] — 2026-09-16
 
 ### Phase 3 — Kraken (read-only)

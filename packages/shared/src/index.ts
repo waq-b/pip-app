@@ -7,6 +7,14 @@ export {
   type BucketScope,
 } from "./buckets.js";
 
+export {
+  DEFAULT_RULES,
+  DRIFT_THRESHOLD_POINTS,
+  SIDE_BET_CAP_MAX,
+  SIDE_BET_CAP_NOTE_ABOVE,
+  type RuleSettings,
+} from "./rules.js";
+
 export type {
   AccountKind,
   ActivityEntry,

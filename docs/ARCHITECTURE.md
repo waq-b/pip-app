@@ -279,6 +279,15 @@ interface Provider {
 - **Refresh-on-read** in the routes (task 12) covers anything the schedule misses.
 - **Keep-alive**: free Supabase projects pause after about a week of low activity, and scheduled jobs inside the database aren't documented as activity. A GitHub Actions workflow queries Supabase's REST API every three days with the publishable key (public by design; stored as repository secrets `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`). RLS refuses the read, but the request still reaches the database.
 
+## Rules engine (`rules/engine.ts`, Phase 4)
+
+The one place that judges the shape. `evaluateRules(pots, settings)` is pure — no I/O, no clock — so every route gets the same answer for the same input. Settings are two whole numbers (`RuleSettings` in `packages/shared/src/rules.ts`): Handpicked's target and Side Bet's cap; `shapeOf` makes Foundation the remainder. Shared constants: `DEFAULT_RULES` (25 / 5, so 70 / 25 / 5), `SIDE_BET_CAP_MAX` 20 (the API refuses more), `SIDE_BET_CAP_NOTE_ABOVE` 10 (a calm FCA note on screen, blocking nothing), `DRIFT_THRESHOLD_POINTS` 5.
+
+- **Shares** are each connected pot's value (investments + cash) over all connected pots; an unconnected pot is `unavailable`.
+- **Targets are scaled over connected pots**: with Handpicked missing, Foundation's 70 is judged against 70 / (70 + 5) = 93.33. `scaled` and `leftOut` say when that happened. A target has **drifted** at 5 points or more either way — calm, never `needsAttention`.
+- **The cap is never scaled** and is broken when Side Bet is over it by any amount (compared in integer pence, so exactly at the cap is fine). `overBy` gives points and pence; `needsAttention` is true only for a broken cap.
+- **Fix-it amounts** when the cap is broken — arithmetic, not advice: `outOfSideBetPence` = ⌈(100·value − cap·total) / (100 − cap)⌉ (money leaving Side Bet and Pip's pots), `intoOtherPotsPence` = ⌈100·value / cap − total⌉ (new money into the other pots; null at a 0 cap). Both are the smallest whole pence that land on or under the cap.
+
 ## Market data layer
 
 `apps/api/src/market/market.ts` is the other provider interface, and it answers a different question: _what is it worth, and what has it done?_ Trading providers only ever answer _what is held, and how much cash?_ Keeping the two apart is how hard line 8 stays true — every price and every chart in the app comes from here, and nothing reads a price from a trading API.
