@@ -1,6 +1,6 @@
 # Architecture
 
-Living doc. Reflects what's actually built, not what's planned — check `docs/phases/phase-N.md` for what's coming. Last updated: end of Phase 2 (0.2.0) — Trading 212 practice accounts, market data, deployed on Render.
+Living doc. Reflects what's actually built, not what's planned — check `docs/phases/phase-N.md` for what's coming. Last updated: Phase 4 — rules engine, after 0.3.0 (Kraken read-only) and 0.2.0 (Trading 212 practice accounts, market data, deployed on Render).
 
 ## Platform: Supabase (decided 2026-09-16)
 
