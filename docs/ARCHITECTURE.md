@@ -2,19 +2,18 @@
 
 Living doc. Reflects what's actually built, not what's planned — check `docs/phases/phase-N.md` for what's coming. Last updated: Phase 1, through the stub API.
 
-## Platform decision: Supabase (decided 2026-09-16 — not yet built)
+## Platform: Supabase (decided 2026-09-16)
 
-This section records a decision. **Everything below it still describes what is actually built**, which for auth is Auth.js.
+Supabase for Postgres and Auth, with Fastify kept as the backend and the wall (CLAUDE.md s3).
 
-Waqar has moved the platform to Supabase for Postgres and Auth, with Fastify kept as the backend and the wall (CLAUDE.md s3). Once built:
+**Built:** the API side of Supabase Auth — see [Auth](#auth) — and Row Level Security switched on for every table. **Not built yet:**
 
-- **Auth.** Supabase Auth, Google only, replaces the Auth.js implementation described under Auth below. The frontend signs in with the Supabase client; the API verifies the Supabase JWT on every route, then checks our own `users` allowlist. The Auth.js mount, database sessions and Auth.js tables are superseded. Sessions stop being server-side: Supabase issues short-lived JWTs held by the browser.
-- **The waitlist gets simpler.** Someone refused by the allowlist is still signed in to Supabase, so asking for the waiting list becomes an ordinary JWT-verified request. The session-free `/waitlist` exemption and its signed token go away, leaving `/health` as the only unauthenticated route besides the sign-in flow itself.
-- **Row Level Security** on every user-owned table, as a second wall. It is only a wall if the API queries as a role that doesn't bypass RLS — `postgres` and `service_role` both do — so each request switches role and sets the verified user's claims inside a transaction.
-- **Scheduled work** runs from `pg_cron`. Price refresh, which touches no user secret, may run in an Edge Function. Anything that uses a provider key is triggered by `pg_cron` but executed by Fastify, because provider keys are never decrypted outside it (hard line 6).
-- **Not used:** Realtime, Storage.
+- **Web sign-in** through the Supabase client (Phase 1 rework task R3).
+- **RLS as a second wall.** Today RLS, with no policies, only shuts Supabase's REST API off from the tables; Fastify queries as a role that bypasses it. Making it a real wall behind the API means querying as a non-bypass role with the verified user's claims set per request, inside a transaction. That arrives with the first user-owned table in Phase 2 — built now it would guard nothing.
+- **Scheduled work** from `pg_cron`. Price refresh, which touches no user secret, may run in an Edge Function. Anything that uses a provider key is triggered by `pg_cron` but executed by Fastify, because provider keys are never decrypted outside it (hard line 6).
+- **Provider keys** encrypted with our own AES-256-GCM and a `MASTER_KEY` held in Render — not Supabase Vault (Phase 2).
 
-The Phase 1 rework is set out in `docs/phases/phase-1.md`. Decisions carried into Phase 2 — Vault versus our own key encryption, scheduling, the free-tier pause — are in `docs/phases/phase-2-inputs.md`.
+**Not used:** Realtime, Storage. Phase 2 decisions are in `docs/phases/phase-2-inputs.md`.
 
 ## Monorepo layout
 
@@ -36,7 +35,7 @@ finance-app-personal/
 │       └── src/
 │           ├── app.ts       ← Fastify instance: guard, then routes
 │           ├── server.ts    ← process entrypoint, listens on PORT
-│           ├── auth/       ← Auth.js config, Fastify mount, guard, waitlist
+│           ├── auth/       ← Supabase JWT verification, allowlist, guard, /me, waitlist
 │           ├── db/
 │           │   ├── client.ts   ← lazy Drizzle/Postgres client (getDb())
 │           │   └── schema.ts   ← users, allowlist, waitlist, Auth.js tables
@@ -159,7 +158,7 @@ apps/web  →  apps/api/routes  →  providers/stub   (what is held)
 
 The frontend never talks to a provider directly and never knows which provider backs a bucket — it only ever calls our own API. That indirection is the point: Phase 2+ swaps `stub` for `t212`/`kraken` behind the same `Provider` interface with zero frontend changes.
 
-**The read routes** (`routes/read.ts`), all behind the session guard:
+**The read routes** (`routes/read.ts`), all behind both auth walls:
 
 | Route                                              | Returns                                                                                                                            |
 | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
@@ -215,48 +214,51 @@ interface MarketData {
 
 ## Auth
 
-Google is the only way in, and being known to Google is not the same as being allowed in — the `allowlist` table decides that (CLAUDE.md hard line 4).
+Supabase Auth, Google only, proves who someone is. A row in our own `users` table is what lets them in (CLAUDE.md s3, hard line 4). Sign-in itself happens between the browser and Supabase; the API never sees a password or an OAuth callback.
 
-**Mounting.** There is no official Fastify adapter (`@auth/fastify` is not published), so `apps/api/src/auth/plugin.ts` mounts `@auth/core`'s `Auth()` handler on `/auth/*` itself: it converts the Fastify request into a Web `Request`, and pipes the `Response` back. Two details matter — Auth.js parses the form body itself, so the plugin registers a raw `application/x-www-form-urlencoded` parser inside its own scope; and `Set-Cookie` can repeat, so the response path uses `Headers.getSetCookie()` rather than the collapsing accessor.
+**Verifying a token** (`auth/jwt.ts`). Every request carries `Authorization: Bearer <Supabase access token>`. The API checks its signature against the project's published signing keys (JWKS, via `jose`), and checks the issuer (`<SUPABASE_URL>/auth/v1`) and audience (`authenticated`), so a token from another Supabase project, or one not issued to a signed-in user, is refused. Only asymmetric algorithms are accepted. The API holds no Supabase secret at all — just the project URL.
 
-**The gate.** `callbacks.signIn` (in `auth/config.ts`) is the wall. It refuses anyone whose email Google hasn't verified, anyone absent from the allowlist, and anyone with no email at all, redirecting each to `/not-on-the-list`. An empty allowlist therefore admits nobody, which is the correct default.
+**Two walls, in order** (`auth/guard.ts`):
 
-**Sessions** are server-side rows, never JWTs: the cookie carries a token and nothing else. Two clocks run:
+| Check                       | Refusal               |
+| --------------------------- | --------------------- |
+| A valid token               | `401 unauthenticated` |
+| That email on the allowlist | `403 not_on_the_list` |
 
-- `expires` — Auth.js rolls it forward while you're active, so a session dies 12 hours after you stop using it.
-- `sessions.created_at` — ours, because Auth.js only has a rolling window. `isLive()` in `auth/session.ts` caps the session at 7 days however active you've been. The route guard enforces it.
+`/health` needs neither. `/me` and `/waitlist` need a valid token but not the allowlist, because someone who has just been refused has to be able to find that out and ask to be let in. Every other route needs both.
 
-**Testability.** `AllowlistStore` and `SessionStore` are interfaces with a Postgres implementation and an in-memory one. Tests inject the in-memory versions, and `buildApp()` takes the auth config as an option, so the app starts with no environment and no database — the suite never opens a socket.
+The guard is an `onRequest` hook on the root instance — deliberately not added via `register`, which would encapsulate it into a child scope and quietly leave sibling routes open. It runs before every route, including ones added later, so **a route is protected by existing**. `buildApp()` with no verifier refuses everyone: a misconfigured server fails closed. The allowlist is checked on every request, not once at sign-in, so removing someone takes effect immediately.
 
-**Admin.** `pnpm --filter api allowlist <list|add|remove> [email]` is the only way to grant access. Removing an address stops the next sign-in; existing sessions live out their span.
+`guard.test.ts` enforces this rather than trusting it: it walks the app's real route table and asserts every route except `/health` answers 401 without a token. An unprotected route added later fails the suite without anyone adding a case, and the test fails rather than passing vacuously if the table is ever empty.
 
-**Route protection.** `registerSessionGuard` (in `auth/guard.ts`) adds an `onRequest` hook to the root instance — deliberately not via `register`, which would encapsulate it into a child scope and quietly leave sibling routes open. It runs before every route, including ones added later, so **a route is protected by existing**. Only `/health`, `/auth/*` and `/waitlist` are exempt. A request with no cookie is refused without touching the store, so refusing an unauthenticated caller never needs a database.
+**`/me`** tells a signed-in person whether they're allowed in, and links their allowlist row to their Supabase identity (`auth_user_id`) the first time they arrive.
 
-**The waitlist exemption.** `/waitlist` has no session by definition — the person asking has just been refused one. It is not open, though: the rejected sign-in mints a token (`auth/waitlist-token.ts`) carrying the address Google has just verified, signed with `AUTH_SECRET` and valid for 15 minutes, and the route takes the email from **inside** the token rather than from the request body. So nobody can add an address to the waiting list without first proving to Google that it's theirs, and a body that says otherwise is ignored. Signature comparison is constant-time, and a length mismatch returns false rather than throwing. If no secret is configured the route isn't registered at all — a route that can't verify its own token shouldn't exist.
+**The waitlist.** Someone refused is still signed in to Supabase, so `POST /waitlist` is an ordinary authenticated request. The address comes from their verified token, never the request body, so nobody can put someone else's email on the list. Asking twice keeps the first ask. Being on it grants nothing.
 
-Being on the waiting list grants nothing. Access still comes from the allowlist, by hand.
+**Sessions** are Supabase's: a short-lived access token (an hour by default), refreshed by the client. The 12-hour-idle and 7-day caps from the original plan need a paid Supabase plan, so they aren't applied.
 
-`guard.test.ts` enforces that rather than trusting it: it walks the app's real route table via the `onRoute` hook and asserts every non-exempt route answers 401 without a session. Adding an unprotected route fails the suite without anyone having to add a case, and the test fails rather than passing vacuously if the table is ever empty.
+**Testability.** `TokenVerifier`, `AllowlistStore` and `WaitlistStore` are all interfaces. `jwt.test.ts` verifies real ES256 signatures from a key generated for the test run; route tests use `test-support/auth.ts`, whose verifier recognises tokens it hands out. No Supabase project, no database, no network.
 
-**Env vars** (see `.env.example`): `AUTH_SECRET`, `AUTH_URL`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`. All four are required for the server to boot — `authConfigFromEnv` throws rather than starting half-configured. Cookies are only marked `Secure` when `AUTH_URL` is https.
+**Admin.** `pnpm --filter api allowlist <list|add|remove> [email]` is the only way to grant access.
+
+**Env vars** (see `.env.example`): `SUPABASE_URL` for the API — the server won't start without it. The web app's `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` arrive with web sign-in.
 
 ## Storage
 
-Postgres via Drizzle ORM. Single `DATABASE_URL` env var — works against local Docker Postgres, Neon, or Supabase, nothing host-specific (see CLAUDE.md section 3; never Render's free Postgres, it expires after 30 days).
+Postgres via Drizzle ORM, on Supabase. Single `DATABASE_URL` env var, nothing else host-specific (CLAUDE.md s3; never Render's free Postgres, it expires after 30 days).
 
 - **The database is hosted in every environment** — on Supabase, with a separate project for development. There is no local Postgres and no Docker: one `DATABASE_URL` is the whole story, which is also what keeps the app portable (CLAUDE.md s3). Nothing in the test suite or CI ever talks to it.
 - `apps/api/drizzle.config.ts` — drizzle-kit config, points at `DATABASE_URL`
 - `apps/api/drizzle/` — generated migration SQL, committed. `pnpm --filter api db:generate` writes a new one from the schema; `db:migrate` applies it.
 - `apps/api/src/db/schema.ts` — current tables:
-  - `users` (id, email, name, image, email_verified, created_at)
-  - `allowlist` (email, created_at) — the wall. Google proves identity; this table grants access.
-  - `waitlist` (email, name, requested_at) — a rejected sign-in, holding a Google-verified address only
-  - `accounts`, `sessions`, `verification_tokens` — Auth.js tables. Column names are dictated by `@auth/drizzle-adapter`, which queries them by name, so they don't follow house style.
+  - `users` (id, email, name, auth_user_id, created_at) — **the allowlist**. Rows are added by hand, keyed by email, before anyone signs in. `auth_user_id` links a row to Supabase's `auth.users` on first arrival; it's a plain uuid rather than a foreign key, so our migrations never reach into the `auth` schema Supabase owns.
+  - `waitlist` (email, name, requested_at) — someone refused, holding the address from their verified token only.
+- **Row Level Security is on for every table**, with no policies (`drizzle/0001_enable_row_level_security.sql`). The web app ships Supabase's public key, and Supabase's REST API exposes every `public` table to it, so a table without RLS would be readable by anyone. `db/rls.test.ts` reads the migrations and fails if any table in the schema lacks the line, so a new table can't forget.
 - `apps/api/src/db/client.ts` — `getDb()` is a lazy singleton. No socket opens until a caller actually queries. Nothing in the test suite or CI imports/calls it, so tests never touch a real database (hard line: no real network calls in tests).
 
 The migrations are generated and committed but have not been applied anywhere yet — that waits on a hosted `DATABASE_URL`. Until then the schema is verified by type-checking and by drizzle-kit's own generation step. To apply them: put the connection string in `apps/api/.env` (gitignored) and run `pnpm --filter api db:migrate`.
 
-Auth is the first thing that needs a live database to exercise by hand; its tests use an injected in-memory session store instead, so CI stays databaseless whatever happens to the hosting.
+Auth is the first thing that needs a live database to exercise by hand; its tests use in-memory stores instead, so CI stays databaseless whatever happens to the hosting.
 
 ## Env flags
 

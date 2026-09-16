@@ -1,18 +1,14 @@
 import type { ConnectResult } from "@finance-app/shared";
 import { describe, expect, it } from "vitest";
 import { buildApp } from "../app.js";
-import { memorySessionStore, sessionCookieName } from "../auth/session.js";
+import { testAuth } from "../test-support/auth.js";
 import { inspectKey } from "./connections.js";
 
-const COOKIE = sessionCookieName(false);
-const SIGNED_IN = { cookie: `${COOKIE}=live-token` };
+const auth = testAuth();
+const SIGNED_IN = auth.headersFor("test@example.com", "Waqar");
 
 function appForTests() {
-  return buildApp({
-    sessionStore: memorySessionStore({
-      "live-token": { id: "user-1", email: "test@example.com", name: "Waqar" },
-    }),
-  });
+  return buildApp(auth.options);
 }
 
 async function connect(key: string, provider = "kraken") {

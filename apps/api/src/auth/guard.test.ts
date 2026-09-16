@@ -1,104 +1,113 @@
 import { describe, expect, it } from "vitest";
 import { buildApp } from "../app.js";
-import { isPublicPath, readCookie } from "./guard.js";
-import { memorySessionStore, sessionCookieName } from "./session.js";
+import { testAuth } from "../test-support/auth.js";
+import { bearerToken, isPublicPath } from "./guard.js";
 
-const COOKIE = sessionCookieName(false);
-const store = memorySessionStore({
-  "live-token": { id: "user-1", email: "test@example.com", name: "Waqar" },
-});
-
-function appWithProtectedRoute() {
-  const app = buildApp({ sessionStore: store });
-  app.get("/protected", async (request) => ({ email: request.sessionUser?.email }));
-  return app;
-}
-
-describe("readCookie", () => {
-  it("finds the named cookie among others", () => {
-    expect(readCookie(`other=1; ${COOKIE}=abc; another=2`, COOKIE)).toBe("abc");
+describe("bearerToken", () => {
+  it("reads the token from an Authorization header", () => {
+    expect(bearerToken("Bearer abc.def.ghi")).toBe("abc.def.ghi");
+    expect(bearerToken("bearer abc")).toBe("abc");
   });
 
-  it("keeps a value containing '='", () => {
-    expect(readCookie(`${COOKIE}=ab==`, COOKIE)).toBe("ab==");
-  });
-
-  it("returns nothing when the header is absent or the cookie is missing", () => {
-    expect(readCookie(undefined, COOKIE)).toBeUndefined();
-    expect(readCookie("other=1", COOKIE)).toBeUndefined();
+  it("returns nothing for anything else", () => {
+    expect(bearerToken(undefined)).toBeUndefined();
+    expect(bearerToken("Basic abc")).toBeUndefined();
+    expect(bearerToken("Bearer")).toBeUndefined();
   });
 });
 
 describe("isPublicPath", () => {
-  it("exempts health and the login flow, and nothing else", () => {
+  it("exempts health and nothing else", () => {
     expect(isPublicPath("/health")).toBe(true);
-    expect(isPublicPath("/auth/session")).toBe(true);
-    expect(isPublicPath("/auth")).toBe(true);
-    expect(isPublicPath("/portfolio")).toBe(false);
-    expect(isPublicPath("/healthcheck")).toBe(false);
-    // A path that merely starts with the word must not slip through.
-    expect(isPublicPath("/authorised")).toBe(false);
+    for (const path of ["/portfolio", "/me", "/waitlist", "/healthcheck", "/auth/session"]) {
+      expect(isPublicPath(path)).toBe(false);
+    }
   });
 });
 
-describe("the session guard", () => {
-  it("refuses a protected route with no cookie", async () => {
-    const response = await appWithProtectedRoute().inject({ method: "GET", url: "/protected" });
+describe("the two walls", () => {
+  function setup() {
+    const auth = testAuth(["test@example.com"]);
+    const app = buildApp(auth.options);
+    app.get("/protected", async (request) => ({ email: request.allowedUser?.email }));
+    return { auth, app };
+  }
+
+  it("refuses a request with no token", async () => {
+    const { app } = setup();
+    const response = await app.inject({ method: "GET", url: "/protected" });
 
     expect(response.statusCode).toBe(401);
     expect(response.json()).toEqual({ error: "unauthenticated" });
   });
 
-  it("refuses a token the store doesn't know", async () => {
-    const response = await appWithProtectedRoute().inject({
+  it("refuses a token that doesn't verify", async () => {
+    const { app } = setup();
+    const response = await app.inject({
       method: "GET",
       url: "/protected",
-      headers: { cookie: `${COOKIE}=made-up` },
+      headers: { authorization: "Bearer forged" },
     });
 
     expect(response.statusCode).toBe(401);
   });
 
-  it("lets a live session through and hands the route its user", async () => {
-    const response = await appWithProtectedRoute().inject({
+  it("tells a verified stranger they're not on the list", async () => {
+    const { app, auth } = setup();
+    const response = await app.inject({
       method: "GET",
       url: "/protected",
-      headers: { cookie: `${COOKIE}=live-token` },
+      headers: auth.headersFor("stranger@example.com"),
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json()).toEqual({ error: "not_on_the_list" });
+  });
+
+  it("lets an allowlisted person through, matching email case-insensitively", async () => {
+    const { app, auth } = setup();
+    const response = await app.inject({
+      method: "GET",
+      url: "/protected",
+      headers: auth.headersFor("Test@Example.com"),
     });
 
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({ email: "test@example.com" });
   });
 
-  it("still answers /health without a session", async () => {
-    const response = await buildApp({ sessionStore: store }).inject({
-      method: "GET",
-      url: "/health",
-    });
-
-    expect(response.statusCode).toBe(200);
+  it("guards a query string the same as a bare path", async () => {
+    const { app } = setup();
+    expect((await app.inject({ method: "GET", url: "/protected?tf=day" })).statusCode).toBe(401);
   });
 
-  it("guards a query string the same as a bare path", async () => {
-    const response = await appWithProtectedRoute().inject({
+  it("fails closed when no verifier is configured", async () => {
+    const app = buildApp();
+    const response = await app.inject({
       method: "GET",
-      url: "/protected?tf=day",
+      url: "/portfolio",
+      headers: { authorization: "Bearer anything" },
     });
 
     expect(response.statusCode).toBe(401);
+  });
+
+  it("still answers /health without a token", async () => {
+    const { app } = setup();
+    expect((await app.inject({ method: "GET", url: "/health" })).statusCode).toBe(200);
   });
 });
 
 describe("route coverage", () => {
   /**
    * The rule, enforced rather than remembered: every route the app registers
-   * either is `/health`, belongs to the login flow, or answers 401 without a
-   * session. This test walks the real route table, so a new unprotected route
-   * fails it without anyone having to add a case here.
+   * either is `/health` or answers 401 without a token. This walks the real
+   * route table, so a new unprotected route fails it without anyone adding a
+   * case here.
    */
   it("leaves no route unprotected", async () => {
     const routes: { method: string; url: string }[] = [];
-    const app = buildApp({ sessionStore: store });
+    const app = buildApp(testAuth().options);
     app.addHook("onRoute", (route) => {
       const methods = Array.isArray(route.method) ? route.method : [route.method];
       for (const method of methods) {
@@ -112,15 +121,14 @@ describe("route coverage", () => {
     const checked: string[] = [];
     for (const route of routes) {
       if (isPublicPath(route.url)) continue;
-      const url = route.url.replace(/:\w+/g, "1").replace(/\/\*$/, "/x");
+      const url = route.url.replace(/:\w+/g, "1");
       const response = await app.inject({ method: route.method as "GET", url });
 
-      expect(response.statusCode, `${route.method} ${url} answered without a session`).toBe(401);
+      expect(response.statusCode, `${route.method} ${url} answered without a token`).toBe(401);
       checked.push(`${route.method} ${url}`);
     }
 
-    // Guards the guard: if the route table is ever empty this test must fail
-    // rather than pass vacuously.
+    // Fails rather than passing vacuously if the table is ever empty.
     expect(checked.length).toBeGreaterThan(0);
   });
 });

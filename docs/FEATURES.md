@@ -22,11 +22,11 @@ The product has a name and a signed-off design — **Pip**, "Three pots. One num
 
 What does work, all of it server-side:
 
-- **Sign in with Google.** One button, no passwords. Google proves who you are; the `allowlist` table decides whether you may come in. An address nobody has allowlisted is turned away — politely, to a "not on the list" destination — and an empty allowlist admits nobody at all.
-- **Unverified addresses are refused**, even if the same address is on the allowlist.
-- **Staying signed in.** Sessions live in the database, not in a token. One goes stale 12 hours after you stop using it, and dies outright 7 days after it began however much you use it.
-- **Everything is shut by default.** Every API route answers 401 without a session. The only exceptions are the health check and the sign-in flow itself, and a test walks the real route table to prove no other route has slipped through.
-- **Asking to be let in.** Someone turned away can put themselves on the waiting list. Pip already knows the address — Google just verified it — so there's no form to fill in and no way to submit somebody else's. The ask expires if it isn't made within 15 minutes of being turned away, and asking twice is harmless.
+- **Google is the only way in**, through Supabase. Being known to Google isn't enough: your email has to be on Pip's allowlist, and an empty allowlist admits nobody at all.
+- **Two checks on every request.** Without a valid sign-in the API answers "not signed in"; signed in but not on the list, it answers "not on the list". The only thing that answers without either is the health check, and a test walks the real route table to prove nothing else has slipped through.
+- **Removing someone works straight away.** The allowlist is checked on every request, not just at sign-in.
+- **Staying signed in** follows Supabase's defaults: a short-lived token that the app refreshes while you use it. (Screens for signing in through Supabase are still to come.)
+- **Asking to be let in.** Someone turned away is still signed in, so they can put themselves on the waiting list. Pip takes the address from their sign-in, so there's no form to fill in and no way to submit somebody else's. Asking twice is harmless.
 - **No promises are made.** No queue position, no countdown, no "we'll email you" — there is no email system. Waqar grants access by hand.
 - **Access is granted by hand**, with `pnpm --filter api allowlist add <email>`. There is no self-service sign-up, by design.
 

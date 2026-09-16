@@ -5,15 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1789550868377,
-      "tag": "0000_lucky_namorita",
+      "when": 1789554638187,
+      "tag": "0000_tricky_randall",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1789551168630,
-      "tag": "0001_regular_shriek",
+      "when": 1789554638447,
+      "tag": "0001_enable_row_level_security",
       "breakpoints": true
     }
   ]

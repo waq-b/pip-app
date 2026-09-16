@@ -3,18 +3,13 @@ import type { PortfolioSummary, RulesView } from "@finance-app/shared";
 import { describe, expect, it } from "vitest";
 import { buildApp } from "../app.js";
 import { createStubMarketData } from "../market/stub/index.js";
-import { memorySessionStore, sessionCookieName } from "../auth/session.js";
+import { testAuth } from "../test-support/auth.js";
 
-const COOKIE = sessionCookieName(false);
-const SIGNED_IN = { cookie: `${COOKIE}=live-token` };
+const auth = testAuth();
+const SIGNED_IN = auth.headersFor("test@example.com", "Waqar");
 
 function appForTests(staleness?: Parameters<typeof createStubMarketData>[0]) {
-  return buildApp({
-    sessionStore: memorySessionStore({
-      "live-token": { id: "user-1", email: "test@example.com", name: "Waqar" },
-    }),
-    marketData: createStubMarketData(staleness),
-  });
+  return buildApp({ ...auth.options, marketData: createStubMarketData(staleness) });
 }
 
 async function get<T>(url: string, headers = SIGNED_IN): Promise<T> {

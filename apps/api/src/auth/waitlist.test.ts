@@ -1,108 +1,84 @@
 import { describe, expect, it } from "vitest";
 import { buildApp } from "../app.js";
-import { isPublicPath } from "./guard.js";
-import { memoryWaitlistStore } from "./waitlist.js";
-import { signWaitlistToken, verifyWaitlistToken, WAITLIST_TOKEN_TTL_MS } from "./waitlist-token.js";
+import { testAuth } from "../test-support/auth.js";
 
-const SECRET = "test-secret-at-least-32-characters-long";
+function setup() {
+  const auth = testAuth(["test@example.com"]);
+  return { auth, app: buildApp(auth.options) };
+}
 
-describe("the waitlist token", () => {
-  it("round-trips the address Google verified", () => {
-    const token = signWaitlistToken({ email: "sam@example.com", name: "Sam" }, SECRET);
-    expect(verifyWaitlistToken(token, SECRET)).toMatchObject({
-      email: "sam@example.com",
-      name: "Sam",
+describe("GET /me", () => {
+  it("needs a token", async () => {
+    const { app } = setup();
+    expect((await app.inject({ method: "GET", url: "/me" })).statusCode).toBe(401);
+  });
+
+  it("tells an allowlisted person they're in", async () => {
+    const { app, auth } = setup();
+    const response = await app.inject({
+      method: "GET",
+      url: "/me",
+      headers: auth.headersFor("test@example.com", "Waqar"),
     });
+
+    expect(response.json()).toEqual({ email: "test@example.com", name: "Waqar", allowed: true });
   });
 
-  it("refuses a token signed with a different secret", () => {
-    const token = signWaitlistToken({ email: "sam@example.com" }, "another-secret-entirely");
-    expect(verifyWaitlistToken(token, SECRET)).toBeNull();
+  it("is reachable by someone not on the list, so they can find out", async () => {
+    const { app, auth } = setup();
+    const response = await app.inject({
+      method: "GET",
+      url: "/me",
+      headers: auth.headersFor("sam@example.com"),
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({ allowed: false });
   });
 
-  it("refuses a tampered payload", () => {
-    const token = signWaitlistToken({ email: "sam@example.com" }, SECRET);
-    const forged = Buffer.from(JSON.stringify({ email: "attacker@example.com" })).toString(
-      "base64url",
+  it("links an allowlisted row to their Supabase identity on first arrival", async () => {
+    const { app, auth } = setup();
+    await app.inject({ method: "GET", url: "/me", headers: auth.headersFor("test@example.com") });
+
+    expect(auth.allowlistStore.rows.get("test@example.com")?.authUserId).toBe(
+      "auth-test@example.com",
     );
-    expect(verifyWaitlistToken(`${forged}.${token.split(".")[1]}`, SECRET)).toBeNull();
-  });
-
-  it("expires", () => {
-    const issued = Date.now();
-    const token = signWaitlistToken({ email: "sam@example.com" }, SECRET, issued);
-
-    expect(
-      verifyWaitlistToken(token, SECRET, issued + WAITLIST_TOKEN_TTL_MS - 1000),
-    ).not.toBeNull();
-    expect(verifyWaitlistToken(token, SECRET, issued + WAITLIST_TOKEN_TTL_MS + 1000)).toBeNull();
-  });
-
-  it("refuses junk", () => {
-    expect(verifyWaitlistToken("", SECRET)).toBeNull();
-    expect(verifyWaitlistToken("no-separator", SECRET)).toBeNull();
-    expect(verifyWaitlistToken(".", SECRET)).toBeNull();
-    expect(verifyWaitlistToken("not-base64.signature", SECRET)).toBeNull();
   });
 });
 
 describe("POST /waitlist", () => {
-  function appWith() {
-    const store = memoryWaitlistStore();
-    const app = buildApp({ waitlistStore: store, authSecret: SECRET });
-    return { app, store };
-  }
-
-  it("is reachable without a session, but not without a token", async () => {
-    const { app } = appWith();
-    const response = await app.inject({ method: "POST", url: "/waitlist", payload: {} });
-
-    expect(response.statusCode).toBe(401);
-    expect(response.json()).toEqual({ error: "missing_token" });
+  it("needs a token", async () => {
+    const { app } = setup();
+    expect((await app.inject({ method: "POST", url: "/waitlist", payload: {} })).statusCode).toBe(
+      401,
+    );
   });
 
-  it("refuses a forged token", async () => {
-    const { app, store } = appWith();
-    const token = signWaitlistToken({ email: "attacker@example.com" }, "wrong-secret");
-    const response = await app.inject({ method: "POST", url: "/waitlist", payload: { token } });
-
-    expect(response.statusCode).toBe(401);
-    expect(store.entries.size).toBe(0);
-  });
-
-  it("adds the address from inside the token, never from the body", async () => {
-    const { app, store } = appWith();
-    const token = signWaitlistToken({ email: "sam@example.com", name: "Sam" }, SECRET);
+  it("adds the address from the token, never from the body", async () => {
+    const { app, auth } = setup();
     const response = await app.inject({
       method: "POST",
       url: "/waitlist",
-      payload: { token, email: "attacker@example.com" },
+      headers: auth.headersFor("sam@example.com", "Sam"),
+      payload: { email: "attacker@example.com" },
     });
 
     expect(response.statusCode).toBe(200);
-    expect([...store.entries.keys()]).toEqual(["sam@example.com"]);
+    expect([...auth.waitlistStore.entries.keys()]).toEqual(["sam@example.com"]);
   });
 
   it("treats asking twice as fine, and keeps the first ask", async () => {
-    const { app, store } = appWith();
-    const token = signWaitlistToken({ email: "sam@example.com", name: "Sam" }, SECRET);
+    const { app, auth } = setup();
+    const headers = auth.headersFor("sam@example.com", "Sam");
 
-    await app.inject({ method: "POST", url: "/waitlist", payload: { token } });
-    await app.inject({ method: "POST", url: "/waitlist", payload: { token } });
+    await app.inject({ method: "POST", url: "/waitlist", headers });
+    await app.inject({
+      method: "POST",
+      url: "/waitlist",
+      headers: auth.headersFor("sam@example.com", "Samuel"),
+    });
 
-    expect(store.entries.size).toBe(1);
-    expect(store.entries.get("sam@example.com")).toBe("Sam");
-  });
-
-  it("does not exist at all when no secret is configured", async () => {
-    const app = buildApp({ waitlistStore: memoryWaitlistStore() });
-    const response = await app.inject({ method: "POST", url: "/waitlist", payload: {} });
-
-    expect(response.statusCode).toBe(404);
-  });
-
-  it("is the only session-free route besides health and the login flow", () => {
-    expect(isPublicPath("/waitlist")).toBe(true);
-    expect(isPublicPath("/portfolio")).toBe(false);
+    expect(auth.waitlistStore.entries.size).toBe(1);
+    expect(auth.waitlistStore.entries.get("sam@example.com")).toBe("Sam");
   });
 });

@@ -5,12 +5,11 @@
  *   pnpm --filter api allowlist add someone@example.com
  *   pnpm --filter api allowlist remove someone@example.com
  *
- * Needs a real DATABASE_URL — it is the one part of auth that talks to Postgres
- * directly rather than through Auth.js.
+ * Needs a real DATABASE_URL.
  */
 import { eq } from "drizzle-orm";
 import { getDb } from "../db/client.js";
-import { allowlist } from "../db/schema.js";
+import { users } from "../db/schema.js";
 import { normaliseEmail } from "./allowlist.js";
 
 const [command, rawEmail] = process.argv.slice(2);
@@ -20,29 +19,30 @@ async function main() {
 
   switch (command) {
     case "list": {
-      const rows = await db.select().from(allowlist).orderBy(allowlist.email);
+      const rows = await db.select().from(users).orderBy(users.email);
       if (rows.length === 0) {
-        console.log("Allowlist is empty — nobody can sign in.");
+        console.log("Allowlist is empty — nobody can get in.");
         return;
       }
       for (const row of rows) {
-        console.log(`${row.email}\t${row.createdAt.toISOString()}`);
+        const linked = row.authUserId ? "signed in" : "not yet signed in";
+        console.log(`${row.email}\t${linked}\t${row.createdAt.toISOString()}`);
       }
       return;
     }
 
     case "add": {
       const email = requireEmail(rawEmail);
-      await db.insert(allowlist).values({ email }).onConflictDoNothing();
+      await db.insert(users).values({ email }).onConflictDoNothing();
       console.log(`Allowed: ${email}`);
       return;
     }
 
     case "remove": {
       const email = requireEmail(rawEmail);
-      // Existing sessions stay alive until they expire; removing an address
-      // only stops the next sign-in.
-      await db.delete(allowlist).where(eq(allowlist.email, email));
+      // Takes effect on their very next request: the API checks the allowlist
+      // every time, not once at sign-in.
+      await db.delete(users).where(eq(users.email, email));
       console.log(`Removed: ${email}`);
       return;
     }

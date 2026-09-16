@@ -63,6 +63,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Changed: the holdings table shows pounds before every percentage, stricter than the design prototype, which showed bare percentages there (#3226676977)
 - Added: `components/no-hex.test.ts` globs the whole folder, so new components are held to the token rule without being listed (#3226676977)
 
+- Changed: auth rebuilt on Supabase — the API verifies the Supabase access token (JWKS, issuer and audience checked, asymmetric algorithms only) on every route, then checks the allowlist: `401 unauthenticated` without a valid token, `403 not_on_the_list` without a row (#3227825365)
+- Added: `GET /me`, reachable by anyone signed in, saying whether they're allowed and linking their allowlist row to their Supabase identity on first arrival (#3227825365)
+- Changed: the waitlist is an ordinary authenticated route taking the address from the verified token; the signed waitlist token and the session-free `/waitlist` exemption are gone, leaving `/health` as the only route that answers without a token (#3227825365)
+- Changed: `buildApp()` with no verifier refuses everyone, so a misconfigured server fails closed (#3227825365)
+- Removed: Auth.js — `@auth/core`, `@auth/drizzle-adapter`, the Fastify mount, database sessions and their store, and the `AUTH_*` env vars (#3227825365)
+- Changed: `users` is now the allowlist, keyed by email and linked to Supabase's `auth.users`; the separate `allowlist` table and the Auth.js tables are gone. Migrations regenerated from scratch — none had ever been applied (#3227824374)
+- Added: Row Level Security on every table, with no policies, and `db/rls.test.ts`, which fails if a table in the schema lacks it (#3227824374)
+
 #### Docs
 
 - Changed: Supabase adopted for Postgres and Auth (Waqar, 2026-09-16). CLAUDE.md s3 now records Supabase Auth with Google only, Fastify as the backend and the wall, RLS as a second wall, `pg_cron` for scheduling, Realtime and Storage skipped, and Render free + Supabase free with no $25 tier on either. Folder tree and provider facts updated to match (#3226664942)

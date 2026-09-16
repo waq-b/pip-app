@@ -1,71 +1,67 @@
 import type { FastifyInstance, FastifyReply } from "fastify";
-import { AUTH_BASE_PATH } from "./config.js";
-import { sessionCookieName, type SessionStore, type SessionUser } from "./session.js";
+import type { AllowedUser, AllowlistStore } from "./allowlist.js";
+import type { TokenVerifier, VerifiedUser } from "./jwt.js";
 
 declare module "fastify" {
   interface FastifyRequest {
-    sessionUser?: SessionUser;
+    /** Set once the bearer token verifies. */
+    authUser?: VerifiedUser;
+    /** Set once that person is also found on the allowlist. */
+    allowedUser?: AllowedUser;
   }
 }
 
+/** The only route that answers without a token (CLAUDE.md hard line 4). */
+export const PUBLIC_PATHS = ["/health"];
+
 /**
- * The only paths that answer without a session (CLAUDE.md hard line 4):
- * `/health` for ops, the login flow itself, and `/waitlist` — which is part of
- * that login flow and enforces its own signed token instead. Everything else is
- * 401 until proven otherwise: a new route is protected by existing, not by
- * anyone remembering to protect it.
+ * Routes that need a valid token but not the allowlist: someone who has just
+ * been refused still has to be able to learn that, and to ask to be let in.
  */
-export const PUBLIC_PATHS = ["/health", "/waitlist"];
+export const SIGNED_IN_ONLY_PATHS = ["/me", "/waitlist"];
 
 export function isPublicPath(path: string): boolean {
-  if (PUBLIC_PATHS.includes(path)) return true;
-  return path === AUTH_BASE_PATH || path.startsWith(`${AUTH_BASE_PATH}/`);
+  return PUBLIC_PATHS.includes(path);
 }
 
-export interface SessionGuardOptions {
-  store: SessionStore;
-  useSecureCookies: boolean;
+export interface AuthGuardOptions {
+  verifier: TokenVerifier;
+  allowlist: AllowlistStore;
 }
 
 /**
+ * Two walls, in order: a valid Supabase token (401 without one), then a row on
+ * the allowlist (403 `not_on_the_list` without one).
+ *
  * Registered directly on the root instance rather than through `register`, so
  * the hook isn't encapsulated into a child scope and genuinely covers every
- * route, including ones added later.
+ * route, including ones added later. A route is protected by existing.
  */
-export function registerSessionGuard(app: FastifyInstance, options: SessionGuardOptions): void {
-  const cookieName = sessionCookieName(options.useSecureCookies);
-
+export function registerAuthGuard(app: FastifyInstance, options: AuthGuardOptions): void {
   app.addHook("onRequest", async (request, reply) => {
     const path = request.url.split("?")[0] ?? request.url;
     if (isPublicPath(path)) return;
 
-    const token = readCookie(request.headers.cookie, cookieName);
-    // No cookie means no store lookup, so refusing an unauthenticated request
-    // never needs a database.
-    if (!token) return unauthenticated(reply);
+    const token = bearerToken(request.headers.authorization);
+    if (!token) return refuse(reply, 401, "unauthenticated");
 
-    const user = await options.store.find(token);
-    if (!user) return unauthenticated(reply);
+    const user = await options.verifier.verify(token);
+    if (!user) return refuse(reply, 401, "unauthenticated");
+    request.authUser = user;
 
-    request.sessionUser = user;
+    if (SIGNED_IN_ONLY_PATHS.includes(path)) return;
+
+    const allowed = await options.allowlist.find(user.email);
+    if (!allowed) return refuse(reply, 403, "not_on_the_list");
+    request.allowedUser = allowed;
   });
 }
 
-function unauthenticated(reply: FastifyReply) {
-  return reply.status(401).send({ error: "unauthenticated" });
+export function bearerToken(header: string | undefined): string | undefined {
+  const match = /^Bearer\s+(\S+)$/i.exec(header ?? "");
+  return match?.[1];
 }
 
-/** Session tokens are base64-ish and can contain `=`, so split on the first one only. */
-export function readCookie(header: string | undefined, name: string): string | undefined {
-  if (!header) return undefined;
-
-  for (const part of header.split(";")) {
-    const trimmed = part.trim();
-    const separator = trimmed.indexOf("=");
-    if (separator === -1) continue;
-    if (trimmed.slice(0, separator) !== name) continue;
-    return decodeURIComponent(trimmed.slice(separator + 1));
-  }
-
-  return undefined;
+function refuse(reply: FastifyReply, status: 401 | 403, error: string) {
+  return reply.status(status).send({ error });
 }
