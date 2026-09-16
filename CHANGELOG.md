@@ -8,6 +8,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Phase 3 — Kraken (read-only)
 
 - Added: Kraken and CoinGecko verified with real calls — `GetApiKeyInfo` reports a read-only key's permissions, CoinGecko GBP prices and its 365-day history cap, Kraken public daily OHLC; anonymised recordings in `apps/api/fixtures/recorded/{kraken,coingecko}`, facts in CLAUDE.md s13 (#3229045898)
+- Added: read-only Kraken client — `GetApiKeyInfo`, `BalanceEx` and paged `Ledgers` only, signed requests, ordered nonces, rate-limit counter and retries, typed errors; permission check that refuses any key able to trade, withdraw, deposit or earn; 14 fixture tests incl. a source scan for money-moving methods (#3229053606)
 
 ### Roadmap
 
