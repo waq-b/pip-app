@@ -82,14 +82,22 @@ describe("the rules screen", () => {
     expect(within(banner).getByText(/information, not advice/i)).toBeInTheDocument();
   });
 
-  it("offers no way to change anything or act on it — that's Phase 4, and the broker's job", async () => {
-    renderRoute("/rules", { session: WAQAR, api: api() });
+  it("offers nothing that acts on money — only rules to change, and sums to read", async () => {
+    renderRoute("/rules", {
+      session: WAQAR,
+      api: api({
+        body: {
+          ...view(),
+          settings: { handpickedTarget: 25, sideBetCap: 5 },
+          needsAttention: true,
+          fixIt: { outOfSideBet: 18_950, intoOtherPots: 416_600 },
+        },
+      }),
+    });
     await screen.findByRole("alert");
 
-    expect(screen.queryAllByRole("button")).toHaveLength(0);
-    expect(screen.queryByText(/raise the cap|show me how to fix it/i)).not.toBeInTheDocument();
-    expect(screen.queryByText("+")).not.toBeInTheDocument();
-    expect(screen.queryByText("−")).not.toBeInTheDocument();
+    const names = screen.queryAllByRole("button").map((button) => button.textContent ?? "");
+    expect(names.join(" | ")).not.toMatch(/buy|sell|move|transfer|withdraw|order|rebalance/i);
   });
 
   it("shows no banner when every pot is inside its line", async () => {
@@ -273,5 +281,72 @@ describe("changing your rules", () => {
   it("says when the rules last changed", async () => {
     withSaving(editable({ lastChangedAt: "2026-09-02T10:00:00Z" }), () => ({}));
     expect(await screen.findByText("Last changed 2 Sep")).toBeInTheDocument();
+  });
+});
+
+describe("a broken cap", () => {
+  function broken(fixIt: RulesView["fixIt"] = { outOfSideBet: 18_950, intoOtherPots: 416_600 }) {
+    return {
+      ...view(),
+      settings: { handpickedTarget: 25, sideBetCap: 5 },
+      needsAttention: true,
+      leftOut: [],
+      fixIt,
+    } satisfies RulesView;
+  }
+
+  it("shows the two amounts that would fix it, at equal weight, as information", async () => {
+    renderRoute("/rules", { session: WAQAR, api: api({ body: broken() }) });
+    const toggle = await screen.findByRole("button", { name: "Show me how to fix it" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(toggle);
+
+    const panel = screen.getByRole("region", { name: "What would bring it back to its cap" });
+    const leaving = within(panel).getByText("£190");
+    const into = within(panel).getByText("£4,166");
+    // Same element, same classes: neither amount is dressed up as the answer.
+    expect(leaving.className).toBe(into.className);
+    expect(within(panel).getByText("leaving Side Bet")).toBeInTheDocument();
+    expect(within(panel).getByText("going into Foundation or Handpicked")).toBeInTheDocument();
+    expect(panel).toHaveTextContent("You'd do either at your broker.");
+    expect(panel).not.toHaveTextContent(/should|recommend|best|better/i);
+    expect(
+      within(screen.getByRole("alert")).getByText(/information, not advice/i),
+    ).toBeInTheDocument();
+  });
+
+  it("with a 0% cap, says no amount added elsewhere would do it", async () => {
+    renderRoute("/rules", {
+      session: WAQAR,
+      api: api({ body: broken({ outOfSideBet: 78_000, intoOtherPots: null }) }),
+    });
+    fireEvent.click(await screen.findByRole("button", { name: "Show me how to fix it" }));
+    expect(
+      screen.getByText("With a 0% cap, no amount added elsewhere would do it."),
+    ).toBeInTheDocument();
+  });
+
+  it("'Raise the cap' only takes you to the cap's stepper, saying it moves no money", async () => {
+    renderRoute("/rules", { session: WAQAR, api: api({ body: broken() }) });
+    fireEvent.click(await screen.findByRole("button", { name: "Raise the cap" }));
+    expect(screen.getByRole("button", { name: "Raise Side Bet's cap" })).toHaveFocus();
+    expect(
+      screen.getByText("Raising the cap changes what Pip tells you. It doesn't move any money."),
+    ).toBeInTheDocument();
+  });
+
+  it("goes red from the engine's answer, not the rounded percentages", async () => {
+    const edge: RulesView = {
+      ...broken(),
+      rules: view().rules.map((rule) =>
+        rule.bucket === "Degen"
+          ? { ...rule, actualPercent: 5, status: "over_cap", overBy: { percent: 0, amount: 1 } }
+          : rule,
+      ),
+    };
+    renderRoute("/rules", { session: WAQAR, api: api({ body: edge }) });
+    await screen.findByRole("heading", { name: "Side Bet" });
+    const meters = screen.getAllByRole("meter");
+    expect(meters.some((meter) => meter.getAttribute("data-over") === "true")).toBe(true);
   });
 });

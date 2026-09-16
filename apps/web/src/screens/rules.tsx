@@ -8,6 +8,7 @@ import {
   type RulesView,
 } from "@finance-app/shared";
 import { Minus, Plus, TriangleAlert } from "lucide-react";
+import { useRef, useState, type RefObject } from "react";
 import { NotAdviceLabel } from "../components/not-advice-label";
 import { ProgressCapBar } from "../components/progress-cap-bar";
 import { Skeleton } from "../components/skeleton";
@@ -67,14 +68,30 @@ function RulesLoaded({ view, isDesktop }: { view: RulesView; isDesktop: boolean 
   const leftOut = view.leftOut ?? [];
   const judged = view.rules.some((rule) => rule.available !== false);
 
+  const [raisingCap, setRaisingCap] = useState(false);
+  const raiseCapButton = useRef<HTMLButtonElement>(null);
+
   const change = (next: RuleSettings) => {
     if (save.isPending) return;
     save.mutate(next);
   };
 
+  const raiseTheCap = () => {
+    setRaisingCap(true);
+    raiseCapButton.current?.scrollIntoView?.({ block: "center", behavior: "smooth" });
+    raiseCapButton.current?.focus();
+  };
+
   return (
     <div className="flex flex-col gap-3">
-      {breached ? <OverCapBanner rule={breached} isDesktop={isDesktop} /> : null}
+      {breached ? (
+        <OverCapBanner
+          rule={breached}
+          fixIt={view.fixIt}
+          isDesktop={isDesktop}
+          onRaiseCap={settings ? raiseTheCap : undefined}
+        />
+      ) : null}
 
       {judged && leftOut.length > 0 ? (
         <p className="bg-sunk text-ink2 m-0 rounded-[18px] px-4 py-3 text-[12.5px] leading-normal font-medium">
@@ -100,6 +117,8 @@ function RulesLoaded({ view, isDesktop }: { view: RulesView; isDesktop: boolean 
             settings={settings}
             saving={save.isPending}
             onChange={change}
+            raisingCap={raisingCap}
+            raiseCapButton={raiseCapButton}
           />
         ))}
       </div>
@@ -146,12 +165,27 @@ function RulesLoaded({ view, isDesktop }: { view: RulesView; isDesktop: boolean 
 }
 
 /**
- * States the breach and stops. No buttons: fixing it happens at the broker, and
- * changing the cap is Phase 4. Pounds lead, because a percentage alone means
- * nothing (DESIGN.md §4.1).
+ * States the breach in pounds first (DESIGN.md §4.1). "Show me how to fix it"
+ * only does the arithmetic — two amounts, equal weight, no preference — and
+ * "Raise the cap" only takes you to the stepper. Nothing here moves money; you'd
+ * do either at your broker (hard lines 1, 12).
  */
-function OverCapBanner({ rule, isDesktop }: { rule: BucketRule; isDesktop: boolean }) {
+function OverCapBanner({
+  rule,
+  fixIt,
+  isDesktop,
+  onRaiseCap,
+}: {
+  rule: BucketRule;
+  fixIt: RulesView["fixIt"];
+  isDesktop: boolean;
+  onRaiseCap?: () => void;
+}) {
   const overBy = rule.overBy!;
+  const [showingFix, setShowingFix] = useState(false);
+  const name = displayNameFor(rule.bucket);
+  const action =
+    "border-aink text-aink cursor-pointer rounded-full border-[1.5px] bg-transparent px-3.5 py-2 text-[12.5px] font-bold";
 
   return (
     <section
@@ -159,16 +193,37 @@ function OverCapBanner({ rule, isDesktop }: { rule: BucketRule; isDesktop: boole
       className={`pot-bet bg-tint border-acc text-aink flex items-start gap-3.5 rounded-[26px] border-2 ${isDesktop ? "px-6 py-5" : "p-[18px]"}`}
     >
       <TriangleAlert size={22} strokeWidth={ICON_STROKE} className="mt-px flex-none" aria-hidden />
-      <div>
+      <div className="min-w-0 flex-1">
         <h2 className="font-heading m-0 text-[19px] leading-tight font-normal">
-          {displayNameFor(rule.bucket)} is {formatPounds(overBy.amount, { whole: true })} over its
-          cap
+          {name} is {formatPounds(overBy.amount, { whole: true })} over its cap
         </h2>
         <p className="m-0 mt-1.5 text-[13.5px] leading-normal font-medium">
           It's grown to {formatPercent(rule.actualPercent)} of your money, against the{" "}
           {formatPercent(rule.targetPercent)} you set —{" "}
           {formatPounds(overBy.amount, { whole: true })} more than you meant to have riding on it.
         </p>
+        {fixIt || onRaiseCap ? (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {fixIt ? (
+              <button
+                type="button"
+                aria-expanded={showingFix}
+                onClick={() => setShowingFix((open) => !open)}
+                className={action}
+              >
+                Show me how to fix it
+              </button>
+            ) : null}
+            {onRaiseCap ? (
+              <button type="button" onClick={onRaiseCap} className={action}>
+                Raise the cap
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+        {showingFix && fixIt ? (
+          <FixItPanel name={name} cap={rule.targetPercent} fixIt={fixIt} />
+        ) : null}
         <div className="mt-3 opacity-85">
           <NotAdviceLabel />
         </div>
@@ -177,16 +232,67 @@ function OverCapBanner({ rule, isDesktop }: { rule: BucketRule; isDesktop: boole
   );
 }
 
+/** The two amounts, side by side at the same size. Neither is the answer. */
+function FixItPanel({
+  name,
+  cap,
+  fixIt,
+}: {
+  name: string;
+  cap: number;
+  fixIt: NonNullable<RulesView["fixIt"]>;
+}) {
+  return (
+    <div
+      role="region"
+      aria-label="What would bring it back to its cap"
+      className="bg-card text-ink mt-3 rounded-[18px] px-4 py-3.5"
+    >
+      <p className="m-0 text-[12.5px] font-semibold">
+        What would bring {name} back to {formatPercent(cap)}:
+      </p>
+      <div className="mt-2.5 grid grid-cols-2 gap-2.5">
+        <FixItAmount amount={fixIt.outOfSideBet} words={`leaving ${name}`} />
+        {fixIt.intoOtherPots === null ? (
+          <div className="bg-sunk rounded-[14px] px-3 py-2.5 text-[12.5px] font-medium">
+            With a 0% cap, no amount added elsewhere would do it.
+          </div>
+        ) : (
+          <FixItAmount amount={fixIt.intoOtherPots} words="going into Foundation or Handpicked" />
+        )}
+      </div>
+      <p className="text-ink2 m-0 mt-2.5 text-[12px] leading-normal font-medium">
+        Either one on its own would do it. You'd do either at your broker.
+      </p>
+    </div>
+  );
+}
+
+function FixItAmount({ amount, words }: { amount: number; words: string }) {
+  return (
+    <div className="bg-sunk rounded-[14px] px-3 py-2.5">
+      <div className="font-heading text-[22px] leading-none">
+        {formatPounds(amount, { whole: true })}
+      </div>
+      <div className="text-ink2 mt-1 text-[12px] font-medium">{words}</div>
+    </div>
+  );
+}
+
 function RuleCard({
   rule,
   settings,
   saving,
   onChange,
+  raisingCap,
+  raiseCapButton,
 }: {
   rule: BucketRule;
   settings: RuleSettings | undefined;
   saving: boolean;
   onChange: (next: RuleSettings) => void;
+  raisingCap: boolean;
+  raiseCapButton: RefObject<HTMLButtonElement | null>;
 }) {
   const { scope } = BUCKET_META[rule.bucket];
   const isSideBet = scope === "bet";
@@ -219,12 +325,18 @@ function RuleCard({
             settings={settings}
             saving={saving}
             onChange={onChange}
+            raiseButton={rule.bucket === "Degen" ? raiseCapButton : undefined}
           />
         ) : null}
       </div>
       {settings && rule.bucket === "Base" ? (
         <p className="text-ink3 m-0 -mt-1.5 mb-3 text-[11.5px] font-semibold">
           The rest, after Handpicked and Side Bet
+        </p>
+      ) : null}
+      {settings && rule.bucket === "Degen" && raisingCap ? (
+        <p className="text-ink2 m-0 -mt-1.5 mb-3 text-[11.5px] leading-normal font-semibold">
+          Raising the cap changes what Pip tells you. It doesn't move any money.
         </p>
       ) : null}
       {settings && rule.bucket === "Degen" && settings.sideBetCap > SIDE_BET_CAP_NOTE_ABOVE ? (
@@ -246,6 +358,7 @@ function RuleCard({
               : rule.targetPercent
           }
           kind={rule.kind}
+          over={rule.status === undefined ? undefined : rule.status === "over_cap"}
           // A 5% cap would be an invisible sliver on a 0–100 track.
           scaleMax={rule.kind === "cap" ? rule.targetPercent * 2 : 100}
           overByAmount={rule.overBy?.amount}
@@ -266,11 +379,13 @@ function RuleStepper({
   settings,
   saving,
   onChange,
+  raiseButton,
 }: {
   bucket: Bucket;
   settings: RuleSettings;
   saving: boolean;
   onChange: (next: RuleSettings) => void;
+  raiseButton?: RefObject<HTMLButtonElement | null>;
 }) {
   if (bucket === "Base") return null;
   const isCap = bucket === "Degen";
@@ -297,6 +412,7 @@ function RuleStepper({
       </button>
       <button
         type="button"
+        ref={raiseButton}
         aria-label={`Raise ${name}`}
         disabled={saving || value >= max}
         onClick={() => set(value + 1)}

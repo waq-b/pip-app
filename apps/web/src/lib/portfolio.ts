@@ -1,8 +1,10 @@
-import type {
-  ActivityEntry,
-  BucketSummary,
-  PortfolioSummary,
-  Timeframe,
+import {
+  DRIFT_THRESHOLD_POINTS,
+  displayNameFor,
+  type ActivityEntry,
+  type BucketSummary,
+  type PortfolioSummary,
+  type Timeframe,
 } from "@finance-app/shared";
 import { useQuery } from "@tanstack/react-query";
 import { apiGet } from "./api";
@@ -38,7 +40,19 @@ export function useActivity() {
 export function targetSentence(buckets: BucketSummary[]): string {
   const asked = buckets.map((bucket) => Math.round(bucket.targetPercent)).join(" / ");
   const actual = buckets.map((bucket) => Math.round(bucket.shareOfTotal)).join(" / ");
-  return `You asked for ${asked}. You're at ${actual}.`;
+  const drifted = buckets.filter((bucket) => bucket.ruleStatus === "drifted");
+  const drift = drifted.length
+    ? ` ${listNames(drifted.map((bucket) => displayNameFor(bucket.bucket)))} ${
+        drifted.length === 1 ? "has" : "have"
+      } drifted ${DRIFT_THRESHOLD_POINTS} points or more from ${drifted.length === 1 ? "its target" : "their targets"}.`
+    : "";
+  return `You asked for ${asked}. You're at ${actual}.${drift}`;
+}
+
+function listNames(names: string[]): string {
+  return names.length <= 1
+    ? (names[0] ?? "")
+    : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
 }
 
 /** A first-run account has pots, but nothing in any of them yet. */

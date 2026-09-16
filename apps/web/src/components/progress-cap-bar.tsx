@@ -15,6 +15,11 @@ export interface ProgressCapBarProps {
   scaleMax?: Percent;
   /** When a cap is breached, how far over in money — pounds before percent. */
   overByAmount?: Pence;
+  /**
+   * The rules engine's answer, when there is one. It decides; the percentages
+   * shown are rounded and can't be trusted to agree at the edge.
+   */
+  over?: boolean;
 }
 
 /**
@@ -29,12 +34,13 @@ export function ProgressCapBar({
   kind,
   scaleMax = 100,
   overByAmount,
+  over,
 }: ProgressCapBarProps) {
-  const isOver = kind === "cap" && actualPercent > targetPercent;
+  const isOver = over ?? (kind === "cap" && actualPercent > targetPercent);
   const fill = clamp((actualPercent / scaleMax) * 100);
   const tick = clamp((targetPercent / scaleMax) * 100);
 
-  const overBy = actualPercent - targetPercent;
+  const overBy = Math.max(0, actualPercent - targetPercent);
   const figure = isOver
     ? `${formatPercent(actualPercent)} · ${formatPercent(overBy)} over cap${
         overByAmount ? ` · ${formatPounds(overByAmount, { whole: true })}` : ""

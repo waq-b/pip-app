@@ -73,6 +73,8 @@ export function PotCard({
         actualPercent={pot.shareOfTotal}
         targetPercent={pot.targetPercent}
         kind={isSideBet ? "cap" : "target"}
+        over={pot.ruleStatus === undefined ? undefined : pot.ruleStatus === "over_cap"}
+        overByAmount={pot.overBy?.amount}
       />
     </Link>
   );
