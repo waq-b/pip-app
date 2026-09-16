@@ -1,6 +1,6 @@
 # Architecture
 
-Living doc. Reflects what's actually built, not what's planned — check `docs/phases/phase-N.md` for what's coming. Last updated: Phase 0.
+Living doc. Reflects what's actually built, not what's planned — check `docs/phases/phase-N.md` for what's coming. Last updated: Phase 1, through the stub API.
 
 ## Monorepo layout
 
@@ -11,14 +11,16 @@ finance-app-personal/
 ├── docs/
 │   ├── ARCHITECTURE.md    ← this file
 │   ├── FEATURES.md
-│   ├── DESIGN.md          ← placeholder, blocked on Phase 1 design gate
+│   ├── DESIGN.md          ← signed off; the visual source of truth
+│   ├── design/            ← the Claude Design prototype, verbatim
 │   └── phases/
-│       └── phase-0.md
+│       ├── phase-0.md
+│       └── phase-1.md
 ├── apps/
 │   ├── web/                ← React frontend (Vite + TS + Tailwind v4 + PWA)
 │   └── api/                ← Fastify backend
 │       └── src/
-│           ├── app.ts       ← Fastify instance + routes (currently just /health)
+│           ├── app.ts       ← Fastify instance: guard, then routes
 │           ├── server.ts    ← process entrypoint, listens on PORT
 │           ├── auth/       ← Auth.js config, Fastify mount, guard, waitlist
 │           ├── db/
@@ -95,6 +97,15 @@ The frontend never talks to a provider directly and never knows which provider b
 | `GET /connections`                                 | Which providers feed which pots                                                                                                    |
 
 An unknown pot or holding is a 404; an unrecognised timeframe or range is a 400 rather than a silent fallback. Composition is deliberately one-way: routes ask the trading layer what is held and the market layer what it is worth, and never the reverse.
+
+**Connecting an account** (`routes/connections.ts`) — `POST /connections/:provider` and `DELETE /connections/:provider`, both behind the guard:
+
+- **Nothing is stored.** Phase 1 builds every screen and state of the connect flow against a handler that inspects the key and forgets it. Phase 2 replaces the body of these handlers with real validation and encrypted per-user storage; the responses the frontend sees don't change.
+- **A key that can trade or withdraw is refused outright**, not warned about (CLAUDE.md s13). That rule lives in the API rather than the UI, because a frontend check is cosmetic.
+- **Every verdict is a 200.** "That key can do too much" is a considered answer about the key, not a malformed request. The outcome is in the body: `connected`, `invalid_key` or `too_much_access`.
+- An unsupported provider is a 404 — Phase 1 supports Trading 212 and Kraken only.
+
+The stub reaches its verdict from the key's shape alone: too short to be real, or carrying a `trade`/`withdraw` scope, or acceptable.
 
 ## Provider interface
 

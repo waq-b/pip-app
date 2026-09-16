@@ -42,6 +42,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Changed: current prices now come from the market layer rather than the trading fixtures, with each generated series anchored to end at that price, so hard line 8 holds structurally and not just by convention (#3226676894)
 - Fixed: `Timeframe` was defined in the shared API types but missing from the package's exports (#3226676894)
 - Fixed: stub provider threw at import — `HISTORY` was built from `MONTHS` before that const was initialised (#3226676894)
+- Added: `POST` / `DELETE /connections/:provider` — the full connect flow against a handler that inspects the key and stores nothing, ready for Phase 2 to swap in real validation behind the same responses (#3226677039)
+- Added: outright refusal of any key carrying a trade or withdraw scope, enforced in the API rather than the UI (#3226677039)
+- Changed: `docs/ARCHITECTURE.md` freshened — header, docs tree, and the `app.ts` description were still describing Phase 0 (#3226677039)
 
 ### Phase 0 — Scaffold
 

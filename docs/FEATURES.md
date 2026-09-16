@@ -41,6 +41,7 @@ All of it from fixtures, all of it behind sign-in. No screen renders it yet.
 - **Your rules**: the 70/25/5 targets, where each pot actually sits, and how far over the line Side Bet is — £208, not just 1.8%.
 - **What changed** last week, and **which account feeds which pot**.
 - **How current the prices are**, per pot, which is what the amber and red states will read.
+- **Connecting an account.** Paste a key and Pip tells you one of three things: it's connected and can only look, it doesn't recognise the key, or the key can do too much. A key that can trade or withdraw is refused outright and never stored — Pip won't hold a key that could move your money, even if you want it to. Nothing at all is stored in this phase.
 
 The sample data has one correction from the design: the prototype showed ISA money buying Rolls-Royce, which lives in the Invest pot. Money never crosses pots here.
 

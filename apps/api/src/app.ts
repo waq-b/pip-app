@@ -7,6 +7,7 @@ import { registerWaitlistRoute } from "./auth/waitlist-route.js";
 import { dbWaitlistStore, type WaitlistStore } from "./auth/waitlist.js";
 import type { MarketData } from "./market/market.js";
 import { createStubMarketData } from "./market/stub/index.js";
+import { registerConnectionRoutes } from "./routes/connections.js";
 import { registerReadRoutes } from "./routes/read.js";
 
 export interface BuildAppOptions {
@@ -45,6 +46,7 @@ export function buildApp(options: BuildAppOptions = {}) {
   app.get("/health", async () => ({ status: "ok" }));
 
   registerReadRoutes(app, { market: options.marketData ?? createStubMarketData() });
+  registerConnectionRoutes(app);
 
   if (options.authSecret) {
     registerWaitlistRoute(app, {
