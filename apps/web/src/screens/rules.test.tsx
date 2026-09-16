@@ -222,51 +222,77 @@ describe("changing your rules", () => {
     return sent;
   }
 
-  it("steps Handpicked's target and Side Bet's cap, saving each change", async () => {
+  it("moves the sliders freely and saves nothing until Save — then once", async () => {
     const sent = withSaving(editable(), () => ({}));
-    fireEvent.click(await screen.findByRole("button", { name: "Raise Handpicked's target" }));
-    await waitFor(() => expect(sent).toEqual([{ handpickedTarget: 26, sideBetCap: 5 }]));
-    await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Lower Side Bet's cap" })).toBeEnabled(),
-    );
-    fireEvent.click(screen.getByRole("button", { name: "Lower Side Bet's cap" }));
-    await waitFor(() => expect(sent).toHaveLength(2));
-    expect(sent[1]).toEqual({ handpickedTarget: 25, sideBetCap: 4 });
+    const target = await screen.findByRole("slider", { name: "Handpicked's target" });
+    fireEvent.change(target, { target: { value: "26" } });
+    fireEvent.change(target, { target: { value: "30" } });
+    fireEvent.change(screen.getByRole("slider", { name: "Side Bet's cap" }), {
+      target: { value: "4" },
+    });
+    // The numbers follow at once; Foundation is 100 − 30 − 4.
+    expect(screen.getByText("30%")).toBeInTheDocument();
+    expect(screen.getByText("66%")).toBeInTheDocument();
+    expect(sent).toEqual([]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Save rules" }));
+    await waitFor(() => expect(sent).toEqual([{ handpickedTarget: 30, sideBetCap: 4 }]));
   });
 
-  it("gives Foundation no stepper — it's the rest", async () => {
+  it("shows no Save until something has changed", async () => {
+    const sent = withSaving(editable(), () => ({}));
+    const cap = await screen.findByRole("slider", { name: "Side Bet's cap" });
+    expect(screen.queryByRole("button", { name: "Save rules" })).not.toBeInTheDocument();
+
+    fireEvent.change(cap, { target: { value: "12" } });
+    expect(
+      screen.getByText("You've changed your rules. Nothing is saved until you save."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save rules" })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: "Discard" })).not.toBeInTheDocument();
+    expect(sent).toEqual([]);
+  });
+
+  it("gives Foundation no slider — it's the rest", async () => {
     withSaving(editable(), () => ({}));
     expect(await screen.findByText("The rest, after Handpicked and Side Bet")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Foundation/ })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("slider")).toHaveLength(2);
+    expect(screen.queryByRole("slider", { name: /Foundation/ })).not.toBeInTheDocument();
   });
 
-  it("stops the cap stepper at 20%", async () => {
+  it("lets the cap slider go no higher than 20%, and never past what Handpicked leaves", async () => {
     withSaving(editable({ settings: { handpickedTarget: 25, sideBetCap: 20 } }), () => ({}));
-    expect(await screen.findByRole("button", { name: "Raise Side Bet's cap" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Lower Side Bet's cap" })).toBeEnabled();
+    expect(await screen.findByRole("slider", { name: "Side Bet's cap" })).toHaveAttribute(
+      "max",
+      "20",
+    );
+    expect(screen.getByRole("slider", { name: "Handpicked's target" })).toHaveAttribute(
+      "max",
+      "80",
+    );
   });
 
   it("notes the FCA restricted-investor assumption above a 10% cap, without blocking", async () => {
-    withSaving(editable({ settings: { handpickedTarget: 25, sideBetCap: 11 } }), () => ({}));
-    expect(
-      await screen.findByText("Above the 10% the FCA restricted-investor rules assume."),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Raise Side Bet's cap" })).toBeEnabled();
-  });
-
-  it("doesn't note it at 10% or below", async () => {
     withSaving(editable({ settings: { handpickedTarget: 25, sideBetCap: 10 } }), () => ({}));
-    await screen.findByRole("button", { name: "Raise Side Bet's cap" });
+    const cap = await screen.findByRole("slider", { name: "Side Bet's cap" });
     expect(screen.queryByText(/FCA restricted-investor/)).not.toBeInTheDocument();
+    fireEvent.change(cap, { target: { value: "11" } });
+    expect(
+      screen.getByText("Above the 10% the FCA restricted-investor rules assume."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save rules" })).toBeEnabled();
   });
 
-  it("says a failed save changed nothing, and keeps showing the saved rules", async () => {
+  it("says a failed save changed nothing", async () => {
     withSaving(editable(), () => ({ status: 400 }));
-    fireEvent.click(await screen.findByRole("button", { name: "Raise Side Bet's cap" }));
+    fireEvent.change(await screen.findByRole("slider", { name: "Side Bet's cap" }), {
+      target: { value: "9" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save rules" }));
     expect(
       await screen.findByText("Couldn't save that. Your rules haven't changed — try again."),
     ).toBeInTheDocument();
-    expect(screen.getAllByText("5%").length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: "Save rules" })).toBeEnabled();
   });
 
   it("says when targets are judged without a pot that isn't connected", async () => {
@@ -326,10 +352,10 @@ describe("a broken cap", () => {
     ).toBeInTheDocument();
   });
 
-  it("'Raise the cap' only takes you to the cap's stepper, saying it moves no money", async () => {
+  it("'Raise the cap' only takes you to the cap's slider, saying it moves no money", async () => {
     renderRoute("/rules", { session: WAQAR, api: api({ body: broken() }) });
     fireEvent.click(await screen.findByRole("button", { name: "Raise the cap" }));
-    expect(screen.getByRole("button", { name: "Raise Side Bet's cap" })).toHaveFocus();
+    expect(screen.getByRole("slider", { name: "Side Bet's cap" })).toHaveFocus();
     expect(
       screen.getByText("Raising the cap changes what Pip tells you. It doesn't move any money."),
     ).toBeInTheDocument();

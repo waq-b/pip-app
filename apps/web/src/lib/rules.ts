@@ -13,9 +13,9 @@ export function useRules(enabled = true) {
 }
 
 /**
- * Saves the two numbers the user sets. The API checks the limits; on success
- * every screen is refetched, because a rule changes what they all say. On
- * failure nothing is changed and the screen keeps showing the saved rules.
+ * Saves the two numbers the user sets — once, when they press Save. The API
+ * checks the limits; on success every screen is refetched, because a rule
+ * changes what they all say. On failure nothing is changed.
  */
 export function useSaveRules() {
   const client = useQueryClient();

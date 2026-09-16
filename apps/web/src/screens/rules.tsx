@@ -7,8 +7,8 @@ import {
   type BucketRule,
   type RulesView,
 } from "@finance-app/shared";
-import { Minus, Plus, TriangleAlert } from "lucide-react";
-import { useRef, useState, type RefObject } from "react";
+import { TriangleAlert } from "lucide-react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { NotAdviceLabel } from "../components/not-advice-label";
 import { ProgressCapBar } from "../components/progress-cap-bar";
 import { Skeleton } from "../components/skeleton";
@@ -64,16 +64,28 @@ export function RulesScreen() {
 function RulesLoaded({ view, isDesktop }: { view: RulesView; isDesktop: boolean }) {
   const breached = view.rules.find((rule) => rule.overBy);
   const save = useSaveRules();
-  const settings = view.settings;
+  // What the sliders show. Nothing is sent until Save — one call, however far they moved.
+  const saved = view.settings;
+  const [settings, setSettings] = useState(saved);
+  useEffect(() => {
+    setSettings(saved);
+    // Only when the saved rules themselves change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [saved?.handpickedTarget, saved?.sideBetCap]);
+  const unsaved =
+    settings !== undefined &&
+    saved !== undefined &&
+    (settings.handpickedTarget !== saved.handpickedTarget ||
+      settings.sideBetCap !== saved.sideBetCap);
   const leftOut = view.leftOut ?? [];
   const judged = view.rules.some((rule) => rule.available !== false);
 
   const [raisingCap, setRaisingCap] = useState(false);
-  const raiseCapButton = useRef<HTMLButtonElement>(null);
+  const raiseCapButton = useRef<HTMLInputElement>(null);
 
   const change = (next: RuleSettings) => {
-    if (save.isPending) return;
-    save.mutate(next);
+    save.reset();
+    setSettings(next);
   };
 
   const raiseTheCap = () => {
@@ -100,14 +112,9 @@ function RulesLoaded({ view, isDesktop }: { view: RulesView; isDesktop: boolean 
         </p>
       ) : null}
 
-      {save.isError ? (
-        <p
-          role="alert"
-          className="pot-bet bg-tint text-aink m-0 rounded-[18px] px-4 py-3 text-[12.5px] font-semibold"
-        >
-          Couldn't save that. Your rules haven't changed — try again.
-        </p>
-      ) : null}
+      <p aria-live="polite" className="sr-only">
+        {save.isPending ? "Saving your rules…" : save.isSuccess ? "Rules saved." : ""}
+      </p>
 
       <div className={isDesktop ? "grid grid-cols-3 gap-3.5" : "flex flex-col gap-[11px]"}>
         {view.rules.map((rule) => (
@@ -115,13 +122,33 @@ function RulesLoaded({ view, isDesktop }: { view: RulesView; isDesktop: boolean 
             key={rule.bucket}
             rule={rule}
             settings={settings}
-            saving={save.isPending}
             onChange={change}
             raisingCap={raisingCap}
             raiseCapButton={raiseCapButton}
           />
         ))}
       </div>
+
+      {unsaved || save.isError ? (
+        <section className="bg-card flex flex-wrap items-center gap-3 rounded-[22px] px-[18px] py-3.5">
+          <p
+            role={save.isError ? "alert" : undefined}
+            className={`m-0 flex-1 text-[12.5px] font-semibold ${save.isError ? "text-dn" : "text-ink2"}`}
+          >
+            {save.isError
+              ? "Couldn't save that. Your rules haven't changed — try again."
+              : "You've changed your rules. Nothing is saved until you save."}
+          </p>
+          <button
+            type="button"
+            disabled={save.isPending || !unsaved}
+            onClick={() => settings && save.mutate(settings)}
+            className="bg-solid text-solid-ink cursor-pointer rounded-full border-0 px-4 py-2 text-[13px] font-bold disabled:opacity-50"
+          >
+            {save.isPending ? "Saving…" : "Save rules"}
+          </button>
+        </section>
+      ) : null}
 
       <section className="bg-card rounded-[26px] px-[19px] py-[18px]">
         <h2 className="font-heading m-0 mb-1 text-[19px] font-normal">Where your new money goes</h2>
@@ -282,21 +309,27 @@ function FixItAmount({ amount, words }: { amount: number; words: string }) {
 function RuleCard({
   rule,
   settings,
-  saving,
   onChange,
   raisingCap,
   raiseCapButton,
 }: {
   rule: BucketRule;
   settings: RuleSettings | undefined;
-  saving: boolean;
   onChange: (next: RuleSettings) => void;
   raisingCap: boolean;
-  raiseCapButton: RefObject<HTMLButtonElement | null>;
+  raiseCapButton: RefObject<HTMLInputElement | null>;
 }) {
   const { scope } = BUCKET_META[rule.bucket];
   const isSideBet = scope === "bet";
   const kind = rule.kind === "cap" ? "Hard cap" : "Target";
+  // While a slider moves, the numbers follow it before the save lands.
+  const line = settings
+    ? rule.bucket === "Base"
+      ? 100 - settings.handpickedTarget - settings.sideBetCap
+      : rule.bucket === "Medium"
+        ? settings.handpickedTarget
+        : settings.sideBetCap
+    : rule.targetPercent;
 
   return (
     <section
@@ -315,20 +348,15 @@ function RuleCard({
       <div className="text-ink2 text-[11.5px] font-semibold tracking-[0.04em] uppercase">
         {kind}
       </div>
-      <div className="mt-0.5 mb-3 flex items-center gap-3">
-        <div className="font-heading text-[34px] leading-none">
-          {formatPercent(rule.targetPercent)}
-        </div>
-        {settings ? (
-          <RuleStepper
-            bucket={rule.bucket}
-            settings={settings}
-            saving={saving}
-            onChange={onChange}
-            raiseButton={rule.bucket === "Degen" ? raiseCapButton : undefined}
-          />
-        ) : null}
-      </div>
+      <div className="font-heading mt-0.5 mb-3 text-[34px] leading-none">{formatPercent(line)}</div>
+      {settings ? (
+        <RuleSlider
+          bucket={rule.bucket}
+          settings={settings}
+          onChange={onChange}
+          inputRef={rule.bucket === "Degen" ? raiseCapButton : undefined}
+        />
+      ) : null}
       {settings && rule.bucket === "Base" ? (
         <p className="text-ink3 m-0 -mt-1.5 mb-3 text-[11.5px] font-semibold">
           The rest, after Handpicked and Side Bet
@@ -371,21 +399,21 @@ function RuleCard({
 }
 
 /**
- * −/+ for the two numbers the user sets. Foundation has none: it's the rest.
- * Limits here only stop pointless taps; the API is what enforces them.
+ * A slider for each of the two numbers the user sets — easy on a phone, arrow
+ * keys on a keyboard. Foundation has none: it's the rest. Moving one saves
+ * nothing; the page's Save button does. The range only stops shapes that can't
+ * exist; the API is what enforces the limits.
  */
-function RuleStepper({
+function RuleSlider({
   bucket,
   settings,
-  saving,
   onChange,
-  raiseButton,
+  inputRef,
 }: {
   bucket: Bucket;
   settings: RuleSettings;
-  saving: boolean;
   onChange: (next: RuleSettings) => void;
-  raiseButton?: RefObject<HTMLButtonElement | null>;
+  inputRef?: RefObject<HTMLInputElement | null>;
 }) {
   if (bucket === "Base") return null;
   const isCap = bucket === "Degen";
@@ -394,32 +422,30 @@ function RuleStepper({
     ? Math.min(SIDE_BET_CAP_MAX, 100 - settings.handpickedTarget)
     : 100 - settings.sideBetCap;
   const name = `${displayNameFor(bucket)}'s ${isCap ? "cap" : "target"}`;
-  const set = (next: number) =>
-    onChange(isCap ? { ...settings, sideBetCap: next } : { ...settings, handpickedTarget: next });
 
-  const button =
-    "border-line text-ink grid h-9 w-9 cursor-pointer place-items-center rounded-full border-[1.5px] bg-transparent disabled:cursor-default disabled:opacity-40";
   return (
-    <div className="ml-auto flex items-center gap-2" aria-busy={saving || undefined}>
-      <button
-        type="button"
-        aria-label={`Lower ${name}`}
-        disabled={saving || value <= 0}
-        onClick={() => set(value - 1)}
-        className={button}
-      >
-        <Minus size={16} strokeWidth={ICON_STROKE} aria-hidden />
-      </button>
-      <button
-        type="button"
-        ref={raiseButton}
-        aria-label={`Raise ${name}`}
-        disabled={saving || value >= max}
-        onClick={() => set(value + 1)}
-        className={button}
-      >
-        <Plus size={16} strokeWidth={ICON_STROKE} aria-hidden />
-      </button>
+    <div className="mb-3">
+      <input
+        ref={inputRef}
+        type="range"
+        min={0}
+        max={max}
+        step={1}
+        value={value}
+        aria-label={name}
+        aria-valuetext={`${value}%`}
+        onChange={(event) => {
+          const next = Number(event.target.value);
+          onChange(
+            isCap ? { ...settings, sideBetCap: next } : { ...settings, handpickedTarget: next },
+          );
+        }}
+        className="accent-acc h-7 w-full cursor-pointer"
+      />
+      <div className="text-ink3 flex justify-between text-[11px] font-semibold">
+        <span>0%</span>
+        <span>{max}%</span>
+      </div>
     </div>
   );
 }
