@@ -1,3 +1,5 @@
+import { BUCKET_META, BUCKETS, displayNameFor } from "@finance-app/shared";
+import { Fragment } from "react";
 import { Link, Outlet, useLocation } from "react-router";
 import { ICON_STROKE, NAV, type NavDestination } from "./nav";
 import { PipMark } from "./pip-mark";
@@ -51,7 +53,12 @@ export function AppShell({ rulesNeedAttention = false, userName }: AppShellProps
   return (
     <div className="bg-ground text-ink flex min-h-svh">
       {isDesktop ? (
-        <Sidebar isActive={isActive} rulesNeedAttention={rulesNeedAttention} userName={userName} />
+        <Sidebar
+          isActive={isActive}
+          pathname={pathname}
+          rulesNeedAttention={rulesNeedAttention}
+          userName={userName}
+        />
       ) : (
         <Rail isActive={isActive} rulesNeedAttention={rulesNeedAttention} />
       )}
@@ -147,13 +154,17 @@ function Rail({
 
 function Sidebar({
   isActive,
+  pathname,
   rulesNeedAttention,
   userName,
 }: {
   isActive: IsActive;
+  pathname: string;
   rulesNeedAttention: boolean;
   userName?: string;
 }) {
+  const insideAPot = pathname.startsWith("/pots/");
+
   return (
     <div className="bg-card border-line flex w-[232px] flex-none flex-col gap-6 border-r px-4 pt-6 pb-5">
       <div className="flex items-center gap-2.5 px-2.5">
@@ -166,20 +177,42 @@ function Sidebar({
           const active = isActive(destination);
 
           return (
-            <Link
-              key={destination.path}
-              to={destination.path}
-              aria-current={active ? "page" : undefined}
-              className={`flex items-center gap-3 rounded-full px-3.5 py-2.5 text-[14.5px] ${
-                active ? "bg-sunk text-ink font-bold" : "text-ink3 font-semibold"
-              }`}
-            >
-              <destination.icon size={20} strokeWidth={ICON_STROKE} aria-hidden />
-              {destination.label}
-              {destination.label === "Rules" && rulesNeedAttention ? (
-                <AlertDot className="ml-auto" />
+            <Fragment key={destination.path}>
+              <Link
+                to={destination.path}
+                aria-current={active ? "page" : undefined}
+                className={`flex items-center gap-3 rounded-full px-3.5 py-2.5 text-[14.5px] ${
+                  active ? "bg-sunk text-ink font-bold" : "text-ink3 font-semibold"
+                }`}
+              >
+                <destination.icon size={20} strokeWidth={ICON_STROKE} aria-hidden />
+                {destination.label}
+                {destination.label === "Rules" && rulesNeedAttention ? (
+                  <AlertDot className="ml-auto" />
+                ) : null}
+              </Link>
+
+              {/* Inside a pot, the other two are one click away (DESIGN.md §8). */}
+              {destination.path === "/" && insideAPot ? (
+                <div className="flex flex-col gap-0.5 py-0.5 pl-[26px]">
+                  {BUCKETS.map((bucket) => {
+                    const current = pathname === `/pots/${bucket}`;
+                    return (
+                      <Link
+                        key={bucket}
+                        to={`/pots/${bucket}`}
+                        aria-current={current ? "page" : undefined}
+                        className={`pot-${BUCKET_META[bucket].scope} rounded-full px-3 py-1.5 text-[13px] no-underline ${
+                          current ? "bg-tint text-ink font-bold" : "text-ink3 font-semibold"
+                        }`}
+                      >
+                        {displayNameFor(bucket)}
+                      </Link>
+                    );
+                  })}
+                </div>
               ) : null}
-            </Link>
+            </Fragment>
           );
         })}
       </nav>

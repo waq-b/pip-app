@@ -79,6 +79,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Added: phone, tablet and desktop layouts for Pots — single-row pots on a tablet; pots side by side and "The shape you asked for" on desktop (#3226691689)
 - Added: loading (skeleton shapes), empty (points to connecting an account) and error (reassures, offers a retry) states for Pots (#3226691689)
 - Changed: stubbed test responses now receive the request URL, so tests can answer by query string (#3226691689)
+- Added: pot detail screen — header with badge and plain-English line, value chart with its caption and provenance, six months of money in, what's inside as a stacked bar and the holdings table, and a footer naming the provider where buying and selling actually happens (#3226677091)
+- Added: pot detail states — loading shapes, no history (value kept, only the chart replaced), an empty Side Bet that says it may stay empty, error with retry, and "no such pot" for unknown ids without calling the API (#3226677091)
+- Added: desktop sidebar lists the three pots under Pots while you're inside one, with the current pot lit (#3226677091)
+- Changed: retry policy moved from individual hooks into the app's query client — never retry a 4xx, retry 5xx and network errors twice (#3226677091)
 
 #### Docs
 

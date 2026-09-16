@@ -117,10 +117,12 @@ apps/web/src/
 │   ├── pip-mark.tsx     ← the mark, choosing its own cut by size
 │   ├── auth-provider.tsx
 │   └── require-session.tsx ← routes by the two walls
-└── screens/             ← sign-in, not-on-the-list, pots (home); the rest arrive in tasks 17–20
+└── screens/             ← sign-in, not-on-the-list, pots (home), pot detail; the rest arrive in tasks 18–20
 ```
 
 **Tokens.** `index.css` declares every colour as a `--pip-*` variable for light, overrides them for dark, and maps them into Tailwind with `@theme inline` — so `bg-card` resolves to the live variable and dark mode is a variable swap, never a second set of classes. Pot scopes (`.pot-fnd`, `.pot-pick`, `.pot-bet`) override only the accent trio, so anything inside one paints itself in that pot's colour without knowing which pot it is. No component carries a hex value — and `shell/pip-mark.test.tsx` enforces that rather than trusting it, because two slipped through before the test existed and both broke dark mode. The mark's seeds and the alert dot have their own tokens (`--pip-seed-fnd/pick/bet`, `--pip-alert`), separate from the accent, because they must not change when a pot scope does. The one deliberate exception is Google's "G" on the sign-in button (`screens/google-mark.tsx`): Google's branding rules require it in its own colours, so it lives in its own file, outside the folders the no-hex tests cover.
+
+**Retries are decided once, app-wide** (`App.tsx`), not per hook: a 4xx — signed out, not on the list, no such pot — is never retried, because asking again only delays the right screen; 5xx and network errors get two more tries. Tests use `retry: false` so error states render immediately.
 
 **Appearance.** Follows the device until someone chooses in Setup. The `data-theme` attribute is written only for an explicit choice; leaving it off for "system" keeps the media query in charge, so the app follows the device live rather than at load. Storage access is wrapped, because private browsing throws rather than returning null.
 

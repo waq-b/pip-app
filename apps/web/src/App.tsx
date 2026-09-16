@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createBrowserRouter, RouterProvider } from "react-router";
-import { UnauthenticatedError } from "./lib/api";
+import { ApiError } from "./lib/api";
 import { supabaseAuthClient, type AuthClient } from "./lib/auth-client";
 import { useAppearance } from "./lib/use-appearance";
 import { routes } from "./routes";
@@ -9,9 +9,11 @@ import { AuthProvider } from "./shell/auth-provider";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Being signed out isn't a flaky request; retrying it just delays the
-      // redirect to sign-in.
-      retry: (failureCount, error) => !(error instanceof UnauthenticatedError) && failureCount < 2,
+      // A 4xx won't change by asking again — signed out, not on the list, no
+      // such pot — so retrying only delays the right screen. A flaky server
+      // might recover, so 5xx and network errors get two more tries.
+      retry: (failureCount, error) =>
+        !(error instanceof ApiError && error.status < 500) && failureCount < 2,
       staleTime: 30_000,
     },
   },
