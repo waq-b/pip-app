@@ -173,7 +173,7 @@ describe("the red dot on Rules", () => {
     const { fetchMock } = renderRoute("/", { session: WAQAR, api: api({ body: view(false) }) });
 
     await waitFor(() =>
-      expect(fetchMock.mock.calls.some(([input]) => String(input) === "/rules")).toBe(true),
+      expect(fetchMock.mock.calls.some(([input]) => String(input) === "/api/rules")).toBe(true),
     );
     await screen.findByRole("navigation", { name: "Sections" });
     expect(screen.queryByRole("status", { name: "A rule needs a look" })).not.toBeInTheDocument();

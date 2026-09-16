@@ -1,38 +1,26 @@
 # Features
 
-Living doc. Every screen, rule, alert, and state the app has — written for a human, not a compiler. Last updated: Phase 0.
+Living doc. Every screen, rule, alert, and state the app has — written for a human, not a compiler. Last updated: end of Phase 1 (0.1.0).
 
-## Current state: Phase 0 ships no user-facing features
+## Where Pip is: every screen, on sample data
 
-Phase 0 is scaffold only. `apps/web` renders a single placeholder screen:
+**Pip** — "Three pots. One number. No homework." — has every screen from the signed-off design (`docs/DESIGN.md`) built at phone, tablet and desktop sizes, in light and dark, behind a real sign-in. The numbers are sample data: no broker is connected, no key is stored, and nothing Pip shows can move money. Real Trading 212 data arrives in Phase 2.
 
-- **Placeholder screen** (`apps/web/src/App.tsx`)
-  - Shows the app name and a "Phase 0 scaffold placeholder" message
-  - Lists the three buckets (Base, Medium, Degen) pulled from `@finance-app/shared`, proving the shared package wires up correctly
-  - No routing, no real data, no interactivity
-  - Single state — no loading/error/empty variants, because there's nothing to load yet
+The API also answers `GET /health` (`{ status: "ok" }`) with no sign-in, for uptime checks.
 
-`apps/api` exposes one route:
-
-- **`GET /health`** — returns `{ status: "ok" }`. No auth, no DB call. Used by CI/ops to confirm the server boots; will also be the target of Phase 7's ntfy health-check alerting.
-
-## Phase 1 so far: a locked door, no rooms yet
-
-The product has a name and a signed-off design — **Pip**, "Three pots. One number. No homework." See `docs/DESIGN.md` for what every screen will look like and `docs/phases/phase-1.md` for the order they arrive in. None of them are built yet.
-
-What does work, all of it server-side:
+## Getting in
 
 - **An emailed sign-in link is the only way in** for now, through Supabase — no password (Google sign-in comes later). Proving you own an email isn't enough: your email has to be on Pip's allowlist, and an empty allowlist admits nobody at all.
 - **Two checks on every request.** Without a valid sign-in the API answers "not signed in"; signed in but not on the list, it answers "not on the list". The only thing that answers without either is the health check, and a test walks the real route table to prove nothing else has slipped through.
 - **Removing someone works straight away.** The allowlist is checked on every request, not just at sign-in.
 - **Staying signed in** follows Supabase's defaults: a short-lived token that the app refreshes while you use it. If a sign-in stops being accepted, Pip signs you out cleanly rather than leaving you stuck.
 - **Asking to be let in.** Someone turned away is still signed in, so they can put themselves on the waiting list. Pip takes the address from their sign-in, so there's no form to fill in and no way to submit somebody else's. Asking twice is harmless.
-- **No promises are made.** No queue position, no countdown, no "we'll email you" — there is no email system. Waqar grants access by hand.
+- **No promises are made.** No queue position, no countdown, no "we'll email you" — the only emails Pip sends are sign-in links. Waqar grants access by hand.
 - **Access is granted by hand**, with `pnpm --filter api allowlist add <email>`. There is no self-service sign-up, by design.
 
-## What the API can already tell you
+## What Pip can tell you
 
-All of it from fixtures, all of it behind sign-in. No screen renders it yet.
+All of it from sample data, all of it behind sign-in, all of it on the screens below.
 
 - **Everything you own**, as one total, with what it did today, this month, or since you started — and the money alongside every percentage, never a bare percent.
 - **A verdict line** that says "nothing needs you" only when that's true. Side Bet is over its cap in the sample data, so the line names it instead.
@@ -40,14 +28,12 @@ All of it from fixtures, all of it behind sign-in. No screen renders it yet.
 - **Each holding**: its price, what it's worth to you, today and since you bought, and a plain-English note on what the company actually does.
 - **Your rules**: the 70/25/5 targets, where each pot actually sits, and how far over the line Side Bet is — £208, not just 1.8%.
 - **What changed** last week, and **which account feeds which pot**.
-- **How current the prices are**, per pot, which is what the amber and red states will read.
+- **How current the prices are**, per pot — see How old the prices are.
 - **Connecting an account.** Paste a key and Pip tells you one of three things: it's connected and can only look, it doesn't recognise the key, or the key can do too much. A key that can trade or withdraw is refused outright and never stored — Pip won't hold a key that could move your money, even if you want it to. Nothing at all is stored in this phase.
 
-The sample data has one correction from the design: the prototype showed ISA money buying Rolls-Royce, which lives in the Invest pot. Money never crosses pots here.
+The sample data has one correction from the design: the prototype showed ISA money buying Rolls-Royce, which lives in the Invest pot. Money never crosses pots here. The sample figures agree with themselves — a holding's percentages match its pounds, and its "All" chart starts at the price paid — and a test keeps it that way.
 
-## The app so far: the frame, not the pictures
-
-The web app has its colours, fonts and layout. Sign-in, the refusal screen, the Pots home screen, pot detail, holding detail, Rules and Setup are built (see Screens built).
+## Getting around
 
 - **Three places to go**, the same at every size: **Pots**, **Rules** and **Setup**. On a phone they sit along the bottom; on a tablet they become a narrow rail of icons down the left; on a computer that rail widens into a sidebar with labels, the Pip mark, and a permanent "Read-only access" badge.
 - **You always know where you are.** The current section is lit — and Pots stays lit while you're inside a pot or looking at a single holding, because those live under it.
@@ -72,7 +58,7 @@ The web app has its colours, fonts and layout. Sign-in, the refusal screen, the 
 
 ## The pieces screens are built from
 
-None of these appear on a screen yet, but they decide how every number will read:
+These decide how every number reads, on every screen:
 
 - **Money always comes first.** Anywhere a change is shown, it reads "+£25.80 · +0.23%", never "+0.23%" on its own. That includes the holdings table, where the design prototype showed bare percentages — Pip is stricter than its own mockup here.
 - **The big number** sets the pence smaller so the pounds carry the weight, and never rounds your money up.

@@ -146,9 +146,9 @@ describe("the pots screen", () => {
       "aria-checked",
       "true",
     );
-    expect(fetchMock.mock.calls.some(([input]) => String(input) === "/portfolio?tf=month")).toBe(
-      true,
-    );
+    expect(
+      fetchMock.mock.calls.some(([input]) => String(input) === "/api/portfolio?tf=month"),
+    ).toBe(true);
   });
 
   it("states the target in words, beside the split", async () => {

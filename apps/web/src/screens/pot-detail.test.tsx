@@ -180,7 +180,7 @@ describe("the pot detail screen's other states", () => {
     const { fetchMock } = renderRoute("/pots/Foundation", { session: WAQAR, api: api() });
 
     expect(await screen.findByRole("heading", { name: "No such pot" })).toBeInTheDocument();
-    expect(fetchMock.mock.calls.some(([input]) => String(input).startsWith("/buckets"))).toBe(
+    expect(fetchMock.mock.calls.some(([input]) => String(input).startsWith("/api/buckets"))).toBe(
       false,
     );
   });

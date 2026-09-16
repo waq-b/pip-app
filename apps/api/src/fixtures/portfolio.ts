@@ -165,21 +165,21 @@ export const INSTRUMENT_FIXTURES: Record<string, InstrumentFixture> = {
   },
   nvidia: {
     quantity: "5.04 shares",
-    today: { amount: 410, percent: 2.9, direction: "up" },
+    today: { amount: 410, percent: 0.6, direction: "up" },
     sinceBought: { amount: 13_900, percent: 24, direction: "up" },
     shareOfBucket: 30,
     note: "Makes the chips that AI runs on. Swings hard in both directions — a third of your Handpicked pot sits here.",
   },
   apple: {
     quantity: "3.05 shares",
-    today: { amount: 90, percent: 0.5, direction: "up" },
+    today: { amount: 90, percent: 0.2, direction: "up" },
     sinceBought: { amount: 3_170, percent: 6, direction: "up" },
     shareOfBucket: 23,
     note: "Phones and laptops. About as steady as a single company gets.",
   },
   asml: {
     quantity: "0.70 shares",
-    today: { amount: -320, percent: -0.5, direction: "down" },
+    today: { amount: -320, percent: -0.7, direction: "down" },
     sinceBought: { amount: -1_330, percent: -3, direction: "down" },
     shareOfBucket: 18,
     note: "Builds the machines that make chips. One customer sneezes and the price moves.",
@@ -276,22 +276,27 @@ export const MONTHLY_SPLIT = {
 /**
  * Phase 1 shows connections but stores no keys — Phase 2 brings encrypted
  * storage. Coinbase appears in the prototype and is deliberately absent.
+ * Last-read times are relative to the request, so Setup always reads like the
+ * design ("synced 4 min ago") rather than ageing with the clock.
  */
-export const CONNECTIONS: Connection[] = [
-  {
-    provider: "trading212",
-    displayName: "Trading 212",
-    status: "live",
-    feeds: ["Base", "Medium"],
-    holdingsSeen: 8,
-    lastReadAt: "2026-09-16T09:56:00.000Z",
-  },
-  {
-    provider: "kraken",
-    displayName: "Kraken",
-    status: "live",
-    feeds: ["Degen"],
-    holdingsSeen: 3,
-    lastReadAt: "2026-09-16T09:49:00.000Z",
-  },
-];
+export function connectionsAt(now: Date): Connection[] {
+  const minutesAgo = (minutes: number) => new Date(now.getTime() - minutes * 60_000).toISOString();
+  return [
+    {
+      provider: "trading212",
+      displayName: "Trading 212",
+      status: "live",
+      feeds: ["Base", "Medium"],
+      holdingsSeen: 8,
+      lastReadAt: minutesAgo(4),
+    },
+    {
+      provider: "kraken",
+      displayName: "Kraken",
+      status: "live",
+      feeds: ["Degen"],
+      holdingsSeen: 3,
+      lastReadAt: minutesAgo(11),
+    },
+  ];
+}

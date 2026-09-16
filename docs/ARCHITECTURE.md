@@ -170,7 +170,7 @@ apps/web  →  apps/api/routes  →  providers/stub   (what is held)
                               →  fixtures/        (the words around the numbers)
 ```
 
-The frontend never talks to a provider directly and never knows which provider backs a bucket — it only ever calls our own API. That indirection is the point: Phase 2+ swaps `stub` for `t212`/`kraken` behind the same `Provider` interface with zero frontend changes.
+The frontend never talks to a provider directly and never knows which provider backs a bucket — it only ever calls our own API, always under `/api` (`lib/api.ts`). In dev, Vite proxies `/api` to the Fastify server and strips the prefix, so the API's own paths stay `/rules`, `/portfolio` and so on. The prefix is not cosmetic: several API paths are also screens (`/rules`, `/instruments/:id`), and proxying the bare paths sent a page load or reload of those screens to the API. Test stubs are still keyed by the API's own path; `test/render-route.tsx` strips the prefix. That indirection is the point: Phase 2+ swaps `stub` for `t212`/`kraken` behind the same `Provider` interface with zero frontend changes.
 
 **The read routes** (`routes/read.ts`), all behind both auth walls:
 
@@ -224,7 +224,7 @@ interface MarketData {
 
 `getFreshness` is per pot, not global, because the staleness ladder names the affected pot ("Side Bet is 2 hours old") and because different pots get different sources from Phase 4 on.
 
-`market/stub` is the only implementation so far. It generates prices from a small deterministic PRNG seeded by the instrument id, so the same holding always draws the same chart and fixtures, tests and screenshots agree. It also takes per-pot staleness overrides — an age in hours, an outright failure, or markets-closed — which is how the green/amber/red ladder gets exercised end to end without a real feed ever having to break. `server.ts` reads them from `STUB_STALENESS` (`market/stub/staleness-env.ts`), so the dev server can be put on any rung.
+`market/stub` is the only implementation so far. It generates prices from a small deterministic PRNG seeded by the instrument id, so the same holding always draws the same chart and fixtures, tests and screenshots agree. It also takes per-pot staleness overrides — an age in hours, an outright failure, or markets-closed — which is how the green/amber/red ladder gets exercised end to end without a real feed ever having to break. It also takes per-holding **series anchors** (`market/stub/anchors.ts`, built from the stub positions and fixtures in `app.ts` and `server.ts`): the "All" series starts at the average price paid and the "Day" series at this morning's price, the walk blending between its two ends. Without them an invented chart captioned "since you bought" could contradict "+24% since you bought" beside it. `server.ts` reads them from `STUB_STALENESS` (`market/stub/staleness-env.ts`), so the dev server can be put on any rung.
 
 ## Auth
 
@@ -293,4 +293,4 @@ Provider secrets (`T212_API_KEY`, `KRAKEN_API_KEY`, etc.) don't exist as env var
 
 ## Testing
 
-Vitest in all three packages (`apps/web`, `apps/api`, `packages/shared`). `apps/web` additionally uses Testing Library + jsdom for component tests. `apps/api/vitest.config.ts` excludes `dist/`: `pnpm build` emits compiled output there, and vitest's default include would otherwise collect it, running every suite twice — the second time against whatever was last compiled. `pnpm test` from the root runs all three via `pnpm -r test`. CI (`.github/workflows/ci.yml`) runs lint, format check, test, and build on every push to `main` and every PR, entirely in stub mode with no secrets configured.
+Vitest in all three packages (`apps/web`, `apps/api`, `packages/shared`). `apps/web` additionally uses Testing Library + jsdom for component tests. `apps/api/vitest.config.ts` excludes `dist/`: `pnpm build` emits compiled output there, and vitest's default include would otherwise collect it, running every suite twice — the second time against whatever was last compiled. `pnpm test` from the root runs all three via `pnpm -r test`. `apps/api/src/fixtures/consistency.test.ts` checks the sample data agrees with itself — percentages against pounds, since-you-bought against the price paid, value against market price, chart ends against their anchors — because stub numbers are still numbers someone reads. CI (`.github/workflows/ci.yml`) runs lint, format check, test, and build on every push to `main` and every PR, entirely in stub mode with no secrets configured.

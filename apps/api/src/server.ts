@@ -2,6 +2,7 @@ import { buildApp } from "./app.js";
 import { dbAllowlistStore } from "./auth/allowlist.js";
 import { supabaseVerifierFromEnv } from "./auth/jwt.js";
 import { dbWaitlistStore } from "./auth/waitlist.js";
+import { stubSeriesAnchors } from "./market/stub/anchors.js";
 import { createStubMarketData } from "./market/stub/index.js";
 import { parseStubStaleness } from "./market/stub/staleness-env.js";
 
@@ -11,6 +12,7 @@ const app = buildApp({
   waitlistStore: dbWaitlistStore,
   marketData: createStubMarketData({
     staleness: parseStubStaleness(process.env.STUB_STALENESS),
+    anchors: stubSeriesAnchors(),
   }),
 });
 const port = Number(process.env.PORT ?? 3001);

@@ -151,6 +151,14 @@ function redCard(
   }
 
   const who = names(late);
+  const one = late.length === 1;
+  if (agoText(oldest) === "just now") {
+    // A feed that failed moments ago: "from just now" would read as fresh.
+    return {
+      heading: `${who} ${one ? "isn't" : "aren't"} updating`,
+      body: `Your ${who} ${one ? "number is the last one" : "numbers are the last ones"} Pip saw. Everything else is live.`,
+    };
+  }
   return {
     heading: `${who} ${late.length === 1 ? "isn't" : "aren't"} updating`,
     body: `Your ${who} ${late.length === 1 ? "number is" : "numbers are"} from ${agoText(oldest)}. Everything else is live.`,

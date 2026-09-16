@@ -49,6 +49,19 @@ export interface StubMarketDataOptions {
    * without a real feed ever having to fail.
    */
   staleness?: Partial<Record<Bucket, StubStaleness>>;
+  /**
+   * Where a holding's charts must start, so an invented shape still agrees
+   * with the figures beside it: "All" starts at the price you paid, "Day" at
+   * this morning's price. The stub has no history of its own to get these from.
+   */
+  anchors?: Record<string, SeriesAnchors>;
+}
+
+export interface SeriesAnchors {
+  /** Average price paid — where the "All" range starts. */
+  boughtAt?: Pence;
+  /** Price at the start of today — where the "Day" range starts. */
+  openedAt?: Pence;
 }
 
 /**
@@ -67,7 +80,10 @@ export function createStubMarketData(options: StubMarketDataOptions = {}): Marke
     },
 
     async getSeries(instrumentId, range) {
-      return buildSeries(instrumentId, range, now());
+      const anchor = options.anchors?.[instrumentId];
+      const startAt =
+        range === "all" ? anchor?.boughtAt : range === "day" ? anchor?.openedAt : undefined;
+      return buildSeries(instrumentId, range, now(), startAt);
     },
 
     async getFreshness(bucket) {
@@ -91,7 +107,12 @@ export function priceFor(instrumentId: string): Pence {
   return 50_00 + (seedFrom(instrumentId) % 450_00);
 }
 
-export function buildSeries(instrumentId: string, range: PriceRange, now: Date): SeriesPoint[] {
+export function buildSeries(
+  instrumentId: string,
+  range: PriceRange,
+  now: Date,
+  startAt?: Pence,
+): SeriesPoint[] {
   const { points, stepMs } = SHAPE[range];
   let state = seedFrom(instrumentId);
 
@@ -106,16 +127,21 @@ export function buildSeries(instrumentId: string, range: PriceRange, now: Date):
     values.push(value);
   }
 
-  // Anchor the walk so it ends at the instrument's actual price. The shape is
-  // invented; where it finishes is not.
-  const target = priceFor(instrumentId);
-  const scale = target / values[values.length - 1]!;
+  // Anchor the walk so it ends at the instrument's actual price — and, when
+  // given, starts where it really started. The shape is invented; the ends are
+  // not. The scale blends from one anchor to the other along the walk.
+  const endScale = priceFor(instrumentId) / values[values.length - 1]!;
+  const startScale = startAt === undefined ? endScale : startAt / values[0]!;
 
   const oldest = now.getTime() - (points - 1) * stepMs;
-  return values.map((point, index) => ({
-    at: new Date(oldest + index * stepMs).toISOString(),
-    value: Math.max(1, Math.round(point * scale)),
-  }));
+  return values.map((point, index) => {
+    const along = index / (points - 1);
+    const scale = startScale + (endScale - startScale) * along;
+    return {
+      at: new Date(oldest + index * stepMs).toISOString(),
+      value: Math.max(1, Math.round(point * scale)),
+    };
+  });
 }
 
 /** Small deterministic PRNG — reproducibility matters more than randomness here. */

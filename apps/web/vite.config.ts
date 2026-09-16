@@ -6,20 +6,13 @@ import { defineConfig } from "vitest/config";
 const API_ORIGIN = process.env.VITE_API_ORIGIN ?? "http://localhost:3001";
 
 /**
- * The API's own paths, proxied in dev so the app can call them relatively.
- * Sign-in itself goes straight from the browser to Supabase, not through here.
+ * The app calls the API under `/api`, proxied in dev with the prefix stripped.
+ * A prefix rather than a list of the API's paths, because several of them are
+ * also screens (`/rules`, `/instruments/:id`): proxying those sent a page load
+ * or a reload straight to the API. Sign-in goes from the browser to Supabase,
+ * not through here.
  */
-const API_PATHS = [
-  "/health",
-  "/me",
-  "/waitlist",
-  "/portfolio",
-  "/buckets",
-  "/instruments",
-  "/rules",
-  "/activity",
-  "/connections",
-];
+const API_PREFIX = "/api";
 
 export default defineConfig({
   plugins: [
@@ -49,9 +42,13 @@ export default defineConfig({
     }),
   ],
   server: {
-    proxy: Object.fromEntries(
-      API_PATHS.map((path) => [path, { target: API_ORIGIN, changeOrigin: false }]),
-    ),
+    proxy: {
+      [API_PREFIX]: {
+        target: API_ORIGIN,
+        changeOrigin: false,
+        rewrite: (path) => path.slice(API_PREFIX.length) || "/",
+      },
+    },
   },
   test: {
     environment: "jsdom",

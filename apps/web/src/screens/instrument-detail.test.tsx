@@ -121,7 +121,9 @@ describe("the instrument screen", () => {
       await screen.findByText("The price went from £118.20 to £142.80 over the last month."),
     ).toBeInTheDocument();
     expect(
-      fetchMock.mock.calls.some(([input]) => String(input) === "/instruments/nvidia?range=month"),
+      fetchMock.mock.calls.some(
+        ([input]) => String(input) === "/api/instruments/nvidia?range=month",
+      ),
     ).toBe(true);
   });
 

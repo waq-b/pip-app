@@ -196,7 +196,7 @@ function PotLoaded({
       {stale.card ? <StaleCard {...stale.card} onRetry={onRetry} /> : null}
       {header}
       {isDesktop ? (
-        <div className="grid grid-cols-[1fr_1.25fr] items-start gap-3.5">
+        <div className="grid grid-cols-[0.8fr_1.45fr] items-start gap-3.5">
           <div className="flex flex-col gap-3.5">
             {chart}
             {moneyIn}

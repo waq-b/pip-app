@@ -29,9 +29,11 @@ export function renderRoute(
   const fetchMock = vi.fn<typeof fetch>(async (input, init) => {
     const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
     const parsed = new URL(url, "http://localhost");
-    const handler = api[parsed.pathname];
+    // Stubs are keyed by the API's own path; the app calls it under `/api`.
+    const apiPath = parsed.pathname.replace(/^\/api(?=\/)/, "");
+    const handler = api[apiPath];
 
-    if (!handler) return json({ error: `not stubbed: ${parsed.pathname}` }, 500);
+    if (!handler) return json({ error: `not stubbed: ${apiPath}` }, 500);
 
     const { status = 200, body } = typeof handler === "function" ? handler(init, parsed) : handler;
     return json(body, status);

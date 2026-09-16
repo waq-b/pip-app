@@ -5,6 +5,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.0] — 2026-09-16
+
 ### Phase 1 — Base UI + auth
 
 - Added: `docs/phases/phase-1.md` — Phase 1 plan from the Claude Design handover (Pip), with scope decisions, hard-line design corrections and a 20-task breakdown (#3226664834)
@@ -99,6 +101,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Changed: sign-in is an emailed magic link for now instead of Google (Waqar, 2026-09-16) — email field, "Check your email", "Use a different email", and a wait message when Supabase's email limit is hit; the Google button, "Checking you're on the list" state and Google mark are removed (#3228026929)
 - Added: the real Supabase project is wired for local use — migrations applied through Drizzle, Waqar on the allowlist, `api` and `web` dev scripts read their gitignored env files, `.claude/launch.json` starts both (#3228026929)
+
+- Fixed: opening or reloading `/rules` or a holding page showed the API's raw JSON — those screen paths were also proxied API paths. The app now calls the API under `/api` (#3226682789)
+- Fixed: sample data contradicted itself — Nvidia, Apple and ASML showed today's percentages that didn't match their pounds, and holding charts didn't start at the price paid. Stub charts are now anchored and a consistency test guards the fixtures (#3226682789)
+- Fixed: Setup's sample accounts aged with the clock ("synced 2 hours ago"); their last-read times are now relative to the request (#3226682789)
+- Fixed: desktop holdings table squeezed names to one word per line; the table's column is wider and long names truncate (#3226682789)
+- Fixed: a price feed that had just failed read "Your Side Bet number is from just now" (#3226682789)
+- Added: Phase 1 run-through at phone, tablet and desktop in light and dark, signed in for real through Supabase, with the staleness ladder shown amber and red against the running stub API (#3226682789)
 
 #### Docs
 

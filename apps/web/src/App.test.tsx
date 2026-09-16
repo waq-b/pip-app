@@ -17,7 +17,7 @@ describe("routing through the two walls", () => {
     const { fetchMock } = renderRoute("/", { session: WAQAR, api: ME_ALLOWED });
 
     await screen.findByRole("heading", { name: "Your pots" });
-    const [, init] = fetchMock.mock.calls.find(([input]) => String(input) === "/me")!;
+    const [, init] = fetchMock.mock.calls.find(([input]) => String(input) === "/api/me")!;
     expect((init?.headers as Record<string, string>).authorization).toBe("Bearer token-for-waqar");
   });
 

@@ -86,8 +86,13 @@ export function HoldingsTable({
                   style={{ opacity: shades.get(holding.id) }}
                 />
                 <div className="min-w-0">
-                  <div className="text-sm leading-tight font-semibold">{holding.name}</div>
-                  <div className="text-ink3 mt-px text-[11.5px] font-medium">
+                  <div
+                    className="truncate text-sm leading-tight font-semibold"
+                    title={holding.name}
+                  >
+                    {holding.name}
+                  </div>
+                  <div className="text-ink3 mt-px truncate text-[11.5px] font-medium">
                     {holding.subtitle}
                   </div>
                 </div>

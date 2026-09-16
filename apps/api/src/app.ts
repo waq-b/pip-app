@@ -6,6 +6,7 @@ import { registerMeRoute } from "./auth/me-route.js";
 import { registerWaitlistRoute } from "./auth/waitlist-route.js";
 import { dbWaitlistStore, type WaitlistStore } from "./auth/waitlist.js";
 import type { MarketData } from "./market/market.js";
+import { stubSeriesAnchors } from "./market/stub/anchors.js";
 import { createStubMarketData } from "./market/stub/index.js";
 import { registerConnectionRoutes } from "./routes/connections.js";
 import { registerReadRoutes } from "./routes/read.js";
@@ -37,7 +38,9 @@ export function buildApp(options: BuildAppOptions = {}) {
 
   registerMeRoute(app, { allowlist });
   registerWaitlistRoute(app, { store: options.waitlistStore ?? dbWaitlistStore });
-  registerReadRoutes(app, { market: options.marketData ?? createStubMarketData() });
+  registerReadRoutes(app, {
+    market: options.marketData ?? createStubMarketData({ anchors: stubSeriesAnchors() }),
+  });
   registerConnectionRoutes(app);
 
   return app;

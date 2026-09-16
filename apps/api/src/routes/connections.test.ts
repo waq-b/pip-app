@@ -94,7 +94,10 @@ describe("POST /connections/:provider", () => {
     });
 
     const after = await app.inject({ method: "GET", url: "/connections", headers: SIGNED_IN });
-    expect(after.json()).toEqual(before.json());
+    // Last-read times are relative to each request, so compare everything else.
+    const withoutTimes = (list: Array<Record<string, unknown>>) =>
+      list.map((connection) => ({ ...connection, lastReadAt: undefined }));
+    expect(withoutTimes(after.json())).toEqual(withoutTimes(before.json()));
   });
 
   it("404s on a provider this phase doesn't support", async () => {

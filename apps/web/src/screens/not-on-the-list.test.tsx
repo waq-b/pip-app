@@ -33,7 +33,7 @@ describe("the not-on-the-list screen", () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/Waqar will let you know when there's room/)).toBeInTheDocument();
 
-    const [, init] = fetchMock.mock.calls.find(([input]) => String(input) === "/waitlist")!;
+    const [, init] = fetchMock.mock.calls.find(([input]) => String(input) === "/api/waitlist")!;
     expect(init?.body).toBeUndefined();
     expect((init?.headers as Record<string, string>).authorization).toBe("Bearer token-for-sam");
   });

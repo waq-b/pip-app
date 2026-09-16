@@ -95,6 +95,16 @@ describe("the ladder across the three pots", () => {
     expect(result.dimmed).toEqual(["Degen"]);
   });
 
+  it("doesn't call a figure from a feed that just failed 'from just now'", () => {
+    const result = ladder(
+      [entry("Base", 0), entry("Medium", 0), entry("Degen", 0, { failed: true })],
+      { now: NOW },
+    );
+    expect(result.card?.body).toBe(
+      "Your Side Bet number is the last one Pip saw. Everything else is live.",
+    );
+  });
+
   it("goes red past six hours", () => {
     const result = ladder([entry("Base", 4), entry("Medium", 4), entry("Degen", 60 * 7)], {
       now: NOW,

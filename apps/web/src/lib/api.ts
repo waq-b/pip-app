@@ -65,7 +65,8 @@ export async function apiDelete<T>(path: string, init?: RequestInit): Promise<T>
 async function request<T>(path: string, init: RequestInit): Promise<T> {
   const token = await getAccessToken();
 
-  const response = await fetch(path, {
+  // Under `/api` so no API path can collide with a screen (see vite.config.ts).
+  const response = await fetch(`/api${path}`, {
     ...init,
     headers: {
       accept: "application/json",
