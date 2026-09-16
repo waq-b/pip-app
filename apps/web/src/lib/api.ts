@@ -58,6 +58,15 @@ export async function apiPost<T>(path: string, body?: unknown, init?: RequestIni
   });
 }
 
+export async function apiPut<T>(path: string, body: unknown, init?: RequestInit): Promise<T> {
+  return request<T>(path, {
+    ...init,
+    method: "PUT",
+    headers: { "content-type": "application/json", ...(init?.headers ?? {}) },
+    body: JSON.stringify(body),
+  });
+}
+
 export async function apiDelete<T>(path: string, init?: RequestInit): Promise<T> {
   return request<T>(path, { ...init, method: "DELETE" });
 }

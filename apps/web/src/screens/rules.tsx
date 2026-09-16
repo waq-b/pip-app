@@ -1,18 +1,27 @@
-import { BUCKET_META, displayNameFor, type BucketRule, type RulesView } from "@finance-app/shared";
-import { TriangleAlert } from "lucide-react";
+import {
+  BUCKET_META,
+  SIDE_BET_CAP_MAX,
+  SIDE_BET_CAP_NOTE_ABOVE,
+  displayNameFor,
+  type Bucket,
+  type BucketRule,
+  type RulesView,
+} from "@finance-app/shared";
+import { Minus, Plus, TriangleAlert } from "lucide-react";
 import { NotAdviceLabel } from "../components/not-advice-label";
 import { ProgressCapBar } from "../components/progress-cap-bar";
 import { Skeleton } from "../components/skeleton";
 import { formatPercent, formatPounds } from "../lib/format";
-import { useRules } from "../lib/rules";
+import { useRules, useSaveRules, type RuleSettings } from "../lib/rules";
 import { ICON_STROKE } from "../shell/nav";
 import { useBreakpoint } from "../shell/use-breakpoint";
 
 /**
  * The shape you set, and where each pot actually sits against it
- * (DESIGN.md §7). **Display only in Phase 1**: no steppers, no "raise the cap",
- * no "show me how to fix it". Rule editing arrives with the Phase 4 engine, and
- * nothing on this screen may suggest Pip will move money (CLAUDE.md hard line 1).
+ * (DESIGN.md §7). Handpicked's target and Side Bet's cap have steppers
+ * (Phase 4); Foundation is the rest. The API checks the limits and judges the
+ * shape — this screen only shows its answer — and nothing here may suggest Pip
+ * will move money (CLAUDE.md hard lines 1, 11).
  */
 export function RulesScreen() {
   const isDesktop = useBreakpoint() === "desktop";
@@ -29,6 +38,11 @@ export function RulesScreen() {
         <p className="text-ink2 m-0 mt-1.5 text-[13.5px] leading-normal">
           You set the shape once. Pip tells you if the shape drifts.
         </p>
+        {rules.data?.lastChangedAt ? (
+          <p className="text-ink3 m-0 mt-1 text-[12px] font-semibold">
+            Last changed {dayMonth(rules.data.lastChangedAt)}
+          </p>
+        ) : null}
       </header>
 
       {rules.isPending ? (
@@ -48,14 +62,45 @@ export function RulesScreen() {
 
 function RulesLoaded({ view, isDesktop }: { view: RulesView; isDesktop: boolean }) {
   const breached = view.rules.find((rule) => rule.overBy);
+  const save = useSaveRules();
+  const settings = view.settings;
+  const leftOut = view.leftOut ?? [];
+  const judged = view.rules.some((rule) => rule.available !== false);
+
+  const change = (next: RuleSettings) => {
+    if (save.isPending) return;
+    save.mutate(next);
+  };
 
   return (
     <div className="flex flex-col gap-3">
       {breached ? <OverCapBanner rule={breached} isDesktop={isDesktop} /> : null}
 
+      {judged && leftOut.length > 0 ? (
+        <p className="bg-sunk text-ink2 m-0 rounded-[18px] px-4 py-3 text-[12.5px] leading-normal font-medium">
+          {listNames(leftOut)} {leftOut.length === 1 ? "isn't" : "aren't"} connected, so your
+          targets are judged against the pots Pip can see. Side Bet's cap stays as you set it.
+        </p>
+      ) : null}
+
+      {save.isError ? (
+        <p
+          role="alert"
+          className="pot-bet bg-tint text-aink m-0 rounded-[18px] px-4 py-3 text-[12.5px] font-semibold"
+        >
+          Couldn't save that. Your rules haven't changed — try again.
+        </p>
+      ) : null}
+
       <div className={isDesktop ? "grid grid-cols-3 gap-3.5" : "flex flex-col gap-[11px]"}>
         {view.rules.map((rule) => (
-          <RuleCard key={rule.bucket} rule={rule} />
+          <RuleCard
+            key={rule.bucket}
+            rule={rule}
+            settings={settings}
+            saving={save.isPending}
+            onChange={change}
+          />
         ))}
       </div>
 
@@ -132,7 +177,17 @@ function OverCapBanner({ rule, isDesktop }: { rule: BucketRule; isDesktop: boole
   );
 }
 
-function RuleCard({ rule }: { rule: BucketRule }) {
+function RuleCard({
+  rule,
+  settings,
+  saving,
+  onChange,
+}: {
+  rule: BucketRule;
+  settings: RuleSettings | undefined;
+  saving: boolean;
+  onChange: (next: RuleSettings) => void;
+}) {
   const { scope } = BUCKET_META[rule.bucket];
   const isSideBet = scope === "bet";
   const kind = rule.kind === "cap" ? "Hard cap" : "Target";
@@ -154,9 +209,29 @@ function RuleCard({ rule }: { rule: BucketRule }) {
       <div className="text-ink2 text-[11.5px] font-semibold tracking-[0.04em] uppercase">
         {kind}
       </div>
-      <div className="font-heading mt-0.5 mb-3 text-[34px] leading-none">
-        {formatPercent(rule.targetPercent)}
+      <div className="mt-0.5 mb-3 flex items-center gap-3">
+        <div className="font-heading text-[34px] leading-none">
+          {formatPercent(rule.targetPercent)}
+        </div>
+        {settings ? (
+          <RuleStepper
+            bucket={rule.bucket}
+            settings={settings}
+            saving={saving}
+            onChange={onChange}
+          />
+        ) : null}
       </div>
+      {settings && rule.bucket === "Base" ? (
+        <p className="text-ink3 m-0 -mt-1.5 mb-3 text-[11.5px] font-semibold">
+          The rest, after Handpicked and Side Bet
+        </p>
+      ) : null}
+      {settings && rule.bucket === "Degen" && settings.sideBetCap > SIDE_BET_CAP_NOTE_ABOVE ? (
+        <p className="text-ink2 m-0 -mt-1.5 mb-3 text-[11.5px] leading-normal font-semibold">
+          Above the 10% the FCA restricted-investor rules assume.
+        </p>
+      ) : null}
 
       {rule.available === false ? (
         <p className="text-ink3 m-0 text-[12.5px] font-semibold">Not connected yet</p>
@@ -164,7 +239,12 @@ function RuleCard({ rule }: { rule: BucketRule }) {
         <ProgressCapBar
           label="Where it sits"
           actualPercent={rule.actualPercent}
-          targetPercent={rule.targetPercent}
+          // A target is judged against its scaled figure when a pot isn't connected; show that line.
+          targetPercent={
+            rule.kind === "target"
+              ? (rule.judgedAgainstPercent ?? rule.targetPercent)
+              : rule.targetPercent
+          }
           kind={rule.kind}
           // A 5% cap would be an invisible sliver on a 0–100 track.
           scaleMax={rule.kind === "cap" ? rule.targetPercent * 2 : 100}
@@ -175,6 +255,71 @@ function RuleCard({ rule }: { rule: BucketRule }) {
       <p className="text-ink2 m-0 mt-2.5 text-[12.5px] leading-normal font-medium">{rule.plain}</p>
     </section>
   );
+}
+
+/**
+ * −/+ for the two numbers the user sets. Foundation has none: it's the rest.
+ * Limits here only stop pointless taps; the API is what enforces them.
+ */
+function RuleStepper({
+  bucket,
+  settings,
+  saving,
+  onChange,
+}: {
+  bucket: Bucket;
+  settings: RuleSettings;
+  saving: boolean;
+  onChange: (next: RuleSettings) => void;
+}) {
+  if (bucket === "Base") return null;
+  const isCap = bucket === "Degen";
+  const value = isCap ? settings.sideBetCap : settings.handpickedTarget;
+  const max = isCap
+    ? Math.min(SIDE_BET_CAP_MAX, 100 - settings.handpickedTarget)
+    : 100 - settings.sideBetCap;
+  const name = `${displayNameFor(bucket)}'s ${isCap ? "cap" : "target"}`;
+  const set = (next: number) =>
+    onChange(isCap ? { ...settings, sideBetCap: next } : { ...settings, handpickedTarget: next });
+
+  const button =
+    "border-line text-ink grid h-9 w-9 cursor-pointer place-items-center rounded-full border-[1.5px] bg-transparent disabled:cursor-default disabled:opacity-40";
+  return (
+    <div className="ml-auto flex items-center gap-2" aria-busy={saving || undefined}>
+      <button
+        type="button"
+        aria-label={`Lower ${name}`}
+        disabled={saving || value <= 0}
+        onClick={() => set(value - 1)}
+        className={button}
+      >
+        <Minus size={16} strokeWidth={ICON_STROKE} aria-hidden />
+      </button>
+      <button
+        type="button"
+        aria-label={`Raise ${name}`}
+        disabled={saving || value >= max}
+        onClick={() => set(value + 1)}
+        className={button}
+      >
+        <Plus size={16} strokeWidth={ICON_STROKE} aria-hidden />
+      </button>
+    </div>
+  );
+}
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function dayMonth(iso: string): string {
+  const date = new Date(iso);
+  return `${date.getDate()} ${MONTHS[date.getMonth()]}`;
+}
+
+function listNames(buckets: Bucket[]): string {
+  const names = buckets.map(displayNameFor);
+  return names.length <= 1
+    ? (names[0] ?? "")
+    : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
 }
 
 function RulesLoading() {

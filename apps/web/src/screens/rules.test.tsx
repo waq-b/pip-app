@@ -179,3 +179,99 @@ describe("the red dot on Rules", () => {
     expect(screen.queryByRole("status", { name: "A rule needs a look" })).not.toBeInTheDocument();
   });
 });
+
+describe("changing your rules", () => {
+  function editable(overrides: Partial<RulesView> = {}): RulesView {
+    return {
+      ...view(false),
+      settings: { handpickedTarget: 25, sideBetCap: 5 },
+      needsAttention: false,
+      leftOut: [],
+      ...overrides,
+    };
+  }
+
+  function withSaving(initial: RulesView, respond: (body: unknown) => { status?: number }) {
+    const sent: unknown[] = [];
+    renderRoute("/rules", {
+      session: WAQAR,
+      api: {
+        ...ME_ALLOWED,
+        "/rules": (init) => {
+          if (init?.method === "PUT") {
+            const body = JSON.parse(String(init.body));
+            sent.push(body);
+            const { status = 200 } = respond(body);
+            return {
+              status,
+              body: status === 200 ? { settings: body } : { error: "cap_out_of_range" },
+            };
+          }
+          return { body: initial };
+        },
+      },
+    });
+    return sent;
+  }
+
+  it("steps Handpicked's target and Side Bet's cap, saving each change", async () => {
+    const sent = withSaving(editable(), () => ({}));
+    fireEvent.click(await screen.findByRole("button", { name: "Raise Handpicked's target" }));
+    await waitFor(() => expect(sent).toEqual([{ handpickedTarget: 26, sideBetCap: 5 }]));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Lower Side Bet's cap" })).toBeEnabled(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Lower Side Bet's cap" }));
+    await waitFor(() => expect(sent).toHaveLength(2));
+    expect(sent[1]).toEqual({ handpickedTarget: 25, sideBetCap: 4 });
+  });
+
+  it("gives Foundation no stepper — it's the rest", async () => {
+    withSaving(editable(), () => ({}));
+    expect(await screen.findByText("The rest, after Handpicked and Side Bet")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Foundation/ })).not.toBeInTheDocument();
+  });
+
+  it("stops the cap stepper at 20%", async () => {
+    withSaving(editable({ settings: { handpickedTarget: 25, sideBetCap: 20 } }), () => ({}));
+    expect(await screen.findByRole("button", { name: "Raise Side Bet's cap" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Lower Side Bet's cap" })).toBeEnabled();
+  });
+
+  it("notes the FCA restricted-investor assumption above a 10% cap, without blocking", async () => {
+    withSaving(editable({ settings: { handpickedTarget: 25, sideBetCap: 11 } }), () => ({}));
+    expect(
+      await screen.findByText("Above the 10% the FCA restricted-investor rules assume."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Raise Side Bet's cap" })).toBeEnabled();
+  });
+
+  it("doesn't note it at 10% or below", async () => {
+    withSaving(editable({ settings: { handpickedTarget: 25, sideBetCap: 10 } }), () => ({}));
+    await screen.findByRole("button", { name: "Raise Side Bet's cap" });
+    expect(screen.queryByText(/FCA restricted-investor/)).not.toBeInTheDocument();
+  });
+
+  it("says a failed save changed nothing, and keeps showing the saved rules", async () => {
+    withSaving(editable(), () => ({ status: 400 }));
+    fireEvent.click(await screen.findByRole("button", { name: "Raise Side Bet's cap" }));
+    expect(
+      await screen.findByText("Couldn't save that. Your rules haven't changed — try again."),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("5%").length).toBeGreaterThan(0);
+  });
+
+  it("says when targets are judged without a pot that isn't connected", async () => {
+    withSaving(editable({ leftOut: ["Medium"] }), () => ({}));
+    expect(
+      await screen.findByText(
+        /Handpicked isn't connected, so your targets are judged against the pots Pip can see/,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("says when the rules last changed", async () => {
+    withSaving(editable({ lastChangedAt: "2026-09-02T10:00:00Z" }), () => ({}));
+    expect(await screen.findByText("Last changed 2 Sep")).toBeInTheDocument();
+  });
+});
