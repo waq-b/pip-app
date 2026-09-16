@@ -4,3 +4,216 @@
    numbers, Figtree for everything else. */
 @import "@fontsource/caprasimo/400.css";
 @import "@fontsource-variable/figtree";
+
+/* ---------------------------------------------------------------------------
+   Tokens. Every colour in the app comes from here — no component carries a hex
+   (DESIGN.md §3). The light values are the default; dark follows the device
+   unless someone has chosen otherwise, which is why both a media query and a
+   data attribute set the same variables.
+   --------------------------------------------------------------------------- */
+
+:root {
+  --pip-bg: #ebddc5;
+  --pip-card: #f5ead8;
+  --pip-sunk: #e3d4ba;
+  --pip-ink: #201e1d;
+  --pip-ink2: rgb(32 30 29 / 0.8);
+  --pip-ink3: rgb(32 30 29 / 0.72);
+  --pip-line: rgb(32 30 29 / 0.12);
+  --pip-up: #56633f;
+  --pip-dn: #a33327;
+  --pip-skel: rgb(32 30 29 / 0.1);
+  --pip-solid: #8c491a;
+  --pip-solid-ink: #fff4ea;
+
+  /* Amber is a state, never a pot (DESIGN.md §5). */
+  --pip-amber: #8a5a00;
+  --pip-amber-dot: #d59217;
+  --pip-amber-tint: #fbe6bd;
+  --pip-amber-line: #b8790a;
+
+  /* Default accent is terracotta; a pot scope overrides these three. */
+  --pip-acc: #c67139;
+  --pip-tint: #ffe1d0;
+  --pip-aink: #643312;
+
+  --pip-hatch: repeating-linear-gradient(135deg, rgb(192 57 44 / 0.07) 0 9px, transparent 9px 18px);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --pip-bg: #1c1815;
+    --pip-card: #2a241e;
+    --pip-sunk: #171310;
+    --pip-ink: #f3ead9;
+    --pip-ink2: rgb(243 234 217 / 0.84);
+    --pip-ink3: rgb(243 234 217 / 0.68);
+    --pip-line: rgb(243 234 217 / 0.14);
+    --pip-up: #aebf92;
+    --pip-dn: #f08a7e;
+    --pip-skel: rgb(243 234 217 / 0.09);
+    --pip-solid: #f6a06b;
+    --pip-solid-ink: #241a12;
+
+    --pip-amber: #f3c46a;
+    --pip-amber-dot: #eab04a;
+    --pip-amber-tint: #3a2c14;
+    --pip-amber-line: #eab04a;
+
+    --pip-acc: #f6a06b;
+    --pip-tint: #3a2a1d;
+    --pip-aink: #ffc6a5;
+
+    --pip-hatch: repeating-linear-gradient(
+      135deg,
+      rgb(240 138 126 / 0.1) 0 9px,
+      transparent 9px 18px
+    );
+  }
+}
+
+:root[data-theme="dark"] {
+  --pip-bg: #1c1815;
+  --pip-card: #2a241e;
+  --pip-sunk: #171310;
+  --pip-ink: #f3ead9;
+  --pip-ink2: rgb(243 234 217 / 0.84);
+  --pip-ink3: rgb(243 234 217 / 0.68);
+  --pip-line: rgb(243 234 217 / 0.14);
+  --pip-up: #aebf92;
+  --pip-dn: #f08a7e;
+  --pip-skel: rgb(243 234 217 / 0.09);
+  --pip-solid: #f6a06b;
+  --pip-solid-ink: #241a12;
+
+  --pip-amber: #f3c46a;
+  --pip-amber-dot: #eab04a;
+  --pip-amber-tint: #3a2c14;
+  --pip-amber-line: #eab04a;
+
+  --pip-acc: #f6a06b;
+  --pip-tint: #3a2a1d;
+  --pip-aink: #ffc6a5;
+
+  --pip-hatch: repeating-linear-gradient(
+    135deg,
+    rgb(240 138 126 / 0.1) 0 9px,
+    transparent 9px 18px
+  );
+}
+
+/* Pot scopes. Anything inside one paints itself in that pot's colour without
+   knowing which pot it is (DESIGN.md §3). */
+.pot-fnd {
+  --pip-acc: #7a8a5e;
+  --pip-tint: #e1eecc;
+  --pip-aink: #3d472b;
+}
+
+.pot-pick {
+  --pip-acc: #c67139;
+  --pip-tint: #ffe1d0;
+  --pip-aink: #643312;
+}
+
+.pot-bet {
+  --pip-acc: #c0392c;
+  --pip-tint: #ffdcd6;
+  --pip-aink: #7a2418;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .pot-fnd {
+    --pip-acc: #aebf92;
+    --pip-tint: #2d3323;
+    --pip-aink: #ccdbb2;
+  }
+  :root:not([data-theme="light"]) .pot-pick {
+    --pip-acc: #f6a06b;
+    --pip-tint: #3a2a1d;
+    --pip-aink: #ffc6a5;
+  }
+  :root:not([data-theme="light"]) .pot-bet {
+    --pip-acc: #f08a7e;
+    --pip-tint: #3d211c;
+    --pip-aink: #ffc7bf;
+  }
+}
+
+:root[data-theme="dark"] .pot-fnd {
+  --pip-acc: #aebf92;
+  --pip-tint: #2d3323;
+  --pip-aink: #ccdbb2;
+}
+
+:root[data-theme="dark"] .pot-pick {
+  --pip-acc: #f6a06b;
+  --pip-tint: #3a2a1d;
+  --pip-aink: #ffc6a5;
+}
+
+:root[data-theme="dark"] .pot-bet {
+  --pip-acc: #f08a7e;
+  --pip-tint: #3d211c;
+  --pip-aink: #ffc7bf;
+}
+
+/* `inline` so the utilities resolve to the live variables above rather than
+   freezing the light values at build time. */
+@theme inline {
+  --color-ground: var(--pip-bg);
+  --color-card: var(--pip-card);
+  --color-sunk: var(--pip-sunk);
+  --color-ink: var(--pip-ink);
+  --color-ink2: var(--pip-ink2);
+  --color-ink3: var(--pip-ink3);
+  --color-line: var(--pip-line);
+  --color-up: var(--pip-up);
+  --color-dn: var(--pip-dn);
+  --color-skel: var(--pip-skel);
+  --color-solid: var(--pip-solid);
+  --color-solid-ink: var(--pip-solid-ink);
+  --color-acc: var(--pip-acc);
+  --color-tint: var(--pip-tint);
+  --color-aink: var(--pip-aink);
+  --color-amber: var(--pip-amber);
+  --color-amber-dot: var(--pip-amber-dot);
+  --color-amber-tint: var(--pip-amber-tint);
+  --color-amber-line: var(--pip-amber-line);
+
+  --font-heading: "Caprasimo", ui-serif, serif;
+  --font-body: "Figtree Variable", "Figtree", ui-sans-serif, system-ui, sans-serif;
+
+  --radius-chip: 14px;
+  --radius-inner: 22px;
+  --radius-card: 26px;
+  --radius-screen: 30px;
+
+  /* The handover's breakpoints: rail at 768, sidebar at 1120 (DESIGN.md §8). */
+  --breakpoint-rail: 768px;
+  --breakpoint-desk: 1120px;
+}
+
+@layer base {
+  html {
+    background: var(--pip-bg);
+  }
+
+  body {
+    margin: 0;
+    background: var(--pip-bg);
+    color: var(--pip-ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Never the browser default (DESIGN.md §3). */
+  :focus-visible {
+    outline: 2px solid var(--pip-acc);
+    outline-offset: 3px;
+  }
+}
+
+@utility hatch {
+  background-image: var(--pip-hatch);
+}

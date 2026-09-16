@@ -1,20 +1,29 @@
-import { BUCKETS } from "@finance-app/shared";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createBrowserRouter, RouterProvider } from "react-router";
+import { UnauthenticatedError } from "./lib/api";
+import { useAppearance } from "./lib/use-appearance";
+import { routes } from "./routes";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Being signed out isn't a flaky request; retrying it just delays the
+      // redirect to sign-in.
+      retry: (failureCount, error) => !(error instanceof UnauthenticatedError) && failureCount < 2,
+      staleTime: 30_000,
+    },
+  },
+});
+
+const router = createBrowserRouter(routes);
 
 function App() {
+  useAppearance();
+
   return (
-    <main className="flex min-h-svh flex-col items-center justify-center gap-4 bg-slate-950 p-6 text-slate-100">
-      <h1 className="text-2xl font-semibold">finance-app-personal</h1>
-      <p className="text-slate-400">
-        Phase 0 scaffold placeholder — real screens arrive in Phase 1.
-      </p>
-      <ul className="flex gap-3 text-sm text-slate-300">
-        {BUCKETS.map((bucket) => (
-          <li key={bucket} className="rounded border border-slate-700 px-3 py-1">
-            {bucket}
-          </li>
-        ))}
-      </ul>
-    </main>
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
   );
 }
 
