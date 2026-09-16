@@ -213,7 +213,16 @@ interface Provider {
 }
 ```
 
-`StubProvider` (`apps/api/src/providers/stub/index.ts`) is the only implementation so far. It returns fixed fake data per bucket, so unit tests never make a network call. `t212/` and `kraken/` implementations arrive in Phase 2 and 4.
+`StubProvider` (`apps/api/src/providers/stub/index.ts`) returns fixed fake data per bucket for stub mode. Its `Position` carries a `value`, which only the stub may do; real providers never supply values.
+
+### Trading 212 (`providers/t212/`, Phase 2)
+
+- **`client.ts`** — read-only client for the **practice environment only** (`env: "demo"`; anything else throws until Phase 3). HTTP Basic `key:secret`. Every request is a `GET` to an allowlisted path (summary, positions, instrument and exchange metadata, order history); a test reads the source and fails if a write method, `equity/orders` or `pies` ever appears. Methods: `accountSummary`, `positions`, `instruments`, `exchanges`, and `fills()` — an async generator following `nextPagePath` cursor pages, skipping unfilled orders.
+- **Errors are typed**: `T212AuthError` (401, never retried), `T212PermissionError` naming the missing permission (T212's 403 is bare, so it's inferred from the endpoint), `T212UnavailableError` (5xx, network, or 429 after retries), `T212ShapeError` (a field Pip relies on is missing — the beta API changed).
+- **Rate limits** come from T212's own headers: when `x-ratelimit-remaining` hits 0 the next call to that endpoint waits until `x-ratelimit-reset`; a 429 waits and retries twice, then gives up.
+- **`rows.ts`** — responses → stored rows: holdings (quantity and average price at full precision, total cost in pence), cash in pence, instruments, and trades (net value and fees in pence). `currentPrice` and `walletImpact.currentValue` are dropped (hard line 8). Anything not in pounds raises `NotInPoundsError`.
+- **`symbols.ts`** — T212 ticker → Yahoo and Alpha Vantage symbols from the exchange the ticker encodes (`GRGl_EQ` → `GRG.L` / `GRG.LON`, `ASMLa_EQ` → `ASML.AS` / `ASML.AMS`, `NVDA_US_EQ` → `NVDA`). Unknown formats give null, for a manual override.
+- Tests replay `fixtures/recorded/t212/`; the client was also run once against the practice account (summary, 4 holdings, 4 fills across pages, 17 exchanges).
 
 ## Market data layer
 
