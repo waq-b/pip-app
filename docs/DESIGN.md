@@ -247,6 +247,7 @@ Everything from the first round has been answered. Outstanding:
   - the connection-gap row in the bell
   - net-assets entry as a keypad field with the stepper
   - the launch splash ("Checking for updates…")
+  - **"Pip's warming up"** (Phase 6, decision 7): Pip is allowed to sleep, so the first call after a while can take up to a minute. After ~3 seconds without an answer, the screen says so in plain words — no spinner that never ends, nothing to tap — and swaps itself for the screen when the answer arrives. Built from the existing loading states; the launch splash (§3) is the nearest thing to it.
 
 ---
 
