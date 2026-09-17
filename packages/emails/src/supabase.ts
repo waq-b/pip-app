@@ -1,7 +1,7 @@
 import { signInCodeEmail } from "./templates/sign-in-code.js";
 
 /** Where Pip is served. The mark is hosted by the web app (apps/web/public/email). */
-export const PIP_URL = "https://pip-old.example.net";
+export const PIP_URL = "https://pip.example.com";
 export const MARK_PATH = "/email/pip-mark-96.png";
 
 /**
