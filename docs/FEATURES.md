@@ -12,6 +12,10 @@ Locally, `PROVIDER_MODE=stub` still runs the whole app on the design's sample da
 
 The API also answers `GET /api/health` (`{ status: "ok" }`) with no sign-in, for uptime checks.
 
+## Opening Pip
+
+- **A short splash** — the Pip mark, "Pip", "Checking for updates…" — while Pip checks for a newer version. If there is one, Pip switches to it before you see anything, so an app installed on a phone never runs an old version after an update. It waits at most 3 seconds, doesn't appear to wait at all on a first visit or offline, and never reloads the app while you're using it: an update found later is picked up next time you open Pip.
+
 ## Getting in
 
 - **An emailed 8-digit code is the only way in** for now, through Supabase — no password (Google sign-in comes later). Proving you own an email isn't enough: your email has to be on Pip's allowlist, and an empty allowlist admits nobody at all.

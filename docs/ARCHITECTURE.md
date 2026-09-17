@@ -95,7 +95,7 @@ The Claude Design handover ("Pip") lives in the repo, not just in the design too
 
 The PWA manifest (`apps/web/vite.config.ts`) and `index.html` carry the Pip name, the cream/dark theme colours and these icons.
 
-**Updates.** `vite-plugin-pwa` generates a service worker that precaches the build, skips waiting and claims open pages. `src/main.tsx` reloads the page once when a new worker takes control (`controllerchange`, only if a worker already controlled the page), so an installed app moves onto a new deploy on its next launch instead of running the old build for a relaunch or two.
+**Updates, behind a launch splash** (ported from Terpa, 2026-09-17). `index.html` carries a static splash — the mark, "Pip", "Checking for updates…" — that shows before any JS, in the saved Appearance (a tiny inline script sets `data-theme` before first paint). `vite-plugin-pwa` runs with `registerType: "prompt"`, so a new service worker waits instead of taking over mid-use. `src/update.ts` registers it and asks for an update: if a new version is waiting, or arrives within `CHECK_MS` (3s), it's applied (`SKIP_WAITING`) and the page reloads into it with the splash still up. Otherwise the splash fades after at least `SPLASH_MIN_MS` (0.6s). The check is skipped on a first visit, offline and in dev; an update found after the splash waits for the next launch. Phase 6 task 7's `injectManifest` worker must keep handling the `SKIP_WAITING` message.
 
 ## Bucket model
 

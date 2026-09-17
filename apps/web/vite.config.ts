@@ -19,7 +19,9 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: "autoUpdate",
+      // A new version waits until src/update.ts applies it on launch, behind the
+      // splash, so the page never reloads mid-use.
+      registerType: "prompt",
       manifest: {
         name: "Pip",
         short_name: "Pip",

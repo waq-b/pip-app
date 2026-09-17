@@ -131,7 +131,8 @@ Provider swatches: Trading 212 `#1f3a5f`, Kraken `#5741d9`.
 
 - Radii: 30px screen cards · 26px section cards · 22–24px inner blocks · 20px sidebar identity block · 14–18px chips and rail items · `999px` every button, pill and track.
 - Icons: **Lucide**, stroke-width **2.75**. 15–23px interface, 20–21px nav, 26–42px empty states.
-- Motion: a 1.5s skeleton pulse, a 1s spinner, a 120ms hover brightness shift. Nothing else animates.
+- Motion: a 1.5s skeleton pulse, a 1s spinner, a 120ms hover brightness shift. Nothing else animates — except the launch splash (below), which uses the same 1.5s pulse on the mark and a 350ms fade out.
+- **Launch splash** (added 2026-09-17, like Terpa's; undesigned, §9): full-screen `bg`, centred column with 14px gaps — the standard-cut mark at 56px (dark fills on dark), "Pip" in Caprasimo 34px, "Checking for updates…" in Figtree 12.5px/500 `ink3`. Follows the saved Appearance. Shows 0.6s at least and 3s at most; no pulse with reduced motion.
 - Focus is never the browser default: `outline: 2px solid var(--acc); outline-offset: 3px`.
 - Tap targets are whole rows and whole cards, not chevrons.
 
@@ -245,6 +246,7 @@ Everything from the first round has been answered. Outstanding:
   - the starter-limit soft reminder on Rules
   - the connection-gap row in the bell
   - net-assets entry as a keypad field with the stepper
+  - the launch splash ("Checking for updates…")
 
 ---
 

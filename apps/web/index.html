@@ -9,9 +9,119 @@
     <meta name="theme-color" content="#1c1815" media="(prefers-color-scheme: dark)" />
     <meta name="description" content="Three pots. One number. No homework." />
     <title>Pip</title>
+    <!-- Your Appearance choice, before first paint, so the splash and app open in it (src/lib/theme.ts). -->
+    <script>
+      try {
+        var theme = localStorage.getItem("pip.appearance");
+        if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
+      } catch (e) {}
+    </script>
+    <!-- Launch splash: static so it shows before any JS; src/update.ts fades it once the update check is done. -->
+    <style>
+      #splash {
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        background: #ebddc5;
+        color: #201e1d;
+        font-family: "Figtree Variable", system-ui, sans-serif;
+        transition: opacity 0.35s ease;
+      }
+      #splash.is-leaving {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #splash svg {
+        width: 56px;
+        height: 56px;
+        animation: splash-pulse 1.5s ease-in-out infinite;
+      }
+      #splash .word {
+        font-family: "Caprasimo", ui-serif, serif;
+        font-size: 34px;
+        letter-spacing: -0.015em;
+        line-height: 1;
+      }
+      #splash .note {
+        font-size: 12.5px;
+        font-weight: 500;
+        color: rgba(32, 30, 29, 0.72);
+        margin-top: 6px;
+      }
+      #splash .fnd {
+        fill: #7a8a5e;
+      }
+      #splash .pick {
+        fill: #c67139;
+      }
+      #splash .bet {
+        fill: #c0392c;
+      }
+      @keyframes splash-pulse {
+        50% {
+          opacity: 0.55;
+        }
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) #splash {
+          background: #1c1815;
+          color: #f3ead9;
+        }
+        :root:not([data-theme="light"]) #splash .note {
+          color: rgba(243, 234, 217, 0.68);
+        }
+        :root:not([data-theme="light"]) #splash .fnd {
+          fill: #aebf92;
+        }
+        :root:not([data-theme="light"]) #splash .pick {
+          fill: #f6a06b;
+        }
+        :root:not([data-theme="light"]) #splash .bet {
+          fill: #f08a7e;
+        }
+      }
+      :root[data-theme="dark"] #splash {
+        background: #1c1815;
+        color: #f3ead9;
+      }
+      :root[data-theme="dark"] #splash .note {
+        color: rgba(243, 234, 217, 0.68);
+      }
+      :root[data-theme="dark"] #splash .fnd {
+        fill: #aebf92;
+      }
+      :root[data-theme="dark"] #splash .pick {
+        fill: #f6a06b;
+      }
+      :root[data-theme="dark"] #splash .bet {
+        fill: #f08a7e;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #splash,
+        #splash svg {
+          transition: none;
+          animation: none;
+        }
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
+    <div id="splash" role="status" aria-label="Checking for updates">
+      <!-- The Pip mark, standard cut (src/assets/brand/pip-mark.svg; dark: pip-mark-dark.svg). -->
+      <svg viewBox="0 0 56 56" aria-hidden="true">
+        <circle cx="19" cy="20" r="13" class="fnd" />
+        <circle cx="36.5" cy="25" r="10" class="pick" />
+        <circle cx="27" cy="41.5" r="6.5" class="bet" />
+      </svg>
+      <span class="word">Pip</span>
+      <span class="note">Checking for updates…</span>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
