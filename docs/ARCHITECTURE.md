@@ -298,6 +298,15 @@ interface Provider {
 - **Refresh-on-read** in the routes (task 12) covers anything the schedule misses.
 - **Keep-alive**: free Supabase projects pause after about a week of low activity, and scheduled jobs inside the database aren't documented as activity. A GitHub Actions workflow queries Supabase's REST API every three days with the publishable key (public by design; stored as repository secrets `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`). RLS refuses the read, but the request still reaches the database.
 
+## Side Bet's limit alerts (`rules/limit-alerts.ts`, Phase 6)
+
+Two alerts, judged in the refresh job after the poll that reads the Kraken ledger — never on a price (phase-6.md decision 2).
+
+- **80% of the limit**, then **the limit itself**. Money in, less taken out, only moves when the user moves money, so there is nothing to flicker and none of the two-run confirmation the old percentage cap needed.
+- **One alert per crossing.** A row in `limit_alerts` stays open until money in comes clearly back under that threshold — by `LIMIT_REARM_PENCE` (£25) — which sets `cleared_at` quietly, with no push. After that the same threshold can alert again, with a new row.
+- **The push** goes through `notify()`, so the user's switches and the one-push-per-event rule apply; the alert is recorded either way, including when nobody has a device subscribed.
+- **What it says** is where the line is, in pounds, and that Pip can't stop anything (hard line 1). The row is also what the bell shows.
+
 ## Ops: job freshness, with Pip asleep (`jobs/runs.ts`, `routes/status.ts`, `drizzle/0018`, Phase 6)
 
 **Nothing pings Pip.** Render is free and allowed to sleep; a liveness check on a schedule would be a keep-alive in disguise and would spend the free hours (CLAUDE.md s3, phase-6.md decision 7). So ops watches the **work**, from inside the database.

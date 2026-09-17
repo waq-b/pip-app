@@ -147,6 +147,8 @@ function realAccounts(): Partial<BuildAppOptions> {
     jobStatus: dbJobStatus(db),
     refreshJob: createRefreshJob({
       runs: dbJobRecorder(db),
+      sideBetLimits,
+      notifier: createNotifier({ store: notifications, ...senders() }),
       db,
       box,
       clientFor,

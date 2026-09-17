@@ -846,6 +846,11 @@ export const limitAlerts = pgTable(
     /** The start of the 12-month window this alert belongs to. */
     windowStart: date("window_start").notNull(),
     alertedAt: timestamp("alerted_at", { withTimezone: true }).notNull().defaultNow(),
+    /**
+     * When money in came back clearly under this threshold. Until then the
+     * alert is open and the threshold stays quiet (phase-6.md decision 2).
+     */
+    clearedAt: timestamp("cleared_at", { withTimezone: true }),
     /** What it was built from, so the bell row can say it in pounds. */
     moneyInPence: bigint("money_in_pence", { mode: "number" }).notNull(),
     limitPence: bigint("limit_pence", { mode: "number" }).notNull(),

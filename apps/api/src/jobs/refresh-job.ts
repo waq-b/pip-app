@@ -7,6 +7,9 @@ import { collectFacts } from "../facts/collect.js";
 import type { FactsAdapter } from "../facts/types.js";
 import { fillOutcomes } from "../nudges/outcomes.js";
 import { noJobRecorder, type JobRecorder } from "./runs.js";
+import { checkLimitAlerts } from "../rules/limit-alerts.js";
+import type { SideBetLimitReader } from "../rules/side-bet.js";
+import type { Notifier } from "../notify/notify.js";
 import type { NudgeService } from "../nudges/service.js";
 import { users } from "../db/schema.js";
 import { refreshDue, type PricedInstrument } from "../market/refresh.js";
@@ -55,6 +58,10 @@ export interface RefreshJobDeps {
   facts?: FactsAdapter[];
   /** Phase 5 nudges. Without it, no weeks are built. */
   nudges?: NudgeService;
+  /** Side Bet's limit, for its 80% and 100% alerts (Phase 6). */
+  sideBetLimits?: SideBetLimitReader;
+  /** Sends the limit push. Without it the alert is still recorded. */
+  notifier?: Notifier;
   /**
    * Records what ran (Phase 6). Every step writes a row, which is what the
    * freshness check inside Supabase reads — nothing pings the API.
@@ -69,6 +76,8 @@ export interface RefreshJobSummary {
   pricesRefreshed: number;
   pricesFailed: number;
   snapshots: number;
+  /** Side Bet limit alerts raised this run (80% and 100%). */
+  limitAlerts: number;
   /** Facts sources read, reports newly stored, results dates written. */
   facts: { read: number; stored: number; events: number };
   /** Weeks built this run, and daily nudges newly logged. */
@@ -92,6 +101,7 @@ export function createRefreshJob(deps: RefreshJobDeps) {
       pricesRefreshed: 0,
       pricesFailed: 0,
       snapshots: 0,
+      limitAlerts: 0,
       facts: { read: 0, stored: 0, events: 0 },
       nudges: { weeks: 0, daily: 0 },
       outcomes: 0,
@@ -190,6 +200,26 @@ export function createRefreshJob(deps: RefreshJobDeps) {
       for (const { userId } of owners) {
         const result = await snapshotDailyValues(deps.db, userId, day);
         summary.snapshots += result.written.length;
+      }
+    });
+
+    // Side Bet's limit is judged on money in, so this runs after the poll that
+    // reads the Kraken ledger — never on a price.
+    await step("limits", async () => {
+      if (!deps.sideBetLimits) return;
+      const owners = await deps.db
+        .selectDistinct({ userId: providerCredentials.userId })
+        .from(providerCredentials)
+        .where(inArray(providerCredentials.status, ["live"]));
+      for (const { userId } of owners) {
+        const sideBet = await deps.sideBetLimits.read({ userId }, at);
+        const outcomes = await checkLimitAlerts(
+          { db: deps.db, ...(deps.notifier ? { notifier: deps.notifier } : {}) },
+          { userId },
+          sideBet,
+          at,
+        );
+        summary.limitAlerts += outcomes.filter((o) => o.action === "alerted").length;
       }
     });
 
