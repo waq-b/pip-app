@@ -60,11 +60,15 @@ export function supabaseAuthClient(
     async sendMagicLink(email) {
       const { error } = await supabase.auth.signInWithOtp({
         email,
-        // Anyone can get a Supabase account; being let in is the API's
-        // allowlist decision, so this doesn't try to gate anything.
-        options: { emailRedirectTo: `${window.location.origin}/`, shouldCreateUser: true },
+        // Supabase accounts are made by the allowlist command, never here, so
+        // a stranger can't get a session at all (sign-ups are off in Supabase
+        // too). Being let in is still the API's allowlist decision.
+        options: { emailRedirectTo: `${window.location.origin}/`, shouldCreateUser: false },
       });
       if (!error) return;
+      // An address with no Supabase account. Answer exactly as for a real
+      // one, so the sign-in screen never reveals who's on the list.
+      if (error.code === "otp_disabled" || /signups not allowed/i.test(error.message)) return;
       if (error.status === 429 || error.code === "over_email_send_rate_limit") {
         throw new TooManyEmailsError();
       }

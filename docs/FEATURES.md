@@ -20,7 +20,7 @@ The API also answers `GET /api/health` (`{ status: "ok" }`) with no sign-in, for
 - **Staying signed in** follows Supabase's defaults: a short-lived token that the app refreshes while you use it. If a sign-in stops being accepted, Pip signs you out cleanly rather than leaving you stuck.
 - **Asking to be let in.** Someone turned away is still signed in, so they can put themselves on the waiting list. Pip takes the address from their sign-in, so there's no form to fill in and no way to submit somebody else's. Asking twice is harmless.
 - **No promises are made.** No queue position, no countdown, no "we'll email you" — the only emails Pip sends are sign-in links. Waqar grants access by hand.
-- **Access is granted by hand**, with `pnpm --filter api allowlist add <email>`. There is no self-service sign-up, by design.
+- **Access is granted by hand**, with `pnpm --filter api allowlist add <email>`, which also makes their Supabase account. There is no self-service sign-up, by design: Supabase's sign-ups are off, so nobody else can even get a session. Asking for a link with an address Pip doesn't know looks exactly like asking with one it does ("Check your email"), so the screen doesn't give away who's on the list.
 - **Personalised research is granted by hand too** (Phase 5): `allowlist personal <email> on`. Off for everyone by default; nothing reads it yet — Your week arrives later in Phase 5.
 
 ## What Pip can tell you

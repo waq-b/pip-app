@@ -93,3 +93,36 @@ describe("user-owned tables", () => {
     for (const statement of grants) expect(statement).toMatch(/GRANT SELECT \(/);
   });
 });
+
+/**
+ * Shared data (prices, instruments, facts) isn't anyone's own, but it still
+ * names what's held — so a Supabase session alone isn't enough to read it; the
+ * caller must be on the allowlist. And the allowlist tables themselves grant
+ * nothing to the public roles.
+ */
+describe("shared tables", () => {
+  const shared = [
+    ...migrations.matchAll(
+      /CREATE POLICY "([^"]+)" ON "(\w+)" FOR SELECT TO authenticated USING \(true\)/g,
+    ),
+  ].map((match) => ({ policy: match[1]!, table: match[2]! }));
+
+  it("found them", () => {
+    expect(shared.map((s) => s.table)).toEqual(
+      expect.arrayContaining(["instruments", "prices", "facts_news"]),
+    );
+  });
+
+  it.each(shared)("$table is read only by allowlisted users", ({ policy, table }) => {
+    const later = [
+      ...migrations.matchAll(
+        new RegExp(`ALTER POLICY "${policy}" ON "${table}" USING \\(([^;]*)\\);`, "g"),
+      ),
+    ];
+    expect(later.at(-1)?.[1]).toBe("private.current_app_user_id() IS NOT NULL");
+  });
+
+  it("revokes every public privilege on the allowlist and waitlist", () => {
+    expect(migrations).toMatch(/REVOKE ALL ON "users", "waitlist" FROM anon, authenticated/);
+  });
+});

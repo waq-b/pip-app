@@ -169,6 +169,24 @@ describe("reading as a signed-in user", () => {
     expect(rows).toEqual([]);
   });
 
+  it("can't read shared prices or instruments with a Supabase session that isn't on the list", async () => {
+    const stranger = "99999999-9999-4999-8999-999999999999";
+    const seen = await asUser(db, stranger, async (tx) => ({
+      instruments: await tx.select().from(instruments),
+      prices: await tx.select().from(prices),
+    }));
+    expect(seen).toEqual({ instruments: [], prices: [] });
+  });
+
+  it("can't touch the allowlist or the waiting list at all", async () => {
+    await expect(asUser(db, ALICE_AUTH, (tx) => tx.select().from(users))).rejects.toThrow(
+      /permission denied/,
+    );
+    await expect(
+      asUser(db, ALICE_AUTH, (tx) => tx.execute(sql`select * from waitlist`)),
+    ).rejects.toThrow(/permission denied/);
+  });
+
   it("leaves nothing behind: the next query on the connection is privileged again", async () => {
     await asUser(db, ALICE_AUTH, (tx) => tx.select().from(holdings));
     const role = await db.execute(sql`select current_user as role`);

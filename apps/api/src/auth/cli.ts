@@ -6,12 +6,15 @@
  *   pnpm --filter api allowlist remove someone@example.com
  *   pnpm --filter api allowlist personal someone@example.com on|off
  *
- * Needs a real DATABASE_URL.
+ * Needs a real DATABASE_URL. `add` also needs SUPABASE_URL and
+ * SUPABASE_SERVICE_ROLE_KEY: sign-ups are off, so it makes the person's
+ * Supabase account too.
  */
 import { eq } from "drizzle-orm";
 import { getDb } from "../db/client.js";
 import { users } from "../db/schema.js";
 import { normaliseEmail } from "./allowlist.js";
+import { ensureSupabaseAccount } from "./supabase-admin.js";
 
 const [command, rawEmail, rawSwitch] = process.argv.slice(2);
 
@@ -36,7 +39,10 @@ async function main() {
     case "add": {
       const email = requireEmail(rawEmail);
       await db.insert(users).values({ email }).onConflictDoNothing();
-      console.log(`Allowed: ${email}`);
+      const account = await ensureSupabaseAccount(email);
+      console.log(
+        `Allowed: ${email} (Supabase account ${account === "created" ? "made" : "already there"})`,
+      );
       return;
     }
 
