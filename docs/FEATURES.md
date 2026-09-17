@@ -1,6 +1,6 @@
 # Features
 
-Living doc. Every screen, rule, alert, and state the app has — written for a human, not a compiler. Last updated: Phase 4 (rules engine), after 0.3.0 (Kraken).
+Living doc. Every screen, rule, alert, and state the app has — written for a human, not a compiler. Last updated: Phase 5 — research agent and Your week (0.5.0), after 0.4.0 (rules engine) and 0.3.0 (Kraken).
 
 ## Where Pip is: live, on a Trading 212 practice account
 

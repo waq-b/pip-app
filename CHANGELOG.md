@@ -5,7 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-09-17
+
 ### Phase 5 — Research agent + digest
+
+- Changed: Phase 5 close-out — Render built the first real week from the practice ISA; that build deleted at Waqar's request so it rebuilds with personal research on (switched on) and the opening-line fix; phase-5.md outcome; 0.5.0 (#3229138524)
 
 - Added: news sources verified with real calls — Google News RSS, Alpha Vantage `NEWS_SENTIMENT` and `EARNINGS_CALENDAR`, Marketaux, RSS (BBC Business, Investing.com, CoinDesk, CoinTelegraph, Nvidia IR) — coverage per practice holding, and Groq `gpt-oss-120b`/`-20b` strict JSON on prompt v1; trimmed recordings in `apps/api/fixtures/recorded/{rss,google-news,marketaux,alpha-vantage,groq}`, facts in CLAUDE.md s13 (#3229132855)
 - Added: Phase 5 storage — `facts_news` (+ `facts_news_instruments`), `facts_events`, `facts_fetches`, `user_profiles`, `trust_settings`, `digests`, `nudges` with outcome fields, `users.personal_research`; RLS (shared facts, server-only fetch bookkeeping, own rows for the rest) and `CHECK`s mirroring new shared constants (`packages/shared/src/research.ts`: trust defaults and limits, profile limits, nudge kinds/reasons); migration 0013 applied; `allowlist personal <email> on|off`; 36 tests incl. limits matching the shared constants and cross-user isolation (#3229143052)
