@@ -565,6 +565,19 @@ export const digests = pgTable(
   ],
 );
 
+export const DB_PUSH_KINDS = ["limit", "urgent", "digest"] as const;
+export const DB_NOTIFICATION_ITEM_KINDS = ["nudge", "limit_alert", "connection_gap"] as const;
+export const DB_RECOMMENDATIONS = ["hold", "take_some_profit", "rebalance"] as const;
+export const DB_RECOMMENDATION_TRIGGERS = [
+  "side_bet_over_limit",
+  "holding_multiple",
+  "pot_off_target",
+  "urgent_move",
+] as const;
+export const DB_RECOMMENDATION_STATES = ["clear", "pending", "fired", "pending_clear"] as const;
+export const DB_JOB_NAMES = ["refresh"] as const;
+export const DB_PROVIDERS = ["trading212", "kraken"] as const;
+
 /**
  * The nudge log — every nudge Pip built, shown or held back, with everything it
  * was built from, what the user did about it, and what happened after. The
@@ -610,6 +623,16 @@ export const nudges = pgTable(
     builtOn: date("built_on").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 
+    /** Phase 6: past the urgent line, so it pushes rather than waiting for the week. */
+    urgent: boolean("urgent").notNull().default(false),
+    /**
+     * Phase 6, `personal_research` users only (hard line 12): the course Pip
+     * recommends, chosen by code — the writer only explains it.
+     */
+    recommendation: text("recommendation"),
+    /** Which trigger produced the recommendation. */
+    trigger: text("trigger"),
+
     response: text("response"),
     respondedAt: timestamp("responded_at", { withTimezone: true }),
 
@@ -646,9 +669,252 @@ export const nudges = pgTable(
     check("nudges_kind", oneOf(table.kind, DB_NUDGE_KINDS)),
     check("nudges_bucket", oneOf(table.bucket, DB_BUCKETS)),
     check("nudges_response", oneOf(table.response, DB_NUDGE_RESPONSES)),
+    check("nudges_recommendation", oneOf(table.recommendation, DB_RECOMMENDATIONS)),
+    check("nudges_trigger", oneOf(table.trigger, DB_RECOMMENDATION_TRIGGERS)),
+    check(
+      "nudges_recommendation_has_a_trigger",
+      sql`(${table.recommendation} is null) = (${table.trigger} is null)`,
+    ),
     check(
       "nudges_weekly_in_a_week",
       sql`(${table.cadence} = 'weekly') = (${table.digestId} is not null)`,
+    ),
+  ],
+);
+
+// ─── Phase 6: notifications, Side Bet's limit, recommendations, jobs ──────────
+//
+// Copies of the constants in `@finance-app/shared` again (drizzle-kit can't
+// load the shared package's source); `notifications-schema.test.ts` fails if
+// they ever differ.
+//
+// Who may read what: the settings, the read marks, the alerts and the
+// connection gaps are the user's own. A device's push keys and the sealed net
+// assets are never granted to anyone signed in — the API reads them, and only
+// in memory. Deliveries, trigger state and job runs are the server's own
+// bookkeeping.
+
+/**
+ * One browser on one device, subscribed to push. Several per user: a phone, a
+ * tablet, a computer. The endpoint is the push service's own address for that
+ * device, and the keys encrypt the payload to it — so the whole row is what
+ * lets anyone push to that device, and none of it is granted to the browser.
+ */
+export const pushSubscriptions = pgTable(
+  "push_subscriptions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** The push service's URL for this device. Unique across everyone. */
+    endpoint: text("endpoint").notNull().unique(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+    /** "iPhone", "Android tablet", "Mac" — worked out from the user agent, for the device row. */
+    label: text("label").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    lastDeliveredAt: timestamp("last_delivered_at", { withTimezone: true }),
+    /** A 404 or 410 from the push service deletes the row; anything else is recorded here. */
+    lastFailedAt: timestamp("last_failed_at", { withTimezone: true }),
+  },
+  (table) => [check("push_subscriptions_https", sql`${table.endpoint} like 'https://%'`)],
+);
+
+/** What a user wants sent. No row means the defaults, which are everything on. */
+export const notificationSettings = pgTable("notification_settings", {
+  userId: uuid("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  /** The master switch. Off means nothing is pushed, whatever the three below say. */
+  push: boolean("push").notNull().default(true),
+  pushLimit: boolean("push_limit").notNull().default(true),
+  pushUrgent: boolean("push_urgent").notNull().default(true),
+  pushDigest: boolean("push_digest").notNull().default(true),
+  email: boolean("email").notNull().default(true),
+  /** When the first-login sheet was answered. Set once; it's never asked twice. */
+  askedAt: timestamp("asked_at", { withTimezone: true }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
+ * Every push Pip sent. The unique key is what makes one event one push, even if
+ * two job runs overlap: the sender writes the row first and gives up if it's
+ * already there.
+ */
+export const pushDeliveries = pgTable(
+  "push_deliveries",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull(),
+    /** The event this push is about: `limit:80:<window>`, `urgent:<nudge id>`, `digest:<Monday>`. */
+    dedupeKey: text("dedupe_key").notNull(),
+    sentAt: timestamp("sent_at", { withTimezone: true }).notNull().defaultNow(),
+    devicesTried: integer("devices_tried").notNull().default(0),
+    devicesDelivered: integer("devices_delivered").notNull().default(0),
+    /** The London day it was sent, for the urgent budget. */
+    sentOn: date("sent_on").notNull(),
+  },
+  (table) => [
+    unique("push_deliveries_once_per_event").on(table.userId, table.kind, table.dedupeKey),
+    check("push_deliveries_kind", oneOf(table.kind, DB_PUSH_KINDS)),
+  ],
+);
+
+/** What the user has read in the bell. Absent means unread. */
+export const notificationReads = pgTable(
+  "notification_reads",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    itemKind: text("item_kind").notNull(),
+    /** The nudge, alert or gap row's id. */
+    itemId: uuid("item_id").notNull(),
+    readAt: timestamp("read_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.itemKind, table.itemId] }),
+    check("notification_reads_item_kind", oneOf(table.itemKind, DB_NOTIFICATION_ITEM_KINDS)),
+  ],
+);
+
+/**
+ * A provider that went quiet: shown in the bell, never pushed. Open while
+ * `ended_at` is null, closed by the refresh job when the provider syncs again.
+ */
+export const connectionGaps = pgTable(
+  "connection_gaps",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    provider: text("provider").notNull(),
+    startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
+    endedAt: timestamp("ended_at", { withTimezone: true }),
+  },
+  (table) => [
+    check("connection_gaps_provider", oneOf(table.provider, DB_PROVIDERS)),
+    check(
+      "connection_gaps_ends_after_it_starts",
+      sql`${table.endedAt} is null or ${table.endedAt} >= ${table.startedAt}`,
+    ),
+  ],
+);
+
+/**
+ * The user's net assets, sealed like a provider key and decrypted only in
+ * memory when Pip needs the limit (hard line 6). It sets Side Bet's limit at
+ * the FCA's 10% guide and is used for nothing else. The browser may read when
+ * it was last reviewed, never the figure.
+ */
+export const netAssets = pgTable("net_assets", {
+  userId: uuid("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  /** Whole pounds, sealed by `crypto/secrets.ts`. */
+  sealedAmount: text("sealed_amount").notNull(),
+  masterKeyVersion: integer("master_key_version").notNull(),
+  /** Set whenever the figure is entered again; Pip asks for a check a year on. */
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
+ * Side Bet's limit alerts: 80% of the limit, then reaching it, each once per
+ * 12-month window. Written by the refresh job from money in, less taken out —
+ * which only moves when money moves, so there's nothing to flicker.
+ */
+export const limitAlerts = pgTable(
+  "limit_alerts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** 80 or 100, in percent of the limit. */
+    threshold: integer("threshold").notNull(),
+    /** The start of the 12-month window this alert belongs to. */
+    windowStart: date("window_start").notNull(),
+    alertedAt: timestamp("alerted_at", { withTimezone: true }).notNull().defaultNow(),
+    /** What it was built from, so the bell row can say it in pounds. */
+    moneyInPence: bigint("money_in_pence", { mode: "number" }).notNull(),
+    limitPence: bigint("limit_pence", { mode: "number" }).notNull(),
+    /** True while net assets are unset and the £350 starter limit applies. */
+    starterLimit: boolean("starter_limit").notNull(),
+  },
+  (table) => [
+    unique("limit_alerts_once_per_window").on(table.userId, table.threshold, table.windowStart),
+    check("limit_alerts_threshold", sql`${table.threshold} in (80, 100)`),
+    check("limit_alerts_money_in", sql`${table.moneyInPence} >= 0`),
+    check("limit_alerts_limit", sql`${table.limitPence} > 0`),
+  ],
+);
+
+/**
+ * Where each recommendation trigger stands for one subject (a pot, a holding),
+ * so one crossing makes one brief. `pending` is a condition seen once, waiting
+ * for the next refresh to confirm it — the calmer rule, which R1 needs because
+ * it's measured on value.
+ */
+export const recommendationState = pgTable(
+  "recommendation_state",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    trigger: text("trigger").notNull(),
+    /** The bucket or instrument the trigger is about; `-` when it's about everything. */
+    subject: text("subject").notNull(),
+    state: text("state").notNull(),
+    /** New on each confirmed crossing, and what the push is keyed by. */
+    eventId: uuid("event_id"),
+    /** When the current state began. */
+    since: timestamp("since", { withTimezone: true }).notNull().defaultNow(),
+    lastCheckedAt: timestamp("last_checked_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.trigger, table.subject] }),
+    check("recommendation_state_trigger", oneOf(table.trigger, DB_RECOMMENDATION_TRIGGERS)),
+    check("recommendation_state_state", oneOf(table.state, DB_RECOMMENDATION_STATES)),
+    check(
+      "recommendation_state_event_when_fired",
+      sql`(${table.state} in ('fired', 'pending_clear')) = (${table.eventId} is not null)`,
+    ),
+  ],
+);
+
+/**
+ * One run of a scheduled job: what it did, what failed, how long it took. The
+ * jobs health check reads the last one, and Setup shows its age. Server-only —
+ * `GET /status` says how long ago, never why.
+ */
+export const jobRuns = pgTable(
+  "job_runs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    job: text("job").notNull(),
+    startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+    finishedAt: timestamp("finished_at", { withTimezone: true }),
+    /** Per-step counts and timings. */
+    summary: jsonb("summary")
+      .notNull()
+      .default(sql`'{}'::jsonb`),
+    /** The steps that failed, by name. Empty is a clean run. */
+    errorSteps: text("error_steps")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+  },
+  (table) => [
+    check("job_runs_job", oneOf(table.job, DB_JOB_NAMES)),
+    check(
+      "job_runs_finishes_after_it_starts",
+      sql`${table.finishedAt} is null or ${table.finishedAt} >= ${table.startedAt}`,
     ),
   ],
 );
