@@ -617,6 +617,7 @@ export const nudges = pgTable(
     priceAt: numeric("price_at"),
     priceCurrency: text("price_currency"),
     priceSource: text("price_source"),
+    /** Pence of pounds per unit 7 days on (`nudges/outcomes.ts`). `price_7d_at` marks the outcome done. */
     price7d: numeric("price_7d"),
     price7dAt: timestamp("price_7d_at", { withTimezone: true }),
     price30d: numeric("price_30d"),

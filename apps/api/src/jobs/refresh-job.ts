@@ -4,6 +4,7 @@ import { holdings, providerCredentials } from "../db/schema.js";
 import type { Db } from "../db/user-scope.js";
 import { collectFacts } from "../facts/collect.js";
 import type { FactsAdapter } from "../facts/types.js";
+import { fillOutcomes } from "../nudges/outcomes.js";
 import type { NudgeService } from "../nudges/service.js";
 import { users } from "../db/schema.js";
 import { refreshDue, type PricedInstrument } from "../market/refresh.js";
@@ -34,6 +35,7 @@ import {
  * 6. Build "Your week" for everyone with a live account once it's due (from
  *    07:00 UTC Monday), and today's daily nudges from 07:00 UTC — after facts,
  *    so a week is built from the freshest reports.
+ * 7. Fill in what happened 7 and 30 days after each nudge, from cached closes.
  */
 
 type Market = ReturnType<typeof withFallback>;
@@ -61,6 +63,8 @@ export interface RefreshJobSummary {
   facts: { read: number; stored: number; events: number };
   /** Weeks built this run, and daily nudges newly logged. */
   nudges: { weeks: number; daily: number };
+  /** Nudge outcomes filled in this run. */
+  outcomes: number;
   errors: string[];
 }
 
@@ -80,6 +84,7 @@ export function createRefreshJob(deps: RefreshJobDeps) {
       snapshots: 0,
       facts: { read: 0, stored: 0, events: 0 },
       nudges: { weeks: 0, daily: 0 },
+      outcomes: 0,
       errors: [],
     };
     const step = async (name: string, work: () => Promise<void>) => {
@@ -187,6 +192,10 @@ export function createRefreshJob(deps: RefreshJobDeps) {
           summary.errors.push(`nudges:${person.userId}`);
         }
       }
+    });
+
+    await step("outcomes", async () => {
+      summary.outcomes = (await fillOutcomes(deps.db, at)).filled;
     });
 
     return summary;
