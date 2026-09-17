@@ -1,3 +1,4 @@
+import { DEFAULT_TRUST_SETTINGS } from "@finance-app/shared";
 import type { RulesView } from "@finance-app/shared";
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -45,7 +46,11 @@ function view(overCap = true): RulesView {
 }
 
 function api(rules: Handler = { body: view() }): Record<string, Handler> {
-  return { ...ME_ALLOWED, "/rules": rules };
+  return {
+    ...ME_ALLOWED,
+    "/rules": rules,
+    "/trust-rules": { body: { settings: DEFAULT_TRUST_SETTINGS } },
+  };
 }
 
 beforeEach(() => {

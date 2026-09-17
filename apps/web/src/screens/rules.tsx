@@ -15,6 +15,7 @@ import { Skeleton } from "../components/skeleton";
 import { formatPercent, formatPounds } from "../lib/format";
 import { useRules, useSaveRules, type RuleSettings } from "../lib/rules";
 import { ICON_STROKE } from "../shell/nav";
+import { TrustRulesSection } from "./trust-rules-section";
 import { useBreakpoint } from "../shell/use-breakpoint";
 
 /**
@@ -53,6 +54,10 @@ export function RulesScreen() {
       ) : (
         <RulesLoaded view={rules.data} isDesktop={isDesktop} />
       )}
+
+      <div className="mt-3">
+        <TrustRulesSection isDesktop={isDesktop} />
+      </div>
 
       <p className="text-ink3 mx-2 mt-5 text-center text-[11.5px] leading-normal font-medium">
         Changing a rule changes what Pip tells you — it never moves your money.

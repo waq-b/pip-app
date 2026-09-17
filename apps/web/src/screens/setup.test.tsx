@@ -1,3 +1,4 @@
+import { EMPTY_PROFILE } from "@finance-app/shared";
 import type { Connection, ConnectResult } from "@finance-app/shared";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -72,6 +73,7 @@ function api(
     ...ME_ALLOWED,
     "/rules": { body: { rules: [], monthlySplit: { total: 0, perBucket: [] } } },
     "/connections": { body: list },
+    "/profile": { body: { profile: EMPTY_PROFILE, personalised: false } },
     ...extra,
   };
 }

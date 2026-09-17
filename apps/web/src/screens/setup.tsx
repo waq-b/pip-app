@@ -18,6 +18,7 @@ import {
 } from "../lib/connections";
 import { setHideNumbers, useHideNumbers } from "../lib/hide-numbers";
 import { useAppearance } from "../lib/use-appearance";
+import { YourPlan } from "./your-plan";
 import { ICON_STROKE } from "../shell/nav";
 import { pointerWords } from "../shell/pointer-words";
 import { useBreakpoint } from "../shell/use-breakpoint";
@@ -52,7 +53,10 @@ export function SetupScreen() {
         className={isDesktop ? "grid grid-cols-2 items-start gap-3.5" : "flex flex-col gap-[11px]"}
       >
         <Connections />
-        <Preferences device={words.device} verb={words.verb} />
+        <div className="flex flex-col gap-[11px]">
+          <Preferences device={words.device} verb={words.verb} />
+          <YourPlan />
+        </div>
       </div>
 
       <p
