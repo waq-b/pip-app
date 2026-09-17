@@ -470,8 +470,9 @@ export interface NudgeService {
 
 export function createNudgeService(
   deps: NudgeServiceDeps,
-  options: { buildOnRead?: boolean } = {},
+  options: { buildOnRead?: boolean; now?: () => Date } = {},
 ): NudgeService {
+  const clock = options.now ?? (() => new Date());
   async function build(user: NudgeUser, now: Date, cadence: "weekly" | "daily") {
     const today = londonDay(now);
     const history = await deps.store.history(user, today, mondayOf(today));
@@ -485,7 +486,7 @@ export function createNudgeService(
   }
 
   const service: NudgeService = {
-    async buildWeekIfDue(user, now = new Date()) {
+    async buildWeekIfDue(user, now = clock()) {
       const today = londonDay(now);
       const weekOf = mondayOf(today);
       const due = Date.parse(`${weekOf}T00:00:00Z`) + WEEKLY_FROM_UTC_HOUR * 3_600_000;
@@ -504,12 +505,12 @@ export function createNudgeService(
       return saved ? "built" : "exists";
     },
 
-    async buildDaily(user, now = new Date()) {
+    async buildDaily(user, now = clock()) {
       const { rows } = await build(user, now, "daily");
       return deps.store.saveDaily(user, rows);
     },
 
-    async week(user, weekOf, now = new Date()) {
+    async week(user, weekOf, now = clock()) {
       if (options.buildOnRead && weekOf === "latest") await service.buildWeekIfDue(user, now);
       const week = await deps.store.week(user, weekOf);
       if (!week) return null;
@@ -520,7 +521,7 @@ export function createNudgeService(
       return weekView(week, trust.settings, profile.profile.exclusions);
     },
 
-    async thisWeek(user, now = new Date()) {
+    async thisWeek(user, now = clock()) {
       const week = await service.week(user, "latest", now);
       const [trust, profile, today, weeks] = await Promise.all([
         deps.trustStore.get(user),
@@ -541,7 +542,7 @@ export function createNudgeService(
       };
     },
 
-    async respond(user, id, response, at = new Date()) {
+    async respond(user, id, response, at = clock()) {
       return deps.store.respond(user, id, response, at);
     },
   };

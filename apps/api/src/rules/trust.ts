@@ -194,7 +194,7 @@ export function capRoomCheck(isSideBet: boolean, capBroken: boolean): TrustCheck
     detail: !isSideBet
       ? "Not in Side Bet"
       : blocked
-        ? "Side Bet is over its cap"
+        ? "Nothing about Side Bet holdings until it's back under"
         : "Side Bet has room under its cap",
   };
 }
@@ -205,7 +205,7 @@ export function exclusionsCheck(exclusions: string[], ...texts: string[]): Trust
     rule: "exclusions",
     setting: exclusions.length,
     passed: hit === null,
-    detail: hit === null ? "Not on your exclusions list" : `On your exclusions list: ${hit}`,
+    detail: hit === null ? "Not on your exclusions list" : hit,
   };
 }
 

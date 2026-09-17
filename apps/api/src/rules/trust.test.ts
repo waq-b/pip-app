@@ -185,7 +185,7 @@ describe("stage B checks", () => {
     expect(excludedBy(["Gregg"], "Greggs results")).toBeNull();
     expect(exclusionsCheck(["NVDA"], "Nvidia", "NVDA")).toMatchObject({
       passed: false,
-      detail: "On your exclusions list: NVDA",
+      detail: "NVDA",
     });
   });
 });
