@@ -38,6 +38,7 @@ const base: BuildAppOptions = {
   jobSecret: config.jobSecret,
   // Production: serve the built web app from the same origin (see web.ts).
   webAppDir: process.env.WEB_DIST_DIR || undefined,
+  canonicalHost: process.env.CANONICAL_HOST || undefined,
   logger: {
     level: process.env.LOG_LEVEL ?? "info",
     redact: { paths: LOG_REDACT_PATHS, censor: "[redacted]" },

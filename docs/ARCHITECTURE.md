@@ -513,14 +513,15 @@ The guard is an `onRequest` hook on the root instance — deliberately not added
 
 ## Deploy (Render, Phase 2)
 
-One **Render free web service**, `pip` — https://pip-old.example.net — in Frankfurt (nearest to Supabase's eu-west-1), deploying `main` automatically on every push.
+One **Render free web service**, `pip` — **https://pip.example.com** (Waqar's domain since 2026-09-17; `pip-old.example.net` still answers) — in Frankfurt (nearest to Supabase's eu-west-1), deploying `main` automatically on every push.
 
 - **Build:** `pnpm install --frozen-lockfile`, then `web` build (needs `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` at build time), then `api` build.
 - **Start:** `cd apps/api && node --import tsx dist/server.js`. `tsx` is a runtime dependency because `@finance-app/shared` is TypeScript source; plain Node can't resolve it.
 - **One origin** (`web.ts`): with `WEB_DIST_DIR=../web/dist`, Fastify's `rewriteUrl` sends `/api/*` to the API's own routes and everything else to `/app/*`, served from the built app — a real file, or `index.html` so a reload of `/rules` works. Fingerprinted `assets/` are cached for a year as immutable; `index.html` is `no-cache`; the shell gets `nosniff`, `same-origin` referrer and `DENY` framing. The static app is public (sign-in screen and code, no data); the guard exempts `/app/*` only when serving it. Health check: `/api/health`.
 - **Non-secret env** set on the service: `NODE_VERSION=24`, `NODE_ENV=production`, `PROVIDER_MODE=t212`, `T212_ENV=demo`, `WEB_DIST_DIR`, `LOG_LEVEL`, `MASTER_KEY_VERSION`, `SUPABASE_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`.
 - **Secrets, set only in Render's dashboard** (never through chat or git): `DATABASE_URL`, `MASTER_KEY`, `JOB_SECRET`, `AV_ACCESS_KEY`, `COINGECKO_KEY` (Phase 3), `MARKETAUX_API`, `GROQ_API_KEY` (Phase 5), with `LLM_MODE=groq` set alongside. The dev and production app share the one Supabase project, so `MASTER_KEY` must be the same key that sealed the stored credentials. `JOB_SECRET` must match the `private.job_settings` row, which already points `pg_cron` at `https://pip-old.example.net/api/jobs/refresh`.
-- **Supabase Auth** must list `https://pip-old.example.net` in its redirect URLs, or the email's fallback link signs into the wrong place.
+- **Supabase Auth**'s Site URL is `https://pip.example.com`, and its redirect URLs list that and the old Render address, or the email's fallback link signs into the wrong place.
+- **`CANONICAL_HOST=pip.example.com`** sends app pages asked for on any other host (the old Render address) to the new domain with a 302. `/api/*` answers on both, so the `pg_cron` refresh never breaks mid-move. Unset, Pip serves whatever host asked — which is what dev and tests do. Dropped once nothing points at the old address.
 - **Free hours are shared** across the Render workspace (750/month). The scheduled refresh runs only in weekday market hours so Pip sleeps otherwise; other services in the workspace draw on the same hours.
 
 ## Storage

@@ -15,6 +15,18 @@ import { relative, resolve } from "node:path";
  */
 export const WEB_PREFIX = "/app";
 
+/**
+ * Pip moved to its own domain (2026-09-17). Anyone opening the old Render
+ * address gets sent to the new one — app pages only, so the scheduled job and
+ * anything else calling `/api/*` keeps working on either address while the
+ * move settles. A temporary redirect, not permanent: browsers cache a
+ * permanent one for a long time, and this is meant to be dropped.
+ */
+export interface WebAppOptions {
+  /** From `CANONICAL_HOST`; unset means serve on whatever host asked. */
+  canonicalHost?: string;
+}
+
 export function rewriteForWebApp(url: string): string {
   if (url === "/api" || url.startsWith("/api/") || url.startsWith("/api?")) {
     return url.slice(4) || "/";
@@ -23,13 +35,21 @@ export function rewriteForWebApp(url: string): string {
 }
 
 /** Registered as a plugin so Fastify loads it in order during startup. */
-export function registerWebApp(app: FastifyInstance, distDir: string): void {
+export function registerWebApp(
+  app: FastifyInstance,
+  distDir: string,
+  options: WebAppOptions = {},
+): void {
   app.register(async (instance) => {
-    await webApp(instance, distDir);
+    await webApp(instance, distDir, options);
   });
 }
 
-async function webApp(app: FastifyInstance, distDir: string): Promise<void> {
+async function webApp(
+  app: FastifyInstance,
+  distDir: string,
+  { canonicalHost }: WebAppOptions,
+): Promise<void> {
   const root = resolve(distDir);
   if (!existsSync(resolve(root, "index.html"))) {
     throw new Error(`No built web app at ${root} — run the web build first`);
@@ -43,6 +63,14 @@ async function webApp(app: FastifyInstance, distDir: string): Promise<void> {
       .header("x-frame-options", "DENY");
 
     const wanted = (request.params as { "*": string })["*"] ?? "";
+
+    if (canonicalHost) {
+      const host = request.headers.host?.split(":")[0];
+      if (host && host !== canonicalHost) {
+        const query = request.url.slice(WEB_PREFIX.length).split("?")[1];
+        return reply.redirect(`https://${canonicalHost}/${wanted}${query ? `?${query}` : ""}`, 302);
+      }
+    }
     const file = resolve(root, wanted);
     const inside = !relative(root, file).startsWith("..");
     if (wanted && inside && existsSync(file) && statSync(file).isFile()) {

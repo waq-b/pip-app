@@ -34,6 +34,41 @@ describe("one origin for the web app and the API", () => {
     expect(response.headers["x-frame-options"]).toBe("DENY");
   });
 
+  it("sends app pages on the old address to the new domain, keeping the path and query", async () => {
+    const moved = () =>
+      buildApp({
+        ...testAuth().options,
+        webAppDir: builtWebApp(),
+        canonicalHost: "pip.example.com",
+      });
+
+    const response = await moved().inject({
+      method: "GET",
+      url: "/rules?tf=day",
+      headers: { host: "pip-old.example.net" },
+    });
+    expect(response.statusCode).toBe(302);
+    expect(response.headers.location).toBe("https://pip.example.com/rules?tf=day");
+
+    const onTheNewDomain = await moved().inject({
+      method: "GET",
+      url: "/rules",
+      headers: { host: "pip.example.com" },
+    });
+    expect(onTheNewDomain.statusCode).toBe(200);
+  });
+
+  it("leaves the API alone on the old address, so the scheduled job keeps working", async () => {
+    const response = await buildApp({
+      ...testAuth().options,
+      webAppDir: builtWebApp(),
+      canonicalHost: "pip.example.com",
+    }).inject({ method: "GET", url: "/api/health", headers: { host: "pip-old.example.net" } });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ status: "ok" });
+  });
+
   it("serves fingerprinted assets as immutable", async () => {
     const response = await app().inject({ method: "GET", url: "/assets/index-abc123.js" });
     expect(response.statusCode).toBe(200);

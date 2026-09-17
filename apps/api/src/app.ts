@@ -63,6 +63,8 @@ export interface BuildAppOptions {
    * (production). Absent in dev (Vite serves the app) and tests.
    */
   webAppDir?: string;
+  /** From `CANONICAL_HOST`: app pages asked for on any other host redirect here. */
+  canonicalHost?: string;
   /** Off in tests; `server.ts` passes the redacted production logger. */
   logger?: FastifyServerOptions["logger"];
 }
@@ -83,7 +85,8 @@ export function buildApp(options: BuildAppOptions = {}) {
     servesWebApp: Boolean(options.webAppDir),
   });
 
-  if (options.webAppDir) registerWebApp(app, options.webAppDir);
+  if (options.webAppDir)
+    registerWebApp(app, options.webAppDir, { canonicalHost: options.canonicalHost });
 
   // The one route that needs no token.
   app.get("/health", async () => ({ status: "ok" }));
