@@ -87,7 +87,7 @@ export function YourPlan() {
         )
       ) : (
         <div className="flex flex-col gap-3.5">
-          {!query.data.personalised ? (
+          {query.data?.personalised === false ? (
             <p className="bg-sunk text-ink2 m-0 rounded-[14px] px-3.5 py-2.5 text-[12.5px] font-medium">
               Pip keeps its notes general for now. The things you never want to hear about still
               apply.
