@@ -27,6 +27,9 @@ import { stubFactsReader } from "./nudges/gather.js";
 import { createNudgeService, type NudgeService } from "./nudges/service.js";
 import { memoryNudgeStore } from "./nudges/store.js";
 import { registerWeekRoutes } from "./routes/week.js";
+import { registerNotificationRoutes } from "./routes/notifications.js";
+import { memoryNotificationStore, type NotificationStore } from "./notify/store.js";
+import type { Notifier } from "./notify/notify.js";
 import { stubWriter } from "./research/writer.js";
 
 export interface BuildAppOptions {
@@ -54,6 +57,10 @@ export interface BuildAppOptions {
    * and the stub writer, kept in memory; real accounts pass the database one.
    */
   nudges?: NudgeService;
+  /** Notification settings, devices and the bell (Phase 6). */
+  notifications?: NotificationStore;
+  /** Sends pushes and emails, by the rules in `notify/notify.ts` (Phase 6). */
+  notifier?: Notifier;
   /** The scheduled refresh (Trading 212 mode). */
   refreshJob?: { run(): Promise<unknown> };
   /** From `JOB_SECRET`; job routes refuse everyone without it. */
@@ -65,6 +72,8 @@ export interface BuildAppOptions {
   webAppDir?: string;
   /** From `CANONICAL_HOST`: app pages asked for on any other host redirect here. */
   canonicalHost?: string;
+  /** Frozen in tests, so a route's timestamps are predictable. */
+  now?: () => Date;
   /** Off in tests; `server.ts` passes the redacted production logger. */
   logger?: FastifyServerOptions["logger"];
 }
@@ -120,6 +129,10 @@ export function buildApp(options: BuildAppOptions = {}) {
         },
         { buildOnRead: true },
       ),
+  });
+  registerNotificationRoutes(app, {
+    store: options.notifications ?? memoryNotificationStore(),
+    ...(options.now ? { now: options.now } : {}),
   });
   registerJobRoutes(app, { refresh: options.refreshJob });
   registerConnectionRoutes(app, { service: options.connections ?? stubConnectionService });

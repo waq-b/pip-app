@@ -23,6 +23,18 @@ export interface ServerConfig {
    * default, and always in CI) or `groq`, which needs `GROQ_API_KEY`.
    */
   llm: { mode: "stub" } | { mode: "groq"; apiKey: string; model: string };
+  /**
+   * Who sends (Phase 6): `stub` records pushes and emails in memory — always in
+   * CI and in stub mode — and `live` needs a VAPID pair and a Resend key.
+   */
+  notify:
+    | { mode: "stub" }
+    | {
+        mode: "live";
+        vapid: { publicKey: string; privateKey: string; subject: string };
+        resendKey: string;
+        emailFrom: string;
+      };
 }
 
 export const DEFAULT_LLM_MODEL = "openai/gpt-oss-120b";
@@ -65,6 +77,38 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
   if (llmMode === "groq" && !env.GROQ_API_KEY) {
     throw new ConfigError("LLM_MODE=groq needs GROQ_API_KEY");
   }
+  const notifyMode = env.NOTIFY_MODE ?? "stub";
+  if (notifyMode !== "stub" && notifyMode !== "live") {
+    throw new ConfigError(`NOTIFY_MODE must be "stub" or "live", not "${notifyMode}"`);
+  }
+  if (notifyMode === "live") {
+    for (const name of [
+      "VAPID_PUBLIC_KEY",
+      "VAPID_PRIVATE_KEY",
+      "VAPID_SUBJECT",
+      "RESEND_KEY",
+      "EMAIL_FROM",
+    ] as const) {
+      if (!env[name]) throw new ConfigError(`NOTIFY_MODE=live needs ${name}`);
+    }
+    if (!env.VAPID_SUBJECT!.startsWith("mailto:")) {
+      throw new ConfigError("VAPID_SUBJECT must be a mailto: address");
+    }
+  }
+  const notify: ServerConfig["notify"] =
+    notifyMode === "live"
+      ? {
+          mode: "live",
+          vapid: {
+            publicKey: env.VAPID_PUBLIC_KEY!,
+            privateKey: env.VAPID_PRIVATE_KEY!,
+            subject: env.VAPID_SUBJECT!,
+          },
+          resendKey: env.RESEND_KEY!,
+          emailFrom: env.EMAIL_FROM!,
+        }
+      : { mode: "stub" };
+
   const llm: ServerConfig["llm"] =
     llmMode === "groq"
       ? { mode: "groq", apiKey: env.GROQ_API_KEY!, model: env.LLM_MODEL || DEFAULT_LLM_MODEL }
@@ -73,6 +117,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
   return {
     providerMode: mode,
     llm,
+    notify,
     secretBox,
     masterKeyVersion: Number(env.MASTER_KEY_VERSION ?? 1),
     jobSecret: env.JOB_SECRET || undefined,

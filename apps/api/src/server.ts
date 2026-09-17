@@ -28,6 +28,14 @@ import { dbRulesStore } from "./rules/store.js";
 import { dbProfileStore } from "./nudges/profile.js";
 import { dbTrustSettingsStore } from "./rules/trust-settings.js";
 import { liveConnectionService } from "./sync/connections.js";
+import { createNotifier } from "./notify/notify.js";
+import {
+  resendEmailSender,
+  stubEmailSender,
+  stubPushSender,
+  webPushSender,
+} from "./notify/senders.js";
+import { dbNotificationStore } from "./notify/store.js";
 
 const config = loadConfig();
 
@@ -44,6 +52,21 @@ const base: BuildAppOptions = {
     redact: { paths: LOG_REDACT_PATHS, censor: "[redacted]" },
   },
 };
+
+/**
+ * Who sends (Phase 6). Stub mode records instead of sending, so a local run and
+ * CI never reach a push service or Resend (hard line 7).
+ */
+function senders() {
+  if (config.notify.mode === "stub") {
+    return { push: stubPushSender(), email: stubEmailSender() };
+  }
+  const { vapid, resendKey, emailFrom } = config.notify;
+  return {
+    push: webPushSender(vapid),
+    email: resendEmailSender({ apiKey: resendKey, from: emailFrom }),
+  };
+}
 
 function realAccounts(): Partial<BuildAppOptions> {
   // loadConfig guarantees a master key in this mode.
@@ -69,6 +92,7 @@ function realAccounts(): Partial<BuildAppOptions> {
     ? { clientFor: (key: string, secret: string) => createKrakenClient({ key, secret }), directory }
     : undefined;
 
+  const notifications = dbNotificationStore(db);
   const rulesStore = dbRulesStore(db);
   const profileStore = dbProfileStore(db);
   const trustSettingsStore = dbTrustSettingsStore(db);
@@ -108,6 +132,8 @@ function realAccounts(): Partial<BuildAppOptions> {
         void backfillHistory(db, box, credential, clientFor, marketFor).catch(() => undefined);
       },
     }),
+    notifications,
+    notifier: createNotifier({ store: notifications, ...senders() }),
     refreshJob: createRefreshJob({
       db,
       box,

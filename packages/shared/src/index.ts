@@ -69,6 +69,12 @@ export {
 
 export type {
   AccountKind,
+  DeviceView,
+  NotificationItemView,
+  NotificationSettingsError,
+  NotificationSettingsView,
+  NotificationsView,
+  SubscriptionError,
   ActivityEntry,
   ActivityKind,
   BucketDetail,

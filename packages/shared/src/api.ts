@@ -3,6 +3,7 @@
  * formatting, no thresholds. Phase 1 serves all of this from stubs.
  */
 import type { Bucket } from "./buckets.js";
+import type { NotificationItemKind, NotificationSettings } from "./notifications.js";
 import type {
   NudgeCadence,
   NudgeKind,
@@ -445,3 +446,45 @@ export interface NudgeResponseResult {
   /** ISO timestamp. */
   respondedAt: string;
 }
+
+// ─── Notifications (Phase 6) ─────────────────────────────────────────────────
+
+/** A device that has notifications turned on. Never its endpoint or its keys. */
+export interface DeviceView {
+  id: string;
+  /** "iPhone", "Android tablet", "Mac". */
+  label: string;
+  addedAt: string;
+  lastDeliveredAt?: string;
+  /** Set when a push to it last failed — the device row says it stopped. */
+  lastFailedAt?: string;
+}
+
+export interface NotificationSettingsView {
+  settings: NotificationSettings;
+  /** The devices this person has turned notifications on for. */
+  devices: DeviceView[];
+  /** True once the first-login sheet has been answered; it's asked once. */
+  asked: boolean;
+}
+
+export interface NotificationItemView {
+  kind: NotificationItemKind;
+  id: string;
+  title: string;
+  body?: string;
+  /** Internal pot id, when the row is about one pot. */
+  bucket?: Bucket;
+  at: string;
+  read: boolean;
+  /** Where tapping it opens Pip. */
+  url: string;
+}
+
+export interface NotificationsView {
+  items: NotificationItemView[];
+  unread: number;
+}
+
+export type NotificationSettingsError = "invalid_body";
+export type SubscriptionError = "invalid_subscription" | "unknown_subscription";

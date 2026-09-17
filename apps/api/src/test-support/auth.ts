@@ -20,6 +20,10 @@ export function testAuth(allowed: string[] = ["test@example.com"]) {
     options,
     allowlistStore,
     waitlistStore,
+    /** The allowlist id a test can seed rows against. */
+    userIdFor(email: string) {
+      return allowlistStore.rows.get(email.toLowerCase())!.id;
+    },
     /** Headers carrying a token that verifies as this person. */
     headersFor(email: string, name?: string) {
       const token = `test-token-for-${email}`;
