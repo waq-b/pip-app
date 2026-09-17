@@ -142,7 +142,8 @@ export function generalFeedAdapter(
   };
 }
 
-const companyFeedFor = (target: FactsTarget) =>
+/** The company's own newsroom feed, when it has one. */
+export const companyFeedFor = (target: Pick<FactsTarget, "region" | "shortName">) =>
   COMPANY_FEEDS[`${target.region}:${target.shortName}`];
 
 /** One adapter for every company feed; it covers only holdings that have one. */

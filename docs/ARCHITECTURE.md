@@ -317,6 +317,30 @@ Two per-user settings the research build reads (task 7). Neither can move money 
 
 Stores follow the rules store: `dbProfileStore` / `dbTrustSettingsStore` read as the user (RLS) and save on the privileged connection; `memoryProfileStore` / `memoryTrustSettingsStore` in stub mode. No row means the empty profile or the defaults. The database's `CHECK`s repeat the limits.
 
+### Trust rules and candidate nudges (`rules/trust.ts`, `nudges/candidates.ts`, Phase 5)
+
+Both pure — no I/O, no clock — so a week gives the same answer when it's built and when it's re-checked after a rule changes. They decide what may be said; the research module (task 6) only writes the words.
+
+**Trust rules** (`rules/trust.ts`):
+
+- **Publisher identity** — `publisherKey(domain)` drops `www.` and trailing country/kind labels (`com`, `co`, `uk`, `org`, `net`, `io`, `news`, `info`, `ac`, `gov`) and keeps the organisation's label: `bbc.co.uk` and `bbc.com` are both `bbc`, `uk.finance.yahoo.com` is `yahoo`. Independent sources are distinct keys, so two BBC reports are one source. `domainMatches` accepts a named domain or its subdomains, never a lookalike (`notreuters.com`).
+- **Stage A** (`stageA`, on reports): named publisher — in the user's list, **or the holding's own newsroom, for that holding only** (Waqar, 2026-09-17; from `COMPANY_FEEDS`) → inside the recency window (the user's days weekly, `DAILY_RECENCY_HOURS` 48 daily; nothing dated in the future) → no exclusion word in the headline or snippet. Kept reports are newest first; dropped ones carry the rule that dropped them.
+- **Stage B** checks (each a `TrustCheck { rule, setting, passed, detail }`): `independent_sources` (≥ `minSources` distinct publishers, detail names them), `results_quiet` (no news nudge within `resultsQuietDays` of a results date either side; "No results date known" passes and says so), `cap_room` (always on: nothing on a Side Bet holding while the cap is broken), `exclusions` (whole word, any case).
+- `basisFor(reports)` — "Based on N sources over M days" (distinct publishers, distinct UTC days). Never a percentage.
+
+**Candidates** (`buildCandidates(input)`): from the rules evaluation, each holding's moves (day / week / month, percent and pence), linked reports, results dates and own newsroom domains, the user's trust settings and exclusions, and what's already been shown (`NudgeHistory`).
+
+| Reason                    | Weekly                                                           | Daily                                           | Checks                                                   |
+| ------------------------- | ---------------------------------------------------------------- | ----------------------------------------------- | -------------------------------------------------------- |
+| `cap` (shape)             | Side Bet over its cap, with over-by and fix-it amounts           | Same, at most once in `CAP_DAILY_REPEAT_DAYS` 7 | exclusions ("Side Bet")                                  |
+| `drift` (shape)           | Each drifted target                                              | —                                               | exclusions (pot name)                                    |
+| `earnings` (calendar)     | Results within `CALENDAR_LEAD_DAYS` 7                            | Within 2, once per date                         | exclusions                                               |
+| `isa_year_end` (calendar) | 5 April within `ISA_YEAR_END_LEAD_DAYS` 14, Foundation connected | Within 2, once                                  | exclusions ("ISA")                                       |
+| `move` (awareness)        | The **week's** move at or past the pot's big-move line           | The **day's** move, once a day                  | cap room, exclusions                                     |
+| `news` (awareness)        | Any report passing stage A                                       | — (weekly only, decision 4)                     | cap room, exclusions, results quiet, independent sources |
+
+A candidate is shown when every check passes; `heldBackBy` is the first that didn't. Then budgets: **weekly**, awareness nudges past `weeklyBudget` are held back (`weekly_budget`), ranked by independent publishers, then newest report, then move size — shape and calendar never count and are never dropped. **Daily**, everything counts against what's left of `dailyBudgetPerDay` and `dailyBudgetPerWeek`, in order cap → results → ISA → moves (`daily_budget`). A weekly build with nothing shown adds a `none`/`quiet` candidate carrying the counts (holdings checked, reports read, reports counted, held back per rule) and the next dated thing (a results date or the ISA year end) — so a quiet week is a result with its working. Every candidate has a `dedupeKey` (`reason:subject:day-or-date`) for daily repeats.
+
 ### Rules on every screen (`rules/view.ts`, Phase 4)
 
 Both read models call the engine the same way — each pot's investments + cash, connected unless `not_connected`, against the user's stored rules — and shape the answer through `rules/view.ts`: `rulesView` builds `/rules` (per-pot `status`, `judgedAgainstPercent`, `driftPoints`, `overBy`, a plain line; plus `settings`, `lastChangedAt`, `needsAttention`, `leftOut`, `fixIt`), and `ruleFlagFor` gives `/portfolio` buckets and `/buckets/:id` their `ruleStatus` and `overBy`. `/portfolio` carries `rulesNeedAttention` and the verdict ends "Side Bet needs a look." whenever the cap is broken. Stub mode judges the sample values the same way, with rules kept in memory. A test drives `/rules`, `/portfolio` and `/buckets/:id` through the real routes, over and under the cap, and requires identical results.
