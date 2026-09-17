@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56" width="56" height="56" role="img" aria-label="Pip" opacity=".5">
+  <circle cx="19" cy="20" r="13" fill="none" stroke="#7a8a5e" stroke-width="2.5" stroke-dasharray="5 4" />
+  <circle cx="36.5" cy="25" r="10" fill="none" stroke="#c67139" stroke-width="2.5" stroke-dasharray="5 4" />
+  <circle cx="27" cy="41.5" r="6.5" fill="none" stroke="#c0392c" stroke-width="2.5" stroke-dasharray="5 4" />
+</svg>

@@ -2,7 +2,7 @@
 
 The developer's translation of the Claude Design handover. Once signed off, this file — not the prototype — is the visual source of truth. Where the two disagree, this file wins and the prototype is treated as an earlier draft.
 
-Reference prototype: `docs/design/Pip.dc.html` (built on the Organic design system). Last updated: Phase 1, second handover (desktop, icon cuts, amber).
+Reference prototype: `docs/design/Pip.dc.html` (built on the Organic design system), plus `docs/design/Pip-s10-s11.dc.html` for the third handover. Last updated: Phase 6 planning, third handover (§10 notifications, §11 net assets) — §10–11 signed off by Waqar 2026-09-17.
 
 ---
 
@@ -119,6 +119,8 @@ Every colour is a token. **No hex values in components.** The theme sets the bas
 | `ambTint` (chip fill) | `#fbe6bd` | `#3a2c14` |
 | `ambLine`             | `#b8790a` | `#eab04a` |
 
+Amber has **three uses**: the provenance line and the age chip (§5), and a chip meaning **needs setting up, not wrong** — e.g. NOT SET on net assets (§11), added Phase 6.
+
 Amber is gold, deliberately ~60° away from every clay in the palette: nothing amber may be mistaken for Side Bet or for a loss. The amber ink is 5.2:1 on card, so it is body-copy safe.
 
 Side Bet hatch: `repeating-linear-gradient(135deg, rgba(192,57,44,.07) 0 9px, transparent 9px 18px)` — `.16` on a track, `rgba(240,138,126,.10)` on dark.
@@ -152,7 +154,7 @@ Provider swatches: Trading 212 `#1f3a5f`, Kraken `#5741d9`.
 
 One small line on any screen showing a live figure: a dot, then the source and age. It is never a badge, never a tooltip, never hidden behind an icon. **It names the market-data source, never the trading APIs** (see §6.1).
 
-Amber appears in exactly two places: **the provenance line** and **a small age chip beside an affected figure**. It never touches the hero number, never tints a card, never draws a border. It is a dot, a line of text, and a chip.
+For staleness, amber appears in exactly two places: **the provenance line** and **a small age chip beside an affected figure**. (Its only other use is the "needs setting up" chip, §2.) It never touches the hero number, never tints a card, never draws a border. It is a dot, a line of text, and a chip.
 
 | Age                                 | State                                                                                                                                                                                                                                                                       |
 | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -173,7 +175,7 @@ Two pots stale is still one line. Three pots stale becomes "All prices are 2 hou
 2. **Rules is display-only in Phase 1.** The desktop Rules screen still shows +/− steppers and the banner still carries "Show me how to fix it" and "Raise the cap". Phase 1 renders the banner with neither button and no steppers; both arrive in Phase 4. Hard line 1. **Phase 4:** the prototype's steppers became sliders (Waqar: taps were slow, sliders suit phones and tablets), on Handpicked's target and Side Bet's cap only (Foundation is the rest), with one explicit Save — no save per change; "Show me how to fix it" opens two amounts at equal weight, never a recommendation; "Raise the cap" only focuses the cap slider. Neither can move money.
 3. **Nothing says Pip moves money.** Any remaining copy implying Pip routes money is rewritten as a statement about the user's own setup at their broker. Hard line 1.
 4. **Fixtures never cross pots.** The feed still says "£60 of your ISA bought Rolls-Royce", but Rolls-Royce is Handpicked (Invest), not the ISA. Hard line 11.
-5. **"Nudge me" is omitted** (notifications are Phase 6) — it reappears in the desktop Setup screen. Currency shows as fixed GBP.
+5. **"Nudge me" is omitted** (notifications are Phase 6) — it reappears in the desktop Setup screen. Currency shows as fixed GBP. **Phase 6:** replaced by the bell and the first-login ask (§10); the old "Nudge me" row is not built.
 
 Instrument explainers are hand-written stub text in Phase 1 under the not-advice label. Their real source is the Phase 5 research module, and they stay generic for users other than Waqar. Hard line 12.
 
@@ -233,3 +235,144 @@ Everything from the first round has been answered. Outstanding:
 
 - **Loading, empty and error states at tablet and desktop.** The handover draws all of them at phone width only. They'll be built from the phone states in the desktop grid.
 - **The desktop connect-account flow.** Only phone cards exist for it.
+- **Phase 6 — built from existing patterns, for the next design handover** (Waqar, 2026-09-17: don't wait):
+  - the bell at tablet width (proposed at the foot of the rail)
+  - Setup's Notifications section (per-kind toggles, this-device row, email, "Pip last checked")
+  - the recommendation brief card ("Pip's take" block on the `/week` note card)
+  - Rules' Side Bet card without its slider (money in, less taken out, against the limit; growth line)
+  - Rules' Handpicked card as the only slider, Foundation as the rest
+  - the starter-limit soft reminder on Rules
+  - the connection-gap row in the bell
+  - net-assets entry as a keypad field with the stepper
+
+---
+
+## 10. Notifications — the ask and the bell (Phase 6)
+
+From the third handover. The design's premise holds: a notification is rare enough to mean something, and "nothing since Tuesday" is the normal state. **Where it disagrees with the Phase 6 brief or CLAUDE.md, §10.6 lists the conflict and what this file proposes; nothing there is settled until Waqar signs off.**
+
+### 10.1 New tokens and components
+
+No new colour tokens. Everything uses the existing theme and pot scopes.
+
+| Component            | Spec                                                                                                                                                                                                                                                                                                                                         |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Switch**           | 42×25 track, `999px`, 20px knob inset 2.5px, knob slides `left` 2.5 → 19.5px over 140ms (the one new motion). On: track `solid`, knob `solidInk`. Off: track `rgba(ink,.18)` light / `rgba(ink,.20)` dark. Desktop popover: 38×23 with an 18px knob. The whole row is the tap target; the switch carries `role="switch"` and `aria-checked`. |
+| **Bell button**      | 40px circle, `card` fill, Lucide `bell` at 20px. Desktop: 38px with a 2px `acc` ring, 19px icon.                                                                                                                                                                                                                                             |
+| **Unread badge**     | 16px pill on the bell's top-right (6px/7px in), 10px/800 figure, 2.5px `card` ring; fades 150ms when read. Fill `solid`, figure `solidInk` — red stays Side Bet's.                                                                                                                                                                           |
+| **Notification row** | 9px dot + title (13.5–14px/700) + body (12.5px, `ink2`) + meta "2 hours ago · Side Bet" (11px, `ink3`). Padding 13×12, radius 20px (18px desktop). A Side Bet row sits in the `bet` scope on `tint`. Unread shows the dot; read hides it. Whole row taps through.                                                                            |
+| **Row dot colours**  | Side Bet → `acc` in `bet` scope; stale connection → `ambDot`; Foundation/good news → `fnd` `acc`; read/neutral → `line`. **Tokens only** — the prototype hardcodes `#7a8a5e` and `#c0392c`.                                                                                                                                                  |
+| **Ask sheet**        | Bottom sheet over a `rgba(ink,.28)` scrim: `card`, radius `28 28 26 26`, padding 24/20/20, gap 14, shadow `0 -14px 40px rgba(ink,.18)`. Lucide `bell` 26px in `acc`, Caprasimo 24px question, 13px body, two switch rows, primary button (left-aligned label, `solid`), a text "Not now", 11px footnote.                                     |
+| **Panel (phone)**    | Over a `rgba(ink,.30)` scrim: top 92px, 14px side insets, `card`, radius 28px, max-height 566px, scrolls inside. Header: Caprasimo 21px "Notifications" + "Mark all read" (12.5px/700, `solid`, hidden when nothing is unread). Grouped "Today" / "This week" / "Earlier" section labels. Foot: switch rows and an 11px footnote.            |
+| **Popover (≥ 1120)** | 382px, anchored 66px down under the bell at the content header's right, radius 24px, shadow `0 0 0 1px line, 0 26px 60px rgba(ink,.26)`. **No scrim** — the board stays visible. Same list, same switches, same order.                                                                                                                       |
+| **Empty mark**       | `pip-mark-empty.svg` — the standard cut as dashed outlines (2.5 stroke, `5 4` dash) at 50% opacity, 30px. New asset.                                                                                                                                                                                                                         |
+
+Icons are Lucide: `bell`, `bell-off`. Stroke **2.75** as everywhere else (the prototype draws 2.4).
+
+### 10.2 First login — step 1 of 2: the ask
+
+Shown once, over Pots, after the first sign-in that has at least one connection (so there is something behind it).
+
+1. **Pip asks first.** Sheet: "Want Pip to tell you when something matters?" / "Most weeks it won't. Pip only speaks up when something you set a line for is crossed." Two switches, both on by default:
+   - **Push alerts** — "When Side Bet nears its limit, or something can't wait for your week."
+   - **Weekly email** — "Monday morning: one number, three pots, what moved."
+   - Primary button: "Turn these on" (both on) · "Turn on email only" · "Turn on alerts only" · "Save" (both off). The prototype's CTA text was lost in the export; these are Pip's wording.
+   - "Not now".
+   - Footnote: "Both live in the bell afterwards."
+2. **Then the phone asks.** The OS permission prompt fires **only** from the primary-button tap when Push alerts is on — never on a maybe, and on iPhone only inside the installed app (a Safari tab gets the Add to Home Screen row instead, §10.4).
+3. **"Not now" is a real answer.** Bell-off icon, "Fine. Pip will stay quiet." / "Nothing is pushed and no email goes out. The bell still keeps the list." / chip "Notifications off · the bell still works". The sheet never reappears.
+
+Step 2 is net assets, §11.2.
+
+### 10.3 The bell
+
+- **Where:** phone — top-right of the page header, beside the Pip mark, on every screen. Tablet — at the foot of the 76px rail above Setup (undesigned, §9). Desktop — on the right of the content header; identity stays in the sidebar.
+- **Badge:** unread count; none when zero.
+- **The list:** the last 30 days of what Pip told you — limit alerts, urgent notes, recommendations, "Your week is ready", and connection gaps ("Kraken went quiet for 3 hours", shown here, never pushed) — newest first, grouped Today / This week / Earlier. Tapping a row opens where it came from (Rules for the limit, `/week` for notes and the week) and marks it read.
+- **Foot switches:** Push alerts and Weekly email, mirrored in Setup — "neither is the real one". The push subtitle reads this device's state ("On for this iPhone", "Off", "Blocked in your phone's settings", "Add Pip to your Home Screen first"). Turning push off never clears the list.
+- **Empty:** dashed mark, "Nothing since <day>" / "Which is the normal amount. Pip will be here when something actually happens."
+- Loading: three skeleton rows. Error: one line, "Couldn't load your notifications" with Try again; switches still work.
+
+### 10.4 Setup — Notifications (mirrors the bell)
+
+Not drawn in the handover; built from Setup's existing card and row patterns with the new switch:
+
+- **Push alerts** master, then per-kind (indented, disabled while the master is off): **Side Bet's limit** · **Urgent notes and Pip's take** · **Your week is ready**.
+- **This device:** On · Off · Not supported · Blocked in settings · "On iPhone and iPad, add Pip to your Home Screen first: tap Share, then Add to Home Screen, then open Pip from there." A "Turn on for this device" button where permission can be asked. A dropped subscription shows "Notifications stopped on this device" and the button again. That is the re-ask; the sheet never returns.
+- **Weekly email** on/off, with the address it goes to.
+- **Pip's jobs:** "Pip last checked prices and news 12 min ago" (plan decision 10).
+
+### 10.5 Push payloads
+
+The OS draws them: Pip's icon and name, a title, a body. Same copy rules as the list rows — pounds first, no buy/sell for anyone but a `personal_research` recommendation (§10.7), never a forecast. Tapping opens the matching screen and does nothing else. Pushes: `limit`, `urgent` (urgent notes and recommendations R1, R2, R4), `digest`.
+
+### 10.6 Corrections to the prototype (decided, Waqar 2026-09-17)
+
+**Build these, not the prototype.**
+
+1. **Monday email**, not Sunday. The week build doesn't move.
+2. **Two masters in the bell, per-kind toggles in Setup.**
+3. **What earns a push is the brief's list**, not the design's: Side Bet's limit (80% / 100%), urgent notes and recommendations (R1, R2, R4), "Your week is ready". Not pushed: target drift, connection gaps (bell list only), milestones (not built — a new feature). The design's "No: daily price moves" and "No: anything about a single holding" explainer isn't shipped.
+4. **No copy implying Pip knows or moves money** (hard line 1): "Your standing order at Kraken is already paused" and "it says what your broker already did" are cut. "Side Bet crept 1.8% over its 5% cap" becomes pounds against the limit.
+5. **"Nothing it could tell you ever needs an urgent decision"** — cut.
+6. **The sheet is asked once**; a dropped subscription is re-asked by the device row, not a second sheet.
+7. **Unread badge in `solid`**, not red.
+8. **Desktop header** carries the bell only; identity stays in the sidebar.
+9. **The list** reads the nudge log, limit alerts and connection gaps — no separate history.
+10. **Fixtures** use Pip's own providers and the sample user — no Coinbase, no real-looking Gmail address, no milestone.
+11. **Row dots are tokens**, icon stroke 2.75.
+
+### 10.7 Recommendations in the list and pushes
+
+Not in the handover. A recommendation (hard line 12, `personal_research` only) shows as a row titled with the fact ("Nvidia is worth 3.2× what you put in") and opens its brief on `/week`: the fact, **Pip's take** (hold / take some profit / rebalance, with the amount in pounds from code), why, the trade-off, "Your call." Built from the existing `/week` note card with a "Pip's take" block; no new visual component until one is designed.
+
+---
+
+## 11. Net assets — the number that sets the limit (Phase 6)
+
+From the third handover. Net assets replace Side Bet's cap slider: Side Bet's limit is **10% of net assets, in pounds**, against **money put into Side Bet over the last 12 months** (agreed with Waqar, phase-6.md). The design predates part of that agreement; §11.5 lists the gaps.
+
+### 11.1 Components
+
+| Component             | Spec                                                                                                                                                                                                                                                       |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Sealed figure**     | Label (11px uppercase `.1em`, 700, `ink2`), "£" then the figure in Caprasimo 22px. Hidden shows `••••••` at `.22em` tracking in `ink2`. Lucide `eye` / `eye-off` in a 44px tap target at the right. Never pre-filled into the DOM while hidden.            |
+| **Stepper**           | Two 46×44 pills, 1.5px `line` border on `bg`, "−" / "+" 15px/800, beside a number-keypad field (`inputmode="numeric"`, whole pounds, formatted with commas as you type). Steps of £5,000; "nearest thousand is fine".                                      |
+| **Limit card**        | `bet` scope on `tint`, radius 20px, padding 14: label "Your Side Bet limit", figure Caprasimo 27px in `aink`, 12px note at 86%. **The figure is masked (`••••`) whenever net assets are** — it gives them away ×10 — and shows only while the eye is open. |
+| **Setup row — set**   | Lucide `lock` 18px `ink2`, "Net assets", "Change" link; masked figure with the eye; "Hidden by default, like a password. Last reviewed 12 Sep — Pip will ask you to check it once a year."                                                                 |
+| **Setup row — unset** | `lock` and a **NOT SET** chip (`ambTint` / `amb`, 10px/800) — the "needs setting up" amber (§2); body copy; primary "Add my net assets".                                                                                                                   |
+| **"What it sets"**    | Rows with a hairline between: limit, money in over 12 months, today's value. 17px Caprasimo figures.                                                                                                                                                       |
+
+### 11.2 First login — step 2 of 2
+
+Asked at the end of first login, never the start. Card on `bg`:
+
+- Lucide `lock` 26px in `acc`. Caprasimo 24px: "Roughly, what are you worth all in?"
+- "Pip uses this for one thing: Side Bet's limit. The FCA's guide for high-risk investments is no more than 10% of your net assets — home, pension, savings, the lot."
+- Sealed figure + entry, then the limit card: "Your Side Bet limit" / "£6,400" / "10% of what you entered. Pip counts money in, less taken out, over 12 months against it." (figure masked with net assets)
+- "Save and show me my money" · "I'd rather not say".
+- "Skip it and Pip uses a £350 starter limit until you add it. Nothing is ever sent to your brokers, and this figure never appears on the home screen."
+
+### 11.3 Setup — Net assets
+
+- **Set:** the sealed row, then "What it sets": **Side Bet limit · 10% of net assets** £6,400 · **Money in, less taken out · last 12 months** £780 · **Side Bet today** £910. Footnote: "Pip can't stop a purchase — it tells you where the limit sits. It only counts Side Bet, not high-risk investments you hold elsewhere."
+- **Not set:** "Until you add it, Pip uses a **£350 starter limit** for Side Bet." · "Add my net assets". A soft reminder elsewhere — one calm line on Rules' Side Bet card: "Starter limit — add your net assets in Setup" (undesigned, §9).
+- **Yearly:** 12 months after "last reviewed", the row carries the reminder and a bell entry: "Time to check your net assets — it's been a year."
+- **"Why dots"** explainer kept; "One figure, one purpose" kept, rewritten: "Pip uses it only for Side Bet's limit."
+
+### 11.4 Rules — Side Bet card
+
+Not redrawn in the handover. The slider goes. The card keeps the fence and hatch and shows money in, less taken out, over 12 months against the limit on the progress + cap bar (§7), "£780 of £6,400". Growth past the limit in value is a calm line, never red: "Side Bet has grown to £910 — more than you put in. That's good news." If its value passes 10% of net assets, Waqar also gets a recommendation (R1, phase-6.md decision 14). Handpicked's target is the only slider; Foundation is the rest; Side Bet sits outside the shape.
+
+### 11.5 Corrections to the prototype (decided, Waqar 2026-09-17)
+
+1. **"The FCA's 10% guide"**, never "legally capped", "legal ceiling" or "the law"; "ceiling" becomes "limit".
+2. **£350 starter limit**, not a £2,000 floor.
+3. **One limit.** No "your own cap · 5% of the portfolio" beside it.
+4. **Measured on money in, less taken out, over 12 months** (net of withdrawals — taking profit out frees room). Value is the calm growth line.
+5. **Number keypad plus stepper.**
+6. **Amber NOT SET chip allowed** — the third amber use, "needs setting up, not wrong" (§2).
+7. **The limit is masked with net assets** and shows only while the eye is open.
+8. **Eye toggles**, and re-hides on leaving the screen.
+9. **"Your Kraken standing order is paused"** — cut (hard line 1).
+10. **"Pip never uses it to size a suggestion"** becomes "Pip uses it only for Side Bet's limit."

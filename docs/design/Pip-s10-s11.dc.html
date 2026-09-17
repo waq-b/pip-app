@@ -1,0 +1,426 @@
+<!-- Excerpt: sections 10 (Notifications) and 11 (Net assets) of the third Claude Design handover, 2026-09-17.
+     Markup only, copied verbatim from Pip.dc.html in the design project. Sections 01–09 of that file are identical to docs/design/Pip.dc.html.
+     The script that fills {{ nt.* }} and {{ na.* }} was cut off by the design tool's 256 KiB read limit, so the switch subtitles, CTA and ceiling copy are not in this file.
+     Reference only — docs/DESIGN.md §10–11 wins where they differ. -->
+<!-- ════════════════ 10 · NOTIFICATIONS ════════════════ -->
+<section style="display:flex;flex-direction:column;gap:30px">
+  <div style="display:flex;align-items:center;gap:18px">
+    <span class="lbl">10 — Notifications · the ask and the bell</span>
+    <span style="flex:1;height:2px;background:var(--brule)"></span>
+  </div>
+  <p style="font-size:14.5px;line-height:1.6;color:var(--bink3);margin:0;max-width:780px">Pip's whole promise is that most days nothing needs you — so a notification has to be rare enough to mean something. Two channels only: a push alert when a pot crosses a line, and a Sunday email that summarises the week. Both are asked for once, in Pip's own sheet, before the operating system ever gets involved, and both can be turned off from the same bell you read them in.</p>
+
+  <!-- ── first run ── -->
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <span class="lbl">First login · the ask</span>
+    <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start">
+
+      <div class="pip {{ dk }}" style="width:330px;border-radius:30px;background:var(--bg);color:var(--ink);padding:20px 18px;box-shadow:0 0 0 1px var(--brule)">
+        <div class="lbl" style="margin-bottom:14px">1 · Pip asks first</div>
+        <div style="position:relative;border-radius:26px;overflow:hidden;background:var(--bg);height:660px">
+          <div style="padding:16px 16px 0;filter:blur(1.5px);opacity:.5">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+              <svg width="22" height="22" viewBox="0 0 56 56"><circle cx="19" cy="20" r="13" fill="#7a8a5e"></circle><circle cx="36.5" cy="25" r="10" fill="#c67139"></circle><circle cx="27" cy="41.5" r="6.5" fill="#c0392c"></circle></svg>
+              <span style="font-family:'Caprasimo',serif;font-size:18px">Pip</span>
+            </div>
+            <div style="background:var(--card);border-radius:24px;padding:20px">
+              <div style="font-family:'Caprasimo',serif;font-size:36px;letter-spacing:-.02em">£11,430</div>
+              <div style="height:10px;width:60%;margin-top:12px;border-radius:8px;background:var(--line)"></div>
+            </div>
+          </div>
+          <div style="position:absolute;inset:0;background:rgba(32,30,29,.28)"></div>
+          <div style="position:absolute;left:0;right:0;bottom:0;background:var(--card);border-radius:28px 28px 26px 26px;padding:24px 20px 20px;display:flex;flex-direction:column;gap:14px;box-shadow:0 -14px 40px rgba(32,30,29,.18)">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+            <div style="font-family:'Caprasimo',serif;font-size:24px;line-height:1.2;letter-spacing:-.01em;text-wrap:pretty">Want Pip to tell you when something matters?</div>
+            <div style="font-size:13px;line-height:1.55;color:var(--ink2);font-weight:500">Most weeks it won't. Pip only speaks up when a pot crosses a line you set or a connection goes quiet.</div>
+
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;align-items:flex-start;gap:12px;background:var(--bg);border-radius:20px;padding:13px 14px">
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13.5px;font-weight:700">Push alerts</div>
+                  <div style="font-size:11.5px;line-height:1.45;color:var(--ink3);font-weight:500;margin-top:3px">Cap breaches and broken connections. Roughly one a month.</div>
+                </div>
+                <button class="tap" onClick="{{ nt.toggleOptPush }}" aria-label="Push alerts" style="flex:0 0 42px;border:0;padding:0;width:42px;height:25px;border-radius:999px;background:{{ nt.optPushBg }};position:relative">
+                  <span style="position:absolute;top:2.5px;left:{{ nt.optPushX }};width:20px;height:20px;border-radius:999px;background:{{ nt.knobInk }};transition:left .14s ease"></span>
+                </button>
+              </div>
+              <div style="display:flex;align-items:flex-start;gap:12px;background:var(--bg);border-radius:20px;padding:13px 14px">
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13.5px;font-weight:700">Weekly email</div>
+                  <div style="font-size:11.5px;line-height:1.45;color:var(--ink3);font-weight:500;margin-top:3px">Sunday morning: one number, three pots, what moved.</div>
+                </div>
+                <button class="tap" onClick="{{ nt.toggleOptEmail }}" aria-label="Weekly email" style="flex:0 0 42px;border:0;padding:0;width:42px;height:25px;border-radius:999px;background:{{ nt.optEmailBg }};position:relative">
+                  <span style="position:absolute;top:2.5px;left:{{ nt.optEmailX }};width:20px;height:20px;border-radius:999px;background:{{ nt.knobInk }};transition:left .14s ease"></span>
+                </button>
+              </div>
+            </div>
+
+            <button class="tap" style="border:0;background:var(--solid);color:var(--solidInk);font:inherit;font-size:14.5px;font-weight:700;padding:14px 18px;border-radius:999px;text-align:left">{{ nt.optCta }}</button>
+            <button class="tap" style="border:0;background:transparent;color:var(--ink2);font:inherit;font-size:13.5px;font-weight:700;padding:2px 0;text-align:left">Not now</button>
+            <div style="font-size:11px;color:var(--ink3);line-height:1.5;font-weight:500">Both live in the bell afterwards. Pip never notifies you about a price going up or down — that's just Tuesday.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pip {{ dk }}" style="width:330px;border-radius:30px;background:var(--bg);color:var(--ink);padding:20px 18px;box-shadow:0 0 0 1px var(--brule)">
+        <div class="lbl" style="margin-bottom:14px">2 · then the phone asks</div>
+        <div style="position:relative;border-radius:26px;overflow:hidden;background:var(--bg);height:660px">
+          <div style="position:absolute;inset:0;background:rgba(32,30,29,.34)"></div>
+          <div style="position:absolute;left:22px;right:22px;top:190px;background:{{ nt.osBg }};border-radius:20px;overflow:hidden;text-align:center;box-shadow:0 20px 50px rgba(32,30,29,.3)">
+            <div style="padding:20px 18px 16px">
+              <div style="font-size:15px;font-weight:700;margin-bottom:6px">“Pip” Would Like to Send You Notifications</div>
+              <div style="font-size:12.5px;line-height:1.45;color:var(--ink2)">Notifications may include alerts and sounds. These can be configured in Settings.</div>
+            </div>
+            <div style="height:1px;background:var(--line)"></div>
+            <div style="display:flex">
+              <div style="flex:1;padding:12px 0;font-size:14px;color:var(--ink2);font-weight:500">Don't Allow</div>
+              <div style="width:1px;background:var(--line)"></div>
+              <div style="flex:1;padding:12px 0;font-size:14px;font-weight:700;color:var(--acc)">Allow</div>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--ink3);line-height:1.5;font-weight:500;margin-top:12px">The system prompt is only ever fired after someone has said yes in Pip's own sheet — you get one shot at it per install, so it's never spent on a maybe.</div>
+      </div>
+
+      <div class="pip {{ dk }}" style="width:330px;border-radius:30px;background:var(--bg);color:var(--ink);padding:20px 18px;box-shadow:0 0 0 1px var(--brule)">
+        <div class="lbl" style="margin-bottom:14px">3 · “Not now” is a real answer</div>
+        <div style="background:var(--card);border-radius:26px;padding:22px 20px;display:flex;flex-direction:column;gap:14px;min-height:612px">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-9.3-5"></path><path d="M6.3 6.3A6 6 0 0 0 6 8c0 7-3 9-3 9h15"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path><path d="M3 3l18 18"></path></svg>
+          <div style="font-family:'Caprasimo',serif;font-size:22px;line-height:1.2">Fine. Pip will stay quiet.</div>
+          <div style="font-size:13px;line-height:1.55;color:var(--ink2);font-weight:500">Nothing is pushed and no email goes out. The bell still keeps the list, so you can come and read it whenever you like.</div>
+          <div style="background:var(--bg);border-radius:20px;padding:14px;display:flex;align-items:center;gap:11px">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+            <div style="font-size:12.5px;line-height:1.45;color:var(--ink2);font-weight:600">Notifications off · the bell still works</div>
+          </div>
+          <div style="font-size:12px;line-height:1.55;color:var(--ink3);font-weight:500">Asked once, never again. There's no second sheet, no red badge nagging you to reconsider, and the ask doesn't reappear after an update.</div>
+          <div style="margin-top:auto;font-size:11.5px;line-height:1.5;color:var(--ink3);font-weight:500">Pip is read-only, so nothing it could tell you ever needs an urgent decision. That's the reason it can afford to be this quiet.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── the bell ── -->
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <span class="lbl">The bell · tap it</span>
+    <div style="display:flex;gap:40px;flex-wrap:wrap;align-items:flex-start">
+
+      <div class="pip {{ dk }}" style="width:390px;flex:0 0 390px;height:700px;border-radius:44px;overflow:hidden;position:relative;background:var(--bg);color:var(--ink);box-shadow:0 0 0 1px rgba(32,30,29,.16), 0 24px 60px rgba(46,43,37,.26)">
+        <div style="height:46px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font-size:13px;font-weight:700">
+          <span>9:41</span>
+          <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x=".5" y=".5" width="20" height="11" rx="3.5" stroke="currentColor" opacity=".45"></rect><rect x="2" y="2" width="14" height="8" rx="2" fill="currentColor"></rect><path d="M22.5 4v4a2.3 2.3 0 0 0 0-4z" fill="currentColor" opacity=".45"></path></svg>
+        </div>
+
+        <div style="padding:4px 20px 0;display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:9px">
+            <svg width="26" height="26" viewBox="0 0 56 56"><circle cx="19" cy="20" r="13" fill="#7a8a5e"></circle><circle cx="36.5" cy="25" r="10" fill="#c67139"></circle><circle cx="27" cy="41.5" r="6.5" fill="#c0392c"></circle></svg>
+            <span style="font-family:'Caprasimo',serif;font-size:21px;letter-spacing:-.015em">Pip</span>
+          </div>
+          <button class="tap" onClick="{{ nt.toggleOpen }}" aria-label="Notifications" style="border:0;background:var(--card);color:var(--ink);width:40px;height:40px;border-radius:999px;display:grid;place-items:center;position:relative">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+            <span style="position:absolute;top:6px;right:7px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--dn);color:#fff;font-size:10px;font-weight:800;line-height:16px;box-shadow:0 0 0 2.5px var(--card);opacity:{{ nt.badgeOp }};transition:opacity .15s ease">{{ nt.count }}</span>
+          </button>
+        </div>
+
+        <div style="padding:14px 20px 0">
+          <div style="background:var(--card);border-radius:28px;padding:22px">
+            <div style="font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink2);font-weight:600">Your week</div>
+            <div style="font-family:'Caprasimo',serif;font-size:26px;line-height:1.18;margin-top:10px">Up <span class="up">£41</span> this week.<br>Nothing needs you.</div>
+            <div style="display:flex;align-items:baseline;gap:8px;margin-top:16px">
+              <span style="font-family:'Caprasimo',serif;font-size:44px;line-height:1;letter-spacing:-.025em">£11,430</span>
+              <span style="font-size:15px;color:var(--ink2);font-weight:700">.18</span>
+            </div>
+          </div>
+        </div>
+
+        <sc-if value="{{ nt.open }}" hint-placeholder-val="{{ true }}">
+          <div style="position:absolute;inset:0;background:rgba(32,30,29,.3)" onClick="{{ nt.toggleOpen }}"></div>
+          <div style="position:absolute;top:92px;left:14px;right:14px;background:var(--card);border-radius:28px;overflow:hidden;box-shadow:0 22px 56px rgba(32,30,29,.3);display:flex;flex-direction:column;max-height:566px">
+            <div style="padding:18px 20px 14px;display:flex;align-items:center;gap:12px">
+              <span style="font-family:'Caprasimo',serif;font-size:21px">Notifications</span>
+              <button class="tap" onClick="{{ nt.markRead }}" style="margin-left:auto;border:0;background:transparent;color:var(--solid);font:inherit;font-size:12.5px;font-weight:700;padding:2px 0;opacity:{{ nt.badgeOp }}">Mark all read</button>
+            </div>
+
+            <div class="noscroll" style="overflow-y:auto;padding:0 14px">
+              <div style="font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3);font-weight:700;padding:4px 6px 8px">Today</div>
+
+              <div class="tap pip-bet" style="display:flex;gap:12px;padding:13px 12px;border-radius:20px;background:var(--tint);margin-bottom:6px">
+                <span style="flex:0 0 9px;width:9px;height:9px;margin-top:6px;border-radius:999px;background:var(--acc);opacity:{{ nt.unreadOp }}"></span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13.5px;line-height:1.4;font-weight:700;color:var(--aink)">Side Bet crept 1.8% over its 5% cap</div>
+                  <div style="font-size:12px;line-height:1.45;color:var(--aink);opacity:.82;margin-top:3px;font-weight:500">It's £780 of £11,430. Your standing order at Kraken is already paused.</div>
+                  <div style="font-size:11px;color:var(--aink);opacity:.7;font-weight:600;margin-top:6px">2 hours ago · Side Bet</div>
+                </div>
+              </div>
+
+              <div class="tap" style="display:flex;gap:12px;padding:13px 12px;border-radius:20px;background:var(--ambTint);margin-bottom:6px">
+                <span style="flex:0 0 9px;width:9px;height:9px;margin-top:6px;border-radius:999px;background:var(--ambDot);opacity:{{ nt.unreadOp }}"></span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13.5px;line-height:1.4;font-weight:700;color:var(--amb)">Kraken went quiet for 3 hours</div>
+                  <div style="font-size:12px;line-height:1.45;color:var(--amb);opacity:.88;margin-top:3px;font-weight:500">Side Bet's number is from 06:40. Nothing is wrong with the money.</div>
+                  <div style="font-size:11px;color:var(--amb);opacity:.78;font-weight:600;margin-top:6px">3 hours ago · Connection</div>
+                </div>
+              </div>
+
+              <div style="font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink3);font-weight:700;padding:10px 6px 8px">This week</div>
+
+              <div class="tap" style="display:flex;gap:12px;padding:13px 12px;border-radius:20px;margin-bottom:2px">
+                <span style="flex:0 0 9px;width:9px;height:9px;margin-top:6px;border-radius:999px;background:#7a8a5e"></span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13.5px;line-height:1.4;font-weight:600">You crossed £11,000. First time.</div>
+                  <div style="font-size:11px;color:var(--ink3);font-weight:600;margin-top:5px">Thursday · Milestone</div>
+                </div>
+              </div>
+
+              <div class="tap" style="display:flex;gap:12px;padding:13px 12px;border-radius:20px;margin-bottom:2px">
+                <span style="flex:0 0 9px;width:9px;height:9px;margin-top:6px;border-radius:999px;background:var(--line)"></span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13.5px;line-height:1.4;font-weight:600">Weekly digest sent to test@example.com</div>
+                  <div style="font-size:11px;color:var(--ink3);font-weight:600;margin-top:5px">Sunday, 08:00 · Email</div>
+                </div>
+              </div>
+
+              <div class="tap" style="display:flex;gap:12px;padding:13px 12px;border-radius:20px;margin-bottom:8px">
+                <span style="flex:0 0 9px;width:9px;height:9px;margin-top:6px;border-radius:999px;background:#c0392c"></span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13.5px;line-height:1.4;font-weight:600">Coinbase key expired — reconnect when you like</div>
+                  <div style="font-size:11px;color:var(--ink3);font-weight:600;margin-top:5px">12 Sep · Connection</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="border-top:1px solid var(--line);background:var(--bg);padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13px;font-weight:700">Push alerts</div>
+                  <div style="font-size:11px;color:var(--ink3);font-weight:500;margin-top:2px">{{ nt.pushSub }}</div>
+                </div>
+                <button class="tap" onClick="{{ nt.togglePush }}" aria-label="Push alerts" style="flex:0 0 42px;border:0;padding:0;width:42px;height:25px;border-radius:999px;background:{{ nt.pushBg }};position:relative">
+                  <span style="position:absolute;top:2.5px;left:{{ nt.pushX }};width:20px;height:20px;border-radius:999px;background:{{ nt.knobInk }};transition:left .14s ease"></span>
+                </button>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13px;font-weight:700">Weekly email</div>
+                  <div style="font-size:11px;color:var(--ink3);font-weight:500;margin-top:2px">{{ nt.emailSub }}</div>
+                </div>
+                <button class="tap" onClick="{{ nt.toggleEmail }}" aria-label="Weekly email" style="flex:0 0 42px;border:0;padding:0;width:42px;height:25px;border-radius:999px;background:{{ nt.emailBg }};position:relative">
+                  <span style="position:absolute;top:2.5px;left:{{ nt.emailX }};width:20px;height:20px;border-radius:999px;background:{{ nt.knobInk }};transition:left .14s ease"></span>
+                </button>
+              </div>
+              <div style="font-size:11px;line-height:1.5;color:var(--ink3);font-weight:500">{{ nt.footer }}</div>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="flex:1;min-width:340px;display:flex;flex-direction:column;gap:18px;max-width:600px">
+        <div style="background:var(--panel);border-radius:26px;padding:22px 24px">
+          <div style="font-family:'Caprasimo',serif;font-size:19px;margin-bottom:10px">Why the switches live in the panel</div>
+          <p style="font-size:13.5px;line-height:1.6;color:var(--bink2);margin:0 0 9px">The moment you want notifications off is the moment one annoys you — and that moment happens inside the list, not three taps deep in Settings. So the two switches sit at the foot of the panel, under the thing they govern. Settings mirrors them; neither is the “real” one.</p>
+          <p style="font-size:13.5px;line-height:1.6;color:var(--bink2);margin:0">Turning push off never clears the list. The bell is the archive, always readable, with or without permission — so switching off costs you nothing you'd miss.</p>
+        </div>
+
+        <div style="background:var(--panel);border-radius:26px;padding:22px 24px">
+          <div style="font-family:'Caprasimo',serif;font-size:19px;margin-bottom:12px">What earns a notification</div>
+          <div style="display:grid;grid-template-columns:auto 1fr;gap:9px 14px;font-size:13.5px;line-height:1.5;color:var(--bink2);align-items:start">
+            <span style="color:var(--k-fnd);font-weight:800">Yes</span><span>A pot crosses its target or cap — the only alert that ever mentions doing something, and it says what your broker already did.</span>
+            <span style="color:var(--k-fnd);font-weight:800">Yes</span><span>A connection breaks or a feed is over six hours quiet.</span>
+            <span style="color:var(--k-fnd);font-weight:800">Yes</span><span>A round-number milestone, first time only. Off by default for the jumpy.</span>
+            <span style="color:var(--k-bet);font-weight:800">No</span><span>Daily price moves, in either direction, however large.</span>
+            <span style="color:var(--k-bet);font-weight:800">No</span><span>Anything about a single holding — that's what opening the app is for.</span>
+            <span style="color:var(--k-bet);font-weight:800">No</span><span>Market news, tips, “trending” lists, streaks, or anything designed to get you back in the app.</span>
+          </div>
+        </div>
+
+        <div class="pip {{ dk }}" style="border-radius:26px;background:var(--bg);padding:20px;box-shadow:0 0 0 1px var(--brule)">
+          <div class="lbl" style="margin-bottom:12px;color:var(--ink3)">Empty · the normal state</div>
+          <div style="background:var(--card);border-radius:22px;padding:26px 22px;display:flex;flex-direction:column;align-items:flex-start;gap:11px">
+            <svg width="30" height="30" viewBox="0 0 56 56" opacity=".5"><circle cx="19" cy="20" r="13" fill="none" stroke="#7a8a5e" stroke-width="2.5" stroke-dasharray="5 4"></circle><circle cx="36.5" cy="25" r="10" fill="none" stroke="#c67139" stroke-width="2.5" stroke-dasharray="5 4"></circle><circle cx="27" cy="41.5" r="6.5" fill="none" stroke="#c0392c" stroke-width="2.5" stroke-dasharray="5 4"></circle></svg>
+            <div style="font-family:'Caprasimo',serif;font-size:21px;line-height:1.22">Nothing since Tuesday</div>
+            <div style="font-size:13px;line-height:1.55;color:var(--ink2);font-weight:500">Which is the normal amount. Pip will be here when something actually happens.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── desktop ── -->
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <span class="lbl">≥ 1120 · anchored under the bell</span>
+    <div class="pip {{ dk }}" style="width:980px;border-radius:26px;background:var(--bg);color:var(--ink);padding:18px 20px 26px;box-shadow:0 0 0 1px var(--brule);position:relative;min-height:436px">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:16px">
+        <div style="font-family:'Caprasimo',serif;font-size:23px">Everything you own</div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="font-size:12px;color:var(--ink3);font-weight:600">Sam · test@example.com</span>
+          <div style="background:var(--card);width:38px;height:38px;border-radius:999px;display:grid;place-items:center;position:relative;box-shadow:0 0 0 2px var(--acc)">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+            <span style="position:absolute;top:5px;right:6px;min-width:15px;height:15px;padding:0 4px;border-radius:999px;background:var(--dn);color:#fff;font-size:9.5px;font-weight:800;line-height:15px;box-shadow:0 0 0 2.5px var(--card)">2</span>
+          </div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+        <div style="background:var(--card);border-radius:22px;padding:18px;height:120px"><div style="font-family:'Caprasimo',serif;font-size:20px">Foundation</div><div style="font-family:'Caprasimo',serif;font-size:27px;margin-top:10px">£8,240</div></div>
+        <div style="background:var(--card);border-radius:22px;padding:18px;height:120px"><div style="font-family:'Caprasimo',serif;font-size:20px">Handpicked</div><div style="font-family:'Caprasimo',serif;font-size:27px;margin-top:10px">£2,410</div></div>
+        <div class="pip-bet" style="background:var(--card);border:1.5px solid var(--acc);border-radius:22px;padding:18px;height:120px;background-image:repeating-linear-gradient(135deg,rgba(192,57,44,.07) 0 9px,transparent 9px 18px)"><div style="font-family:'Caprasimo',serif;font-size:20px">Side Bet</div><div style="font-family:'Caprasimo',serif;font-size:27px;margin-top:10px">£780</div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:540px;gap:14px;margin-top:14px">
+        <div style="background:var(--card);border-radius:22px;padding:20px;height:190px;display:flex;flex-direction:column;gap:14px">
+          <div style="font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink2);font-weight:600">All time</div>
+          <svg viewBox="0 0 320 120" preserveAspectRatio="none" style="width:100%;height:96px;overflow:visible"><path d="{{ dtPickArea }}" fill="var(--acc)" opacity=".13"></path><path d="{{ dtPickLine }}" fill="none" stroke="var(--acc)" stroke-width="2.5" stroke-linecap="round"></path></svg>
+          <div style="font-size:12px;color:var(--ink3);font-weight:500">Up £1,130 since you started. Two dips along the way, both recovered.</div>
+        </div>
+      </div>
+
+      <div style="position:absolute;top:66px;right:20px;width:382px;background:var(--card);border-radius:24px;overflow:hidden;box-shadow:0 0 0 1px var(--line), 0 26px 60px rgba(32,30,29,.26)">
+        <div style="padding:16px 18px 12px;display:flex;align-items:center;gap:12px">
+          <span style="font-family:'Caprasimo',serif;font-size:19px">Notifications</span>
+          <span style="margin-left:auto;color:var(--solid);font-size:12px;font-weight:700">Mark all read</span>
+        </div>
+        <div class="pip-bet" style="display:flex;gap:11px;padding:12px 14px;margin:0 12px 6px;border-radius:18px;background:var(--tint)">
+          <span style="flex:0 0 9px;width:9px;height:9px;margin-top:5px;border-radius:999px;background:var(--acc)"></span>
+          <div>
+            <div style="font-size:13px;font-weight:700;line-height:1.4;color:var(--aink)">Side Bet crept 1.8% over its 5% cap</div>
+            <div style="font-size:11px;color:var(--aink);opacity:.7;font-weight:600;margin-top:5px">2 hours ago · Side Bet</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:11px;padding:12px 14px;margin:0 12px 6px;border-radius:18px;background:var(--ambTint)">
+          <span style="flex:0 0 9px;width:9px;height:9px;margin-top:5px;border-radius:999px;background:var(--ambDot)"></span>
+          <div>
+            <div style="font-size:13px;font-weight:700;line-height:1.4;color:var(--amb)">Kraken went quiet for 3 hours</div>
+            <div style="font-size:11px;color:var(--amb);opacity:.78;font-weight:600;margin-top:5px">3 hours ago · Connection</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:11px;padding:12px 14px;margin:0 12px">
+          <span style="flex:0 0 9px;width:9px;height:9px;margin-top:5px;border-radius:999px;background:#7a8a5e"></span>
+          <div>
+            <div style="font-size:13px;font-weight:600;line-height:1.4">You crossed £11,000. First time.</div>
+            <div style="font-size:11px;color:var(--ink3);font-weight:600;margin-top:5px">Thursday · Milestone</div>
+          </div>
+        </div>
+        <div style="border-top:1px solid var(--line);background:var(--bg);margin-top:12px;padding:13px 16px;display:flex;align-items:center;gap:16px">
+          <span style="font-size:12.5px;font-weight:700">Push alerts</span>
+          <span style="width:38px;height:23px;border-radius:999px;background:var(--solid);position:relative;flex:0 0 38px"><span style="position:absolute;top:2.5px;left:17px;width:18px;height:18px;border-radius:999px;background:var(--solidInk)"></span></span>
+          <span style="font-size:12.5px;font-weight:700;margin-left:6px">Weekly email</span>
+          <span style="width:38px;height:23px;border-radius:999px;background:var(--solid);position:relative;flex:0 0 38px"><span style="position:absolute;top:2.5px;left:17px;width:18px;height:18px;border-radius:999px;background:var(--solidInk)"></span></span>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:12.5px;color:var(--bink3);line-height:1.55;max-width:760px;font-weight:500">On desktop the bell moves into the content header beside who you're signed in as, and the panel drops as a 382px popover anchored to it — no full-screen scrim, since there's room to leave the board visible behind it. Same list, same two switches, same order.</div>
+  </div>
+</section>
+
+<!-- ════════════════ 11 · NET ASSETS ════════════════ -->
+<section style="display:flex;flex-direction:column;gap:30px">
+  <div style="display:flex;align-items:center;gap:18px">
+    <span class="lbl">11 — Net assets · the number that sets the ceiling</span>
+    <span style="flex:1;height:2px;background:var(--brule)"></span>
+  </div>
+  <p style="font-size:14.5px;line-height:1.6;color:var(--bink3);margin:0;max-width:820px">Side Bet can't exceed 10% of everything you're worth — that's the rule Pip has to work to, not a preference. Which means Pip needs one figure it has no other way of knowing: your net assets, house and pension and savings included, most of which live nowhere near a broker. It's the single most sensitive number in the app and the one you need to see least often, so it's entered behind dots and stays behind dots.</p>
+
+  <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start">
+
+    <!-- first login -->
+    <div class="pip {{ dk }}" style="width:330px;border-radius:30px;background:var(--bg);color:var(--ink);padding:20px 18px;box-shadow:0 0 0 1px var(--brule)">
+      <div class="lbl" style="margin-bottom:14px">First login · step 2 of 2</div>
+      <div style="background:var(--card);border-radius:26px;padding:24px 20px;display:flex;flex-direction:column;gap:14px;min-height:560px">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2.5"></rect><path d="M7.5 11V7.5a4.5 4.5 0 0 1 9 0V11"></path></svg>
+        <div style="font-family:'Caprasimo',serif;font-size:24px;line-height:1.2;letter-spacing:-.01em;text-wrap:pretty">Roughly, what are you worth all in?</div>
+        <div style="font-size:13px;line-height:1.55;color:var(--ink2);font-weight:500">Side Bet is legally capped at 10% of your net assets. Pip can only work out your ceiling if it knows the bigger number — home, pension, savings, the lot.</div>
+
+        <div>
+          <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);font-weight:700;margin-bottom:7px">Net assets</div>
+          <div style="display:flex;align-items:center;gap:10px;background:var(--bg);border:1.5px solid var(--line);border-radius:18px;padding:13px 14px">
+            <span style="font-size:17px;font-weight:700;color:var(--ink2)">£</span>
+            <span style="flex:1;min-width:0;font-family:'Caprasimo',serif;font-size:22px;letter-spacing:{{ na.track }};line-height:1.1">{{ na.display }}</span>
+            <button class="tap" onClick="{{ na.toggleShow }}" aria-label="Show net assets" style="border:0;background:transparent;padding:0;width:44px;height:44px;margin:-10px -10px -10px 0;flex:0 0 44px;color:var(--ink2);display:grid;place-items:center;border-radius:999px">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle><path d="M3 3l18 18" opacity="{{ na.slashOp }}"></path></svg>
+            </button>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
+            <button class="tap" onClick="{{ na.down }}" style="border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:15px;font-weight:800;width:46px;height:44px;border-radius:999px">−</button>
+            <button class="tap" onClick="{{ na.up }}" style="border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:15px;font-weight:800;width:46px;height:44px;border-radius:999px">+</button>
+            <span style="font-size:11.5px;color:var(--ink3);font-weight:600">£5,000 steps · nearest thousand is fine</span>
+          </div>
+        </div>
+
+        <div class="pip-bet" style="background:var(--tint);border-radius:20px;padding:14px;display:flex;flex-direction:column;gap:7px">
+          <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--aink);font-weight:700">Your Side Bet ceiling</div>
+          <div style="font-family:'Caprasimo',serif;font-size:27px;line-height:1;color:var(--aink)">{{ na.ceiling }}</div>
+          <div style="font-size:12px;line-height:1.45;color:var(--aink);opacity:.86;font-weight:500">{{ na.ceilingNote }}</div>
+        </div>
+
+        <button class="tap" style="border:0;background:var(--solid);color:var(--solidInk);font:inherit;font-size:14.5px;font-weight:700;padding:14px 18px;border-radius:999px;text-align:left">Save and show me my money</button>
+        <button class="tap" style="border:0;background:transparent;color:var(--ink2);font:inherit;font-size:13.5px;font-weight:700;padding:2px 0;text-align:left">I'd rather not say</button>
+        <div style="font-size:11px;color:var(--ink3);line-height:1.5;font-weight:500">Skip it and Pip uses the cautious floor — a flat £2,000 ceiling — until you fill it in. Nothing is ever sent to your brokers, and this figure never appears on the home screen.</div>
+      </div>
+    </div>
+
+    <!-- setup screen -->
+    <div class="pip {{ dk }}" style="width:330px;border-radius:30px;background:var(--bg);color:var(--ink);padding:20px 18px;box-shadow:0 0 0 1px var(--brule)">
+      <div class="lbl" style="margin-bottom:14px">Setup screen · set</div>
+      <div style="display:flex;flex-direction:column;gap:12px;min-height:560px">
+        <div style="font-family:'Caprasimo',serif;font-size:22px;padding:0 2px">Setup</div>
+        <div style="background:var(--card);border-radius:24px;padding:18px 18px 16px;display:flex;flex-direction:column;gap:13px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2.5"></rect><path d="M7.5 11V7.5a4.5 4.5 0 0 1 9 0V11"></path></svg>
+            <span style="font-size:13.5px;font-weight:700">Net assets</span>
+            <span style="margin-left:auto;font-size:12.5px;font-weight:700;color:var(--solid)">Change</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:var(--bg);border-radius:16px;padding:12px 14px">
+            <span style="font-size:15px;font-weight:700;color:var(--ink2)">£</span>
+            <span style="flex:1;min-width:0;font-family:'Caprasimo',serif;font-size:19px;letter-spacing:.22em;color:var(--ink2)">••••••</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink3)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle><path d="M3 3l18 18"></path></svg>
+          </div>
+          <div style="font-size:11.5px;line-height:1.5;color:var(--ink3);font-weight:500">Hidden by default, like a password. Last reviewed 12 Sep — Pip will ask you to check it once a year.</div>
+        </div>
+
+        <div style="background:var(--card);border-radius:24px;padding:18px;display:flex;flex-direction:column;gap:10px">
+          <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);font-weight:700">What it sets</div>
+          <div style="display:flex;align-items:baseline;gap:8px">
+            <span style="font-size:13px;font-weight:600;flex:1">Legal ceiling · 10% of net assets</span>
+            <span style="font-family:'Caprasimo',serif;font-size:17px">£6,400</span>
+          </div>
+          <div style="height:1px;background:var(--line)"></div>
+          <div style="display:flex;align-items:baseline;gap:8px">
+            <span style="font-size:13px;font-weight:600;flex:1">Your own cap · 5% of the portfolio</span>
+            <span style="font-family:'Caprasimo',serif;font-size:17px">£572</span>
+          </div>
+          <div style="height:1px;background:var(--line)"></div>
+          <div style="display:flex;align-items:baseline;gap:8px">
+            <span style="font-size:13px;font-weight:600;flex:1">Side Bet today</span>
+            <span style="font-family:'Caprasimo',serif;font-size:17px;color:var(--dn)">£780</span>
+          </div>
+          <div style="font-size:11.5px;line-height:1.5;color:var(--ink3);font-weight:500;margin-top:2px">Well inside the law, over the line you drew yourself. The tighter of the two is always the one Pip shows you on Rules.</div>
+        </div>
+
+        <div style="font-size:11.5px;line-height:1.5;color:var(--ink3);font-weight:500;padding:0 2px">Pip is read-only, so it can't block a purchase — it can only tell you where the line sits and that your Kraken standing order is paused.</div>
+      </div>
+    </div>
+
+    <!-- unset -->
+    <div class="pip {{ dk }}" style="width:330px;border-radius:30px;background:var(--bg);color:var(--ink);padding:20px 18px;box-shadow:0 0 0 1px var(--brule)">
+      <div class="lbl" style="margin-bottom:14px">Setup screen · not set yet</div>
+      <div style="display:flex;flex-direction:column;gap:12px;min-height:560px">
+        <div style="font-family:'Caprasimo',serif;font-size:22px;padding:0 2px">Setup</div>
+        <div style="background:var(--card);border-radius:24px;padding:18px;display:flex;flex-direction:column;gap:13px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--amb)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2.5"></rect><path d="M7.5 11V7.5a4.5 4.5 0 0 1 9 0V11"></path></svg>
+            <span style="font-size:13.5px;font-weight:700">Net assets</span>
+            <span style="margin-left:auto;font-size:10px;font-weight:800;letter-spacing:.04em;padding:3px 8px;border-radius:999px;background:var(--ambTint);color:var(--amb)">NOT SET</span>
+          </div>
+          <div style="font-size:12.5px;line-height:1.55;color:var(--ink2);font-weight:500">Until Pip knows the bigger number it has to assume the smallest one: Side Bet is held to a flat <strong>£2,000</strong> ceiling.</div>
+          <button class="tap" style="border:0;background:var(--solid);color:var(--solidInk);font:inherit;font-size:13.5px;font-weight:700;padding:12px 18px;border-radius:999px;text-align:left">Add my net assets</button>
+        </div>
+
+        <div style="background:var(--panel);border-radius:24px;padding:18px;display:flex;flex-direction:column;gap:9px">
+          <div style="font-family:'Caprasimo',serif;font-size:17px">Why dots</div>
+          <div style="font-size:12.5px;line-height:1.55;color:var(--ink2);font-weight:500">Your portfolio total is yours and it's on the home screen because you want it there. Your net worth is a different thing — it's the number that identifies you on a train, and you never need it at a glance. So it behaves like a password: masked on entry, masked on the row, revealed only while you hold the eye open.</div>
+          <div style="font-size:12.5px;line-height:1.55;color:var(--ink2);font-weight:500">Asked at the end of first login, never the start — nobody types their net worth into an app that hasn't shown them anything yet.</div>
+        </div>
+
+        <div style="font-size:11.5px;line-height:1.5;color:var(--ink3);font-weight:500;padding:0 2px">One figure, one purpose. Pip never uses it to size a suggestion, rank you, or unlock anything.</div>
+      </div>
+    </div>
+  </div>
+</section>
