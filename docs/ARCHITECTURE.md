@@ -457,7 +457,7 @@ The stub above still drives stub mode. Real prices come from two sources behind 
 
 ## Auth
 
-Supabase Auth, an emailed 6-digit code for now (Google later), proves someone owns an email. A row in our own `users` table is what lets them in (CLAUDE.md s3, hard line 4). Sign-in itself happens between the browser and Supabase; the API never sees a password or an OAuth callback.
+Supabase Auth, an emailed 8-digit code (Supabase's Email OTP Length; `SIGN_IN_CODE_LENGTH` must match) for now (Google later), proves someone owns an email. A row in our own `users` table is what lets them in (CLAUDE.md s3, hard line 4). Sign-in itself happens between the browser and Supabase; the API never sees a password or an OAuth callback.
 
 **Verifying a token** (`auth/jwt.ts`). Every request carries `Authorization: Bearer <Supabase access token>`. The API checks its signature against the project's published signing keys (JWKS, via `jose`), and checks the issuer (`<SUPABASE_URL>/auth/v1`) and audience (`authenticated`), so a token from another Supabase project, or one not issued to a signed-in user, is refused. Only asymmetric algorithms are accepted. The API holds no Supabase secret at all — just the project URL.
 

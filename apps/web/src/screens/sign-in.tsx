@@ -20,7 +20,7 @@ type Step =
 
 /**
  * No passwords, nothing to set up (DESIGN.md §7). Sign-in is an emailed
- * 6-digit code (Waqar, 2026-09-17) — Google returns later. A code, not a link,
+ * 8-digit code (Waqar, 2026-09-17) — Google returns later. A code, not a link,
  * because a link opens the system browser, and an app installed to the Home
  * Screen keeps its own storage: the browser got signed in, the app didn't. The
  * email still carries the link, which works in a desktop browser tab. The only screen with
@@ -209,7 +209,7 @@ function CodeForm({ email, onRestart }: { email: string; onRestart: () => void }
     }
   };
 
-  // Digits only, so a pasted "123 456" or "Your code: 123456" still works. The
+  // Digits only, so a pasted "1234 5678" or "Your code: 12345678" still works. The
   // last digit typed or pasted submits on its own.
   const change = (value: string) => {
     const digits = value.replace(/\D/g, "").slice(0, SIGN_IN_CODE_LENGTH);
@@ -241,7 +241,7 @@ function CodeForm({ email, onRestart }: { email: string; onRestart: () => void }
         Enter the code from your email
       </h2>
       <p className="text-ink2 m-0 text-[13px] leading-normal font-medium">
-        Pip sent a {SIGN_IN_CODE_LENGTH}-digit code to{" "}
+        Pip sent your {SIGN_IN_CODE_LENGTH}-digit code to{" "}
         <strong className="text-ink break-all">{email}</strong>.
       </p>
       <form onSubmit={submit} className="w-full">
@@ -262,7 +262,7 @@ function CodeForm({ email, onRestart }: { email: string; onRestart: () => void }
           onChange={(event) => change(event.target.value)}
           placeholder={"0".repeat(SIGN_IN_CODE_LENGTH)}
           disabled={busy}
-          className="bg-sunk border-line text-ink placeholder:text-ink3 w-full rounded-2xl border-[1.5px] px-3.5 py-3 text-center text-[22px] font-bold tracking-[0.3em] tabular-nums"
+          className="bg-sunk border-line text-ink placeholder:text-ink3 w-full rounded-2xl border-[1.5px] px-3.5 py-3 text-center text-[22px] font-bold tracking-[0.2em] tabular-nums"
         />
         <button
           type="submit"

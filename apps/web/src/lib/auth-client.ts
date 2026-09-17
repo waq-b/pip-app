@@ -32,8 +32,8 @@ export interface AuthClient {
   signOut(): Promise<void>;
 }
 
-/** How many digits Supabase's email code has (Auth → Email OTP length). */
-export const SIGN_IN_CODE_LENGTH = 6;
+/** How many digits Supabase's email code has — must match Auth → Email OTP Length (8). */
+export const SIGN_IN_CODE_LENGTH = 8;
 
 /** Supabase's built-in mailer only sends a few emails an hour. */
 export class TooManyEmailsError extends Error {

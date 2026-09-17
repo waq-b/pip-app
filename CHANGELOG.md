@@ -7,7 +7,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Phase 6 — Notifications + ops
 
-- Fixed: sign-in works in the app installed to an iPhone or Android Home Screen — email sign-in is now a 6-digit code (`verifyOtp`, type `email`) typed into Pip, because the emailed magic link opened the system browser, which has separate storage, so the installed app stayed signed out. "Email me a code" → "Enter the code from your email": number keypad, one-time-code autofill, paste-friendly, signs in on the sixth digit, wrong/expired and too-many-tries states, "Send a new code"; the send-limit and failure states kept. The email template (`docs/email-templates/sign-in-code.html`, pasted into Supabase) shows the code large and keeps the link as a desktop fallback, still detected in a browser tab. Google sign-in has the same iOS redirect problem — noted on the Pre POC sign-in item (#3230978993)
+- Fixed: sign-in works in the app installed to an iPhone or Android Home Screen — email sign-in is now a 8-digit code (`verifyOtp`, type `email`) typed into Pip, because the emailed magic link opened the system browser, which has separate storage, so the installed app stayed signed out. "Email me a code" → "Enter the code from your email": number keypad, one-time-code autofill, paste-friendly, signs in on the eighth digit, wrong/expired and too-many-tries states, "Send a new code"; the send-limit and failure states kept. The email template (`docs/email-templates/sign-in-code.html`, pasted into Supabase) shows the code large and keeps the link as a desktop fallback, still detected in a browser tab. Google sign-in has the same iOS redirect problem — noted on the Pre POC sign-in item (#3230978993)
 
 ### Constitution
 

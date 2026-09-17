@@ -64,36 +64,36 @@ describe("the sign-in screen", () => {
     expect(screen.getByLabelText("Email")).toBeInTheDocument();
   });
 
-  it("signs this window in with the code, once all six digits are there", async () => {
+  it("signs this window in with the code, once all eight digits are there", async () => {
     const { auth } = await askForCode();
 
-    type("12345");
+    type("1234567");
     expect(auth.verifyCode).not.toHaveBeenCalled();
-    type("123456");
+    type("12345678");
 
     expect(auth.verifyCode).toHaveBeenCalledTimes(1);
-    expect(auth.verifyCode).toHaveBeenCalledWith("test@example.com", "123456");
+    expect(auth.verifyCode).toHaveBeenCalledWith("test@example.com", "12345678");
     expect(await screen.findByRole("heading", { name: "Your pots" })).toBeInTheDocument();
   });
 
   it("takes a pasted code with spaces or words around it", async () => {
     const { auth } = await askForCode();
 
-    type("Your code: 123 456");
+    type("Your code: 1234 5678");
 
-    expect(auth.verifyCode).toHaveBeenCalledWith("test@example.com", "123456");
+    expect(auth.verifyCode).toHaveBeenCalledWith("test@example.com", "12345678");
   });
 
   it("says when a code is wrong or expired, and lets you fix it", async () => {
     const { auth } = await askForCode();
     auth.verifyCode.mockRejectedValueOnce(new WrongCodeError());
 
-    type("000000");
+    type("00000000");
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "That code didn't work. Check it's from the newest email, or send a new code.",
     );
-    type("123456");
+    type("12345678");
     expect(await screen.findByRole("heading", { name: "Your pots" })).toBeInTheDocument();
   });
 
@@ -101,7 +101,7 @@ describe("the sign-in screen", () => {
     const { auth } = await askForCode();
     auth.verifyCode.mockRejectedValueOnce(new TooManyTriesError());
 
-    type("000000");
+    type("00000000");
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Too many tries for now. Wait a few minutes, then send a new code.",
