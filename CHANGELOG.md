@@ -5,6 +5,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Constitution
+
+- Changed: CLAUDE.md section 1 — for Waqar, Pip also recommends a course of action (hold, take some profit, rebalance) when the facts and his own rules point to one, says why, and leaves the decision to him; hard line 12 becomes "Recommendations, not forecasts" (personal_research users only, built on what is true now and on discipline, never predicting prices; others get generic information). Hard line 2 unchanged. Waqar's decision in chat, 2026-09-17 ("Change the goal: yes. Pip recommends a course of action for me when the facts and my own rules point to one.") (#3230768753)
+
 ## [0.5.0] — 2026-09-17
 
 ### Phase 5 — Research agent + digest
