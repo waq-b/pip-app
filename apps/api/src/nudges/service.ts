@@ -6,7 +6,7 @@ import {
   type WeekResponse,
   type WeekView,
 } from "@finance-app/shared";
-import { templateFor, type TemplateFacts } from "../research/templates.js";
+import { OPENING_TEMPLATE, templateFor, type TemplateFacts } from "../research/templates.js";
 import type { NudgeWriter } from "../research/writer.js";
 import type { ReadUser } from "../read/model.js";
 import {
@@ -496,7 +496,10 @@ export function createNudgeService(
       const { rows, counts, next, heldAfterWords } = await build(user, now, "weekly");
       const shown = rows.filter((row) => row.shown);
       if (shown.length === 0) rows.push(quietRow(counts, next, today, heldAfterWords));
-      const opening = await deps.writer.opening(shown.map((row) => row.title));
+      // Titles name holdings, so they only go to a writer for someone with personal research on.
+      const opening = user.personalResearch
+        ? await deps.writer.opening(shown.map((row) => row.title))
+        : { sentence: OPENING_TEMPLATE, model: "template", promptVersion: null };
       const saved = await deps.store.saveWeek(
         user,
         { weekOf, opening: opening.sentence, counts: { ...counts, next }, builtAt: now },

@@ -94,11 +94,14 @@ describe("building a week", () => {
   it("gives general words and sends nothing to a writer for someone without personal research", async () => {
     const writer = stubWriter();
     const news = vi.spyOn(writer, "news");
+    const opening = vi.spyOn(writer, "opening");
     const { service, store } = setup(writer);
     await service.buildWeekIfDue(friend, MONDAY);
     const week = (await service.week(friend, "latest", MONDAY))!;
     expect(titles(week.nudges)).toContain("ASML was in the news");
     expect(news.mock.calls.every(([input]) => input.plan === null)).toBe(true);
+    expect(opening).not.toHaveBeenCalled();
+    expect(week.opening).toBe("Here's your week.");
     expect(store.all().every((n) => !n.personalised)).toBe(true);
   });
 
