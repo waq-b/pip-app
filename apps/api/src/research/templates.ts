@@ -1,0 +1,138 @@
+import { displayNameFor, type Bucket, type Pence } from "@finance-app/shared";
+import type { NudgeDraft } from "./types.js";
+import { inDays, listOf, percentText, plural, shortDate, wholePounds } from "./words.js";
+
+/**
+ * Pip's own sentences — for every nudge that isn't news, for news when the
+ * reader doesn't have personal research on, and whenever an LLM draft fails
+ * the guard. Deterministic, pounds before percent, no advice.
+ *
+ * `TemplateFacts` mirrors the candidate facts the build hands over
+ * (`nudges/candidates.ts`); a type test there keeps the two in step.
+ */
+
+export type TemplateFacts =
+  | {
+      type: "cap";
+      bucket: Bucket;
+      overBy: { percent: number; pence: Pence };
+      fixIt: { outOfSideBetPence: Pence; intoOtherPotsPence: Pence | null } | null;
+    }
+  | {
+      type: "drift";
+      bucket: Bucket;
+      actualPercent: number;
+      judgedAgainstPercent: number;
+      driftPoints: number;
+    }
+  | { type: "earnings"; name: string; shortName: string; onDate: string; daysAway: number }
+  | { type: "isa_year_end"; onDate: string; daysAway: number }
+  | {
+      type: "move";
+      name: string;
+      shortName: string;
+      bucket?: Bucket;
+      period: "day" | "week";
+      move: { percent: number; pence: Pence };
+      threshold: number;
+    }
+  | {
+      type: "news";
+      name: string;
+      shortName: string;
+      reports: { id: string; publisher: string; publishedAt: Date }[];
+    }
+  | {
+      type: "quiet";
+      counts: {
+        holdingsChecked: number;
+        reportsRead: number;
+        reportsCounted: number;
+        heldBack: Partial<Record<string, number>>;
+      };
+      next: { what: string; onDate: string } | null;
+    };
+
+const draft = (title: string, body: string, citedIds: string[] = []): NudgeDraft => ({
+  title,
+  body,
+  citedIds,
+  model: "template",
+  promptVersion: null,
+});
+
+function distinctPublishers(reports: { publisher: string }[]): string[] {
+  return [...new Set(reports.map((report) => report.publisher))];
+}
+
+export function templateFor(
+  facts: TemplateFacts,
+  context: { bucket?: Bucket | null } = {},
+): NudgeDraft {
+  switch (facts.type) {
+    case "cap": {
+      const title = `Side Bet is ${wholePounds(facts.overBy.pence)} over its cap`;
+      const amounts = facts.fixIt
+        ? facts.fixIt.intoOtherPotsPence === null
+          ? ` ${wholePounds(facts.fixIt.outOfSideBetPence)} leaving Side Bet would bring it back.`
+          : ` ${wholePounds(facts.fixIt.outOfSideBetPence)} leaving Side Bet, or ${wholePounds(facts.fixIt.intoOtherPotsPence)} going into Foundation or Handpicked, would bring it back — either on its own.`
+        : "";
+      return draft(
+        title,
+        `That's ${percentText(facts.overBy.percent)} past the line you set.${amounts} You'd do either at your broker.`,
+      );
+    }
+    case "drift": {
+      const name = displayNameFor(facts.bucket);
+      const direction = facts.driftPoints > 0 ? "over" : "under";
+      const points = Math.round(Math.abs(facts.driftPoints));
+      return draft(
+        `${name} has drifted ${points} points ${direction}`,
+        `It's ${percentText(facts.actualPercent)} of what Pip can see, against the ${percentText(facts.judgedAgainstPercent)} you set. Nothing's broken — a drifting target is just worth knowing about.`,
+      );
+    }
+    case "earnings":
+      return draft(
+        `${facts.name} reports results on ${shortDate(facts.onDate)}`,
+        `${inDays(facts.daysAway)}. It's a date on the calendar, not a prediction — share prices can move around results days.`,
+      );
+    case "isa_year_end":
+      return draft(
+        `The ISA year ends on ${shortDate(facts.onDate)}`,
+        `${inDays(facts.daysAway)}. Money meant for this tax year's ISA allowance has to be in by then; next year's allowance starts the day after.`,
+      );
+    case "move": {
+      const up = facts.move.pence >= 0;
+      const when = facts.period === "day" ? "today" : "this week";
+      const bucket = facts.bucket ?? context.bucket;
+      const line = bucket ? ` for ${displayNameFor(bucket)}` : "";
+      return draft(
+        `${facts.name} is ${up ? "up" : "down"} ${wholePounds(facts.move.pence)} ${when}`,
+        `That's ${percentText(facts.move.percent)}, past the ${facts.threshold}% line you set${line}. Big moves happen; this is here so it isn't a surprise.`,
+      );
+    }
+    case "news": {
+      const publishers = distinctPublishers(facts.reports);
+      return draft(
+        `${facts.name} was in the news`,
+        `${plural(facts.reports.length, "report")} from named publishers: ${listOf(publishers)}. The links are below.`,
+        facts.reports.map((report) => report.id),
+      );
+    }
+    case "quiet": {
+      const { holdingsChecked, reportsRead, heldBack } = facts.counts;
+      const held = Object.values(heldBack).reduce<number>((sum, n) => sum + (n ?? 0), 0);
+      const checked = `Pip checked ${plural(holdingsChecked, "holding")} and read ${plural(reportsRead, "news report")}`;
+      const through =
+        held > 0
+          ? `${plural(held, "thing")} didn't get past your trust rules.`
+          : "Nothing got past your trust rules.";
+      const next = facts.next
+        ? ` Next on the calendar: ${facts.next.what}, ${shortDate(facts.next.onDate)}.`
+        : "";
+      return draft("Nothing needs you this week.", `${checked}. ${through}${next}`);
+    }
+  }
+}
+
+export const OPENING_TEMPLATE = "Here's your week.";

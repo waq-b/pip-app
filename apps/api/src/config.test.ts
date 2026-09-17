@@ -30,4 +30,26 @@ describe("server config", () => {
   it("rejects an unknown mode", () => {
     expect(() => loadConfig({ PROVIDER_MODE: "live" })).toThrow(/must be "stub" or "t212"/);
   });
+
+  it("writes nudges with the stub unless told otherwise", () => {
+    expect(loadConfig({}).llm).toEqual({ mode: "stub" });
+  });
+
+  it("uses Groq only with a key, defaulting to gpt-oss-120b", () => {
+    expect(() => loadConfig({ LLM_MODE: "groq" })).toThrow(/GROQ_API_KEY/);
+    expect(loadConfig({ LLM_MODE: "groq", GROQ_API_KEY: "gsk_x" }).llm).toEqual({
+      mode: "groq",
+      apiKey: "gsk_x",
+      model: "openai/gpt-oss-120b",
+    });
+    expect(
+      loadConfig({ LLM_MODE: "groq", GROQ_API_KEY: "gsk_x", LLM_MODEL: "openai/gpt-oss-20b" }).llm,
+    ).toMatchObject({
+      model: "openai/gpt-oss-20b",
+    });
+  });
+
+  it("refuses an LLM mode it doesn't know — no Ollama (Waqar, 2026-09-17)", () => {
+    expect(() => loadConfig({ LLM_MODE: "ollama" })).toThrow(/stub" or "groq/);
+  });
 });

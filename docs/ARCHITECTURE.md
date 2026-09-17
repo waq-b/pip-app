@@ -46,6 +46,8 @@ finance-app-personal/
 │           │   ├── schema.ts   ← allowlist, waitlist, credentials, holdings, prices, daily values…
 │           │   └── user-scope.ts ← asUser: queries as the signed-in user so RLS applies
 │           ├── dev/         ← local-only tools (sign-in link without email)
+│           ├── research/    ← RESEARCH (Phase 5): handed values, hands back words — walled off
+│           ├── nudges/      ← candidates, profile, Groq chat client (outside the wall)
 │           ├── facts/       ← FACTS (Phase 5): news and results dates for what's held
 │           │   ├── types.ts    ← adapters declare coverage (regions, asset types)
 │           │   ├── targets.ts  ← instrument → region, asset, aliases; which adapters cover it
@@ -80,7 +82,7 @@ finance-app-personal/
             └── api.ts        ← response types for every API route
 ```
 
-`research/` doesn't exist yet — it arrives with Phase 5 task 6. Don't scaffold them early. `auth/` and `market/` arrived in Phase 1: `market/` earlier than originally planned, because instrument charts need price history and prices may never come from a trading API.
+`research/` (Phase 5 task 6) is walled off — see [Research](#research-research-phase-5). Don't scaffold them early. `auth/` and `market/` arrived in Phase 1: `market/` earlier than originally planned, because instrument charts need price history and prices may never come from a trading API.
 
 ## Brand assets and fonts (Phase 1)
 
@@ -367,6 +369,21 @@ What's being said about what users hold, and what's coming up — collected on t
 - **Live** (`live.ts`): general feeds, Google News and company newsrooms always; Marketaux with `MARKETAUX_API`; Alpha Vantage news and results with `AV_ACCESS_KEY`.
 - Tested on recorded responses (`fixtures/recorded/{google-news,rss,marketaux,alpha-vantage}`) and PGlite (dedupe across sources, alias linking, coverage selection, due and retry timing, rate limits, budgets incl. the share left for prices, bursts, clean-up). Run once against the dev database with the live sources (2026-09-17): 17 reads, none failed; 516 reports — Nvidia 172, ASML 108, Greggs 101, VWRL 23 — and ASML's results date.
 
+## Research (`research/`, Phase 5)
+
+Where words come from. **Handed values, hands back text** — nothing else (hard line 2, decision 9).
+
+- **The wall.** `research/` imports only its own files and `@finance-app/shared`, and its code never touches `fetch`, `process`, `require`, `globalThis`, `eval` or the filesystem. `research/wall.test.ts` proves it: it lists every import in every non-test file with the TypeScript compiler (`ts.preProcessFile`, dynamic imports included), resolves relative ones and fails on anything leaving `research/` or any package but the shared one; scans code (comments stripped) for the forbidden globals; fails if it finds no files; and checks itself against a planted crossing. ESLint (`eslint.config.js`) flags the same in the editor: imports naming the rest of the API, other packages, and the `fetch`/`process` globals. So there's no path from an LLM to rules, keys, the database, providers or orders.
+- **The LLM is injected.** `Chat` (`types.ts`) is a function `{ model, system, user, schema } → { content, model }`. The only network implementation is `nudges/groq-chat.ts` (`groqChat`): Groq's OpenAI-compatible chat completions, strict `json_schema`, `reasoning_effort: low`, temperature 0.2, 30 s timeout; any failure is `LlmUnavailableError` with a reason and never the key. Zero Data Retention is on in Groq's console.
+- **Writers** (`writer.ts`), both `NudgeWriter { news(input), opening(titles) }`:
+  - `llmWriter({ chat, model })` — a news nudge goes to the model **only when the input has a plan** (personal research on); otherwise Pip's template, and no call. The answer goes through the guard; a failure (unreachable, schema, bad citation, banned words) returns the template and reports why through `onFallback`. `material: false` comes back as `NotMaterial` for the build to hold the nudge back. Cited numbers become report ids. The week's opening sentence works the same way, falling back to "Here's your week."
+  - `stubWriter()` — stub mode and CI: canned words from the facts, always material, citing every report. No network.
+- **What reaches the model** (`prompts/awareness.v1.ts`, signed-off prompt v1): the plan (goals, horizon, risk words, shape in percent), the holding's name, ticker, pot, pot share, price moves **in percent**, next results date, and numbered reports (publisher, date, headline, snippet) with angle brackets stripped so a headline can't close its block. **Never** pounds, quantities, emails or ids. `week.v1` gets only the week's titles.
+- **The guard** (`guard.ts`): JSON must match; title ≤ 80, body ≤ 320, opening ≤ 140; every cited number must be one it was given, at least one; and no banned wording — buy/sell/sold, hold-as-advice phrases, should, recommend, price targets, "will rise/fall…", "expect the price", under/overvalued, cheap/expensive/bargain, guarantee, benefit/good for/opportunity/upside, the design's banned jargon, and **any percentage** (the model is never given pounds, so it can't put money first — Pip shows figures itself).
+- **Pip's own sentences** (`templates.ts`, `TemplateFacts` kept in step with the candidates' facts by a compile-time test): cap (over by in pounds, both fix-it amounts, "You'd do either at your broker"), drift, results date ("a date on the calendar, not a prediction"), ISA year end, big move (pounds first, then the percent and the user's line), news ("N reports from named publishers: …" — the general wording for everyone without personal research, never "worth a look"), and the quiet week (holdings checked, reports read, how many didn't get past the trust rules, next on the calendar).
+- **Config**: `LLM_MODE` `stub` (default) or `groq` (needs `GROQ_API_KEY`); `LLM_MODEL` defaults to `openai/gpt-oss-120b`. Anything else, Ollama included, stops the server at startup.
+- Tested with recorded Groq answers (the "benefit a long-term holder" answer is thrown out) and fakes. Run once against Groq (2026-09-17): three news drafts and an opening sentence all passed the guard, 0.3–0.8 s each.
+
 ## Market data layer
 
 `apps/api/src/market/market.ts` is the other provider interface, and it answers a different question: _what is it worth, and what has it done?_ Trading providers only ever answer _what is held, and how much cash?_ Keeping the two apart is how hard line 8 stays true — every price and every chart in the app comes from here, and nothing reads a price from a trading API.
@@ -453,7 +470,7 @@ One **Render free web service**, `pip` — https://pip-old.example.net — in Fr
 - **Start:** `cd apps/api && node --import tsx dist/server.js`. `tsx` is a runtime dependency because `@finance-app/shared` is TypeScript source; plain Node can't resolve it.
 - **One origin** (`web.ts`): with `WEB_DIST_DIR=../web/dist`, Fastify's `rewriteUrl` sends `/api/*` to the API's own routes and everything else to `/app/*`, served from the built app — a real file, or `index.html` so a reload of `/rules` works. Fingerprinted `assets/` are cached for a year as immutable; `index.html` is `no-cache`; the shell gets `nosniff`, `same-origin` referrer and `DENY` framing. The static app is public (sign-in screen and code, no data); the guard exempts `/app/*` only when serving it. Health check: `/api/health`.
 - **Non-secret env** set on the service: `NODE_VERSION=24`, `NODE_ENV=production`, `PROVIDER_MODE=t212`, `T212_ENV=demo`, `WEB_DIST_DIR`, `LOG_LEVEL`, `MASTER_KEY_VERSION`, `SUPABASE_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`.
-- **Secrets, set only in Render's dashboard** (never through chat or git): `DATABASE_URL`, `MASTER_KEY`, `JOB_SECRET`, `AV_ACCESS_KEY`, `COINGECKO_KEY` (Phase 3), `MARKETAUX_API` (Phase 5 — not set yet). The dev and production app share the one Supabase project, so `MASTER_KEY` must be the same key that sealed the stored credentials. `JOB_SECRET` must match the `private.job_settings` row, which already points `pg_cron` at `https://pip-old.example.net/api/jobs/refresh`.
+- **Secrets, set only in Render's dashboard** (never through chat or git): `DATABASE_URL`, `MASTER_KEY`, `JOB_SECRET`, `AV_ACCESS_KEY`, `COINGECKO_KEY` (Phase 3), `MARKETAUX_API`, `GROQ_API_KEY` (Phase 5), with `LLM_MODE=groq` set alongside. The dev and production app share the one Supabase project, so `MASTER_KEY` must be the same key that sealed the stored credentials. `JOB_SECRET` must match the `private.job_settings` row, which already points `pg_cron` at `https://pip-old.example.net/api/jobs/refresh`.
 - **Supabase Auth** must list `https://pip-old.example.net` in its redirect URLs, or magic links sign into the wrong place.
 - **Free hours are shared** across the Render workspace (750/month). The scheduled refresh runs only in weekday market hours so Pip sleeps otherwise; other services in the workspace draw on the same hours.
 
@@ -520,6 +537,9 @@ Auth and route tests otherwise use in-memory stores, and CI never talks to Supab
 | `LOG_LEVEL`                                          | pino level for the server                                                                                                                                                              | `info`                                      |
 | `DATABASE_URL`                                       | Postgres connection string                                                                                                                                                             | none — required once a route touches the DB |
 | `PORT`                                               | apps/api listen port                                                                                                                                                                   | `3001`                                      |
+| `LLM_MODE`                                           | Who writes nudges: `stub` (canned, no network) or `groq`                                                                                                                               | `stub`                                      |
+| `LLM_MODEL`                                          | The Groq model                                                                                                                                                                         | `openai/gpt-oss-120b`                       |
+| `GROQ_API_KEY`                                       | Groq key, needed for `LLM_MODE=groq`. Render and local `.env` only                                                                                                                     | none                                        |
 | `MARKETAUX_API`                                      | Marketaux free key — news for Phase 5 facts. Render only in production                                                                                                                 | none — Marketaux left out                   |
 | `STUB_STALENESS`                                     | Stub only: force the staleness ladder, e.g. `Degen:2` (amber), `Degen:failed` (red), `all:closed`. Unreadable values stop the server at startup                                        | empty — everything fresh                    |
 

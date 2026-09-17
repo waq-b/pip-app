@@ -18,7 +18,14 @@ export interface ServerConfig {
   marketauxKey?: string;
   /** Present whenever real provider keys can be stored or used. */
   secretBox?: SecretBox;
+  /**
+   * Who writes nudges (Phase 5): `stub` (canned words, no network — the
+   * default, and always in CI) or `groq`, which needs `GROQ_API_KEY`.
+   */
+  llm: { mode: "stub" } | { mode: "groq"; apiKey: string; model: string };
 }
+
+export const DEFAULT_LLM_MODEL = "openai/gpt-oss-120b";
 
 export class ConfigError extends Error {
   constructor(message: string) {
@@ -51,8 +58,21 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     throw new ConfigError("JOB_SECRET must be at least 32 characters");
   }
 
+  const llmMode = env.LLM_MODE ?? "stub";
+  if (llmMode !== "stub" && llmMode !== "groq") {
+    throw new ConfigError(`LLM_MODE must be "stub" or "groq", not "${llmMode}"`);
+  }
+  if (llmMode === "groq" && !env.GROQ_API_KEY) {
+    throw new ConfigError("LLM_MODE=groq needs GROQ_API_KEY");
+  }
+  const llm: ServerConfig["llm"] =
+    llmMode === "groq"
+      ? { mode: "groq", apiKey: env.GROQ_API_KEY!, model: env.LLM_MODEL || DEFAULT_LLM_MODEL }
+      : { mode: "stub" };
+
   return {
     providerMode: mode,
+    llm,
     secretBox,
     masterKeyVersion: Number(env.MASTER_KEY_VERSION ?? 1),
     jobSecret: env.JOB_SECRET || undefined,
