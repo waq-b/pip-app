@@ -1,3 +1,4 @@
+import type { JobName } from "@finance-app/shared";
 import { and, eq, inArray } from "drizzle-orm";
 import type { SecretBox } from "../crypto/secrets.js";
 import { holdings, providerCredentials } from "../db/schema.js";
@@ -5,6 +6,7 @@ import type { Db } from "../db/user-scope.js";
 import { collectFacts } from "../facts/collect.js";
 import type { FactsAdapter } from "../facts/types.js";
 import { fillOutcomes } from "../nudges/outcomes.js";
+import { noJobRecorder, type JobRecorder } from "./runs.js";
 import type { NudgeService } from "../nudges/service.js";
 import { users } from "../db/schema.js";
 import { refreshDue, type PricedInstrument } from "../market/refresh.js";
@@ -36,6 +38,9 @@ import {
  *    07:00 UTC Monday), and today's daily nudges from 07:00 UTC — after facts,
  *    so a week is built from the freshest reports.
  * 7. Fill in what happened 7 and 30 days after each nudge, from cached closes.
+ *
+ * Each step records a `job_runs` row of its own (Phase 6 decision 7), so a kind
+ * of work going stale or failing is visible without anything asking the API.
  */
 
 type Market = ReturnType<typeof withFallback>;
@@ -50,6 +55,11 @@ export interface RefreshJobDeps {
   facts?: FactsAdapter[];
   /** Phase 5 nudges. Without it, no weeks are built. */
   nudges?: NudgeService;
+  /**
+   * Records what ran (Phase 6). Every step writes a row, which is what the
+   * freshness check inside Supabase reads — nothing pings the API.
+   */
+  runs?: JobRecorder;
   now?: () => Date;
 }
 
@@ -87,32 +97,47 @@ export function createRefreshJob(deps: RefreshJobDeps) {
       outcomes: 0,
       errors: [],
     };
-    const step = async (name: string, work: () => Promise<void>) => {
+    const recorder = deps.runs ?? noJobRecorder();
+    const whole = await recorder.start("refresh", at);
+
+    /**
+     * A step records its own run when it maps to a kind of work the freshness
+     * check watches. `poll` and `prices` do; `backfill` and `snapshots` follow
+     * the run as a whole.
+     */
+    const step = async (name: string, work: () => Promise<void>, job?: JobName) => {
+      const run = job ? await recorder.start(job, now()) : null;
       try {
         await work();
+        await run?.finish();
       } catch {
         summary.errors.push(name);
+        await run?.finish({}, [name]);
       }
     };
 
-    await step("poll", async () => {
-      for (const credential of await credentialsDue(deps.db, at, POLL_EVERY_MS)) {
-        const outcome =
-          credential.provider === "kraken"
-            ? deps.kraken
-              ? await pollKraken(
-                  deps.db,
-                  deps.box,
-                  credential,
-                  deps.kraken.clientFor,
-                  deps.kraken.directory,
-                  at,
-                )
-              : null
-            : await pollCredential(deps.db, deps.box, credential, deps.clientFor, at);
-        if (outcome?.outcome === "polled") summary.polled += 1;
-      }
-    });
+    await step(
+      "poll",
+      async () => {
+        for (const credential of await credentialsDue(deps.db, at, POLL_EVERY_MS)) {
+          const outcome =
+            credential.provider === "kraken"
+              ? deps.kraken
+                ? await pollKraken(
+                    deps.db,
+                    deps.box,
+                    credential,
+                    deps.kraken.clientFor,
+                    deps.kraken.directory,
+                    at,
+                  )
+                : null
+              : await pollCredential(deps.db, deps.box, credential, deps.clientFor, at);
+          if (outcome?.outcome === "polled") summary.polled += 1;
+        }
+      },
+      "poll",
+    );
 
     await step("backfill", async () => {
       const [waiting] = await deps.db
@@ -140,17 +165,21 @@ export function createRefreshJob(deps: RefreshJobDeps) {
       if (outcome.outcome !== "failed") summary.backfilled += 1;
     });
 
-    await step("prices", async () => {
-      const held = await deps.db.selectDistinct({ id: holdings.instrumentId }).from(holdings);
-      const result = await refreshDue(
-        deps.db,
-        deps.marketFor,
-        held.map((row) => row.id),
-        at,
-      );
-      summary.pricesRefreshed = result.refreshed.length;
-      summary.pricesFailed = result.failed.length;
-    });
+    await step(
+      "prices",
+      async () => {
+        const held = await deps.db.selectDistinct({ id: holdings.instrumentId }).from(holdings);
+        const result = await refreshDue(
+          deps.db,
+          deps.marketFor,
+          held.map((row) => row.id),
+          at,
+        );
+        summary.pricesRefreshed = result.refreshed.length;
+        summary.pricesFailed = result.failed.length;
+      },
+      "prices",
+    );
 
     await step("snapshots", async () => {
       const owners = await deps.db
@@ -164,14 +193,21 @@ export function createRefreshJob(deps: RefreshJobDeps) {
       }
     });
 
-    await step("facts", async () => {
-      if (!deps.facts?.length) return;
-      const result = await collectFacts({ db: deps.db, adapters: deps.facts, now: at });
-      summary.facts = { read: result.read, stored: result.stored, events: result.events };
-    });
+    await step(
+      "facts",
+      async () => {
+        if (!deps.facts?.length) return;
+        const result = await collectFacts({ db: deps.db, adapters: deps.facts, now: at });
+        summary.facts = { read: result.read, stored: result.stored, events: result.events };
+      },
+      "facts",
+    );
 
     await step("nudges", async () => {
       if (!deps.nudges) return;
+      const weekly = await recorder.start("weekly_build", now());
+      const daily = await recorder.start("daily_build", now());
+      const failures: string[] = [];
       const people = await deps.db
         .selectDistinct({
           userId: users.id,
@@ -190,14 +226,25 @@ export function createRefreshJob(deps: RefreshJobDeps) {
           if (at.getUTCHours() >= 7) summary.nudges.daily += await deps.nudges.buildDaily(user, at);
         } catch {
           summary.errors.push(`nudges:${person.userId}`);
+          failures.push(`nudges:${person.userId}`);
         }
       }
+      // The two builds are watched separately: a Monday that never built is a
+      // different failure from a quiet day with no daily notes.
+      await weekly.finish({ weeks: summary.nudges.weeks }, failures);
+      await daily.finish({ daily: summary.nudges.daily }, failures);
     });
 
-    await step("outcomes", async () => {
-      summary.outcomes = (await fillOutcomes(deps.db, at)).filled;
-    });
+    await step(
+      "outcomes",
+      async () => {
+        summary.outcomes = (await fillOutcomes(deps.db, at)).filled;
+      },
+      "outcomes",
+    );
 
+    await whole.finish({ ...summary }, summary.errors);
+    await recorder.cleanUp(at).catch(() => 0);
     return summary;
   }
 

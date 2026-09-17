@@ -29,6 +29,7 @@ import { memoryNudgeStore } from "./nudges/store.js";
 import { registerWeekRoutes } from "./routes/week.js";
 import { registerNotificationRoutes } from "./routes/notifications.js";
 import { registerNetAssetsRoutes } from "./routes/net-assets.js";
+import { fixedJobStatus, registerStatusRoutes, type JobStatusReader } from "./routes/status.js";
 import { memoryNetAssetsStore, type NetAssetsStore } from "./rules/net-assets.js";
 import { fixedSideBetLimits, type SideBetLimitReader } from "./rules/side-bet.js";
 import { memoryNotificationStore, type NotificationStore } from "./notify/store.js";
@@ -68,6 +69,8 @@ export interface BuildAppOptions {
   netAssets?: NetAssetsStore;
   /** What Side Bet is judged against (Phase 6); stub mode uses a fixed answer. */
   sideBetLimits?: SideBetLimitReader;
+  /** What the jobs have been doing, for `/status` and `/health/jobs` (Phase 6). */
+  jobStatus?: JobStatusReader;
   /** The scheduled refresh (Trading 212 mode). */
   refreshJob?: { run(): Promise<unknown> };
   /** From `JOB_SECRET`; job routes refuse everyone without it. */
@@ -138,6 +141,10 @@ export function buildApp(options: BuildAppOptions = {}) {
         },
         { buildOnRead: true },
       ),
+  });
+  registerStatusRoutes(app, {
+    jobs: options.jobStatus ?? fixedJobStatus(options.now),
+    ...(options.now ? { now: options.now } : {}),
   });
   registerNetAssetsRoutes(app, {
     store: options.netAssets ?? memoryNetAssetsStore(),

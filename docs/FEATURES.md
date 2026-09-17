@@ -12,6 +12,14 @@ Locally, `PROVIDER_MODE=stub` still runs the whole app on the design's sample da
 
 The API also answers `GET /api/health` (`{ status: "ok" }`) with no sign-in, for uptime checks.
 
+## Pip looking after itself
+
+- **Pip sleeps when nobody needs it.** It wakes for its scheduled work and when you open it, so opening it after a while can take a few seconds (see the warming-up line below).
+- **Nothing checks up on Pip by poking it** — that would keep it awake and cost the free hours. Instead every job writes down what it did, and a check inside the database reads that every 20 minutes and emails Waqar when work has gone stale, failed, or never happened at all. That last one is also how a Pip that never woke up gets noticed.
+- **One email per problem**, not one per check, and the problem closes itself when the work runs cleanly again.
+- **Silence outside working hours is not a problem.** Pip is only judged during the hours it's meant to be running.
+- **Setup shows when prices were last checked**, and says so plainly when that's gone stale.
+
 ## Opening Pip
 
 - **A short splash** — the Pip mark, "Pip", "Checking for updates…" — while Pip checks for a newer version. If there is one, Pip switches to it before you see anything, so an app installed on a phone never runs an old version after an update. It waits at most 3 seconds, doesn't appear to wait at all on a first visit or offline, and never reloads the app while you're using it: an update found later is picked up next time you open Pip.

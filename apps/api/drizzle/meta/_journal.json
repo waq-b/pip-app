@@ -127,6 +127,13 @@
       "when": 1789683816622,
       "tag": "0017_side_bet_limit",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1789683816623,
+      "tag": "0018_job_freshness",
+      "breakpoints": true
     }
   ]
 }

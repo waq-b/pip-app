@@ -38,6 +38,8 @@ import {
 import { dbNotificationStore } from "./notify/store.js";
 import { dbNetAssetsStore } from "./rules/net-assets.js";
 import { dbSideBetLimits } from "./rules/side-bet.js";
+import { dbJobStatus } from "./routes/status.js";
+import { dbJobRecorder } from "./jobs/runs.js";
 
 const config = loadConfig();
 
@@ -141,7 +143,9 @@ function realAccounts(): Partial<BuildAppOptions> {
     netAssets,
     sideBetLimits,
     notifier: createNotifier({ store: notifications, ...senders() }),
+    jobStatus: dbJobStatus(db),
     refreshJob: createRefreshJob({
+      runs: dbJobRecorder(db),
       db,
       box,
       clientFor,

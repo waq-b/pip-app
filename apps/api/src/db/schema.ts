@@ -572,7 +572,15 @@ export const DB_RECOMMENDATION_TRIGGERS = [
   "urgent_move",
 ] as const;
 export const DB_RECOMMENDATION_STATES = ["clear", "pending", "fired", "pending_clear"] as const;
-export const DB_JOB_NAMES = ["refresh"] as const;
+export const DB_JOB_NAMES = [
+  "refresh",
+  "poll",
+  "prices",
+  "facts",
+  "weekly_build",
+  "daily_build",
+  "outcomes",
+] as const;
 export const DB_PROVIDERS = ["trading212", "kraken"] as const;
 
 /**

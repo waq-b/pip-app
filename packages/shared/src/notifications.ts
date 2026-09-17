@@ -9,7 +9,8 @@
 /**
  * A push Pip can send. `limit` is Side Bet nearing or reaching its limit,
  * `urgent` an urgent note or a pushed recommendation, `digest` the week being
- * ready. Ops alerts aren't here: UptimeRobot emails Waqar directly.
+ * ready. Ops alerts aren't here: the freshness check inside the database emails
+ * Waqar, because Pip may be asleep on purpose (phase-6.md decision 7).
  */
 export const PUSH_KINDS = ["limit", "urgent", "digest"] as const;
 export type PushKind = (typeof PUSH_KINDS)[number];
@@ -111,6 +112,29 @@ export const URGENT_PUSH_DAILY_MAX = 2;
 
 // ─── Jobs ─────────────────────────────────────────────────────────────────────
 
-/** Jobs that record a run, so Setup and the health check can see the last one. */
-export const JOB_NAMES = ["refresh"] as const;
+/**
+ * What records a run in `job_runs`. `refresh` is the whole scheduled run;
+ * the rest are its steps, so freshness can be judged per kind of work rather
+ * than per run (phase-6.md decision 7).
+ */
+export const JOB_NAMES = [
+  "refresh",
+  "poll",
+  "prices",
+  "facts",
+  "weekly_build",
+  "daily_build",
+  "outcomes",
+] as const;
 export type JobName = (typeof JOB_NAMES)[number];
+
+/**
+ * How stale each kind of work may get before the freshness check inside
+ * Supabase emails Waqar. Pip is allowed to sleep, so nothing pings the API —
+ * these are judged from the rows the jobs themselves wrote.
+ */
+export const STALE_REFRESH_MINUTES = 75;
+/** The Monday build should have happened by this hour, London. */
+export const WEEKLY_BUILD_BY_HOUR = 9;
+/** Job runs are kept this long, then cleaned up by the job itself. */
+export const JOB_RUNS_KEPT_DAYS = 30;

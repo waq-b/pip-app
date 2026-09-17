@@ -298,6 +298,17 @@ interface Provider {
 - **Refresh-on-read** in the routes (task 12) covers anything the schedule misses.
 - **Keep-alive**: free Supabase projects pause after about a week of low activity, and scheduled jobs inside the database aren't documented as activity. A GitHub Actions workflow queries Supabase's REST API every three days with the publishable key (public by design; stored as repository secrets `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`). RLS refuses the read, but the request still reaches the database.
 
+## Ops: job freshness, with Pip asleep (`jobs/runs.ts`, `routes/status.ts`, `drizzle/0018`, Phase 6)
+
+**Nothing pings Pip.** Render is free and allowed to sleep; a liveness check on a schedule would be a keep-alive in disguise and would spend the free hours (CLAUDE.md s3, phase-6.md decision 7). So ops watches the **work**, from inside the database.
+
+- **Every job records a run.** `dbJobRecorder` writes a `job_runs` row when a step starts and fills in the same row when it finishes — one per kind of work: `refresh` (the whole run), `poll`, `prices`, `facts`, `weekly_build`, `daily_build`, `outcomes`. A job that dies mid-run leaves an unfinished row, which reads as a failure. The job drops rows older than `JOB_RUNS_KEPT_DAYS`.
+- **`private.stale_jobs(at)`** is the whole judgement, in SQL: no successful price refresh within `stale_refresh_minutes` **during the hours Pip is meant to run**; no Monday build by `weekly_build_by_hour` London on a Monday; anything started over 30 minutes ago and never finished — which is what an unreachable API looks like. Outside those hours silence is not a failure. Thresholds live in `private.job_settings`, so they change without a deploy. Tested on PGlite against the real migration (`jobs/freshness.test.ts`).
+- **`private.check_job_freshness()`** runs every 20 minutes under `pg_cron`, reads those rows and posts to Resend through `pg_net`. **One email per incident:** `private.job_alerts` holds an open row until the job runs cleanly again, and a recovered job closes it. The Resend key and `OPS_EMAIL` live in `private.job_settings`, server-only, never granted. Proven on the dev database, 2026-09-17: a planted unfinished job produced exactly one email (Resend 200), a second run sent none, and recovery closed the incident.
+- **`GET /status`** (signed in) gives Setup its line — when prices were last checked, and whether that's stale — and says nothing about why anything failed. **`GET /health/jobs`** answers `ok` or `stale` with no detail and no session, for Waqar to open in a browser; the guard allows it because it carries no data. **Nothing calls either on a schedule.**
+- **`GET /health`** stays for Render's own deploy check.
+- **The Supabase keep-alive stays** (`.github/workflows/keep-supabase-awake.yml`): it pings **Supabase**, not Pip, every three days, because a free Supabase project pauses after about a week and scheduled jobs inside it don't count as activity. It costs no Render hours.
+
 ## Rules engine (`rules/engine.ts`, Phase 4, reshaped in Phase 6)
 
 One pure function, no I/O and no clock, so `/rules`, `/portfolio` and `/buckets/:id` can't tell different stories. It only describes; nothing in it can move money.

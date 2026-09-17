@@ -12,8 +12,15 @@ declare module "fastify" {
   }
 }
 
-/** The only route that answers without a token (CLAUDE.md hard line 4). */
-export const PUBLIC_PATHS = ["/health"];
+/**
+ * The only routes that answer without a token (CLAUDE.md hard line 4).
+ *
+ * - `/health` is Render's own deploy check.
+ * - `/health/jobs` is up-or-down for Waqar to open in a browser (Phase 6
+ *   decision 7). It carries no data at all: one word, "ok" or "stale". Nothing
+ *   calls it on a schedule — Pip is allowed to sleep.
+ */
+export const PUBLIC_PATHS = ["/health", "/health/jobs"];
 
 /**
  * Routes that need a valid token but not the allowlist: someone who has just
