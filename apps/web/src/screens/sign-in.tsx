@@ -1,5 +1,5 @@
 import { MailCheck } from "lucide-react";
-import { useId, useState, type FormEvent } from "react";
+import { useId, useRef, useState, type FormEvent } from "react";
 import { Navigate } from "react-router";
 import {
   SIGN_IN_CODE_LENGTH,
@@ -192,7 +192,10 @@ function CodeForm({ email, onRestart }: { email: string; onRestart: () => void }
   const busy = status.kind === "checking" || status.kind === "resending";
 
   // A successful check signs this window in; the screen then redirects itself.
+  const checking = useRef(false);
   const check = async (digits: string) => {
+    if (checking.current) return;
+    checking.current = true;
     setStatus({ kind: "checking" });
     try {
       await verifyCode(email, digits);
@@ -206,21 +209,26 @@ function CodeForm({ email, onRestart }: { email: string; onRestart: () => void }
               ? "Too many tries for now. Wait a few minutes, then send a new code."
               : "Pip couldn't check the code. Give it a moment and try again.",
       });
+    } finally {
+      checking.current = false;
     }
   };
 
-  // Digits only, so a pasted "1234 5678" or "Your code: 12345678" still works. The
-  // last digit typed or pasted submits on its own.
+  // Digits only, so a pasted "1234 5678" or "Your code: 12345678" still works.
+  // The code submits on its own the moment it becomes complete — once. Typing
+  // past the end, or autofill firing twice, doesn't send it again: every extra
+  // try against a used or wrong code only counts towards Supabase's limit.
   const change = (value: string) => {
     const digits = value.replace(/\D/g, "").slice(0, SIGN_IN_CODE_LENGTH);
+    if (digits === code) return;
     setCode(digits);
     if (status.kind === "failed" || status.kind === "resent") setStatus({ kind: "typing" });
-    if (digits.length === SIGN_IN_CODE_LENGTH && !busy) void check(digits);
+    if (digits.length === SIGN_IN_CODE_LENGTH) void check(digits);
   };
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    if (code.length === SIGN_IN_CODE_LENGTH && !busy) void check(code);
+    if (code.length === SIGN_IN_CODE_LENGTH) void check(code);
   };
 
   const resend = async () => {

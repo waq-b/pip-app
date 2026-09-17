@@ -76,6 +76,26 @@ describe("the sign-in screen", () => {
     expect(await screen.findByRole("heading", { name: "Your pots" })).toBeInTheDocument();
   });
 
+  it("checks a complete code once — typing past the end or submitting again doesn't resend it", async () => {
+    const { auth } = await askForCode();
+    let finish: () => void = () => {};
+    auth.verifyCode.mockImplementationOnce(
+      () =>
+        new Promise<void>((_resolve, reject) => {
+          finish = () => reject(new WrongCodeError());
+        }),
+    );
+
+    type("12345678");
+    type("123456789");
+    fireEvent.submit(screen.getByLabelText("Code").closest("form")!);
+
+    expect(auth.verifyCode).toHaveBeenCalledTimes(1);
+    await act(async () => finish());
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    expect(auth.verifyCode).toHaveBeenCalledTimes(1);
+  });
+
   it("takes a pasted code with spaces or words around it", async () => {
     const { auth } = await askForCode();
 
