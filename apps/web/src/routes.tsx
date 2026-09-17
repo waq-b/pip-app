@@ -6,6 +6,7 @@ import { PotsScreen } from "./screens/pots";
 import { RulesScreen } from "./screens/rules";
 import { SetupScreen } from "./screens/setup";
 import { SignInScreen } from "./screens/sign-in";
+import { WeekScreen } from "./screens/week";
 import { RequireSession } from "./shell/require-session";
 
 /**
@@ -21,6 +22,8 @@ export const routes: RouteObject[] = [
       { index: true, element: <PotsScreen /> },
       { path: "pots/:bucket", element: <PotDetailScreen /> },
       { path: "instruments/:id", element: <InstrumentDetailScreen /> },
+      { path: "week", element: <WeekScreen /> },
+      { path: "week/:weekOf", element: <WeekScreen /> },
       { path: "rules", element: <RulesScreen /> },
       { path: "setup", element: <SetupScreen /> },
     ],

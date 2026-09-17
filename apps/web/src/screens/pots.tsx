@@ -12,17 +12,11 @@ import { ProgressCapBar } from "../components/progress-cap-bar";
 import { ProvenanceLine } from "../components/provenance";
 import { Skeleton } from "../components/skeleton";
 import { StaleCard } from "../components/stale-card";
-import {
-  isEmptyPortfolio,
-  TIMEFRAMES,
-  targetSentence,
-  useActivity,
-  usePortfolio,
-} from "../lib/portfolio";
+import { isEmptyPortfolio, TIMEFRAMES, targetSentence, usePortfolio } from "../lib/portfolio";
 import { ladder } from "../lib/staleness";
 import { PipMark } from "../shell/pip-mark";
 import { useBreakpoint, type Breakpoint } from "../shell/use-breakpoint";
-import { ActivityFeed } from "./activity-feed";
+import { WeekCard } from "./week-card";
 import { PotCard, PotRow } from "./pot-card";
 
 /**
@@ -168,7 +162,7 @@ function PotsLoaded({
         </div>
 
         <div className="grid grid-cols-[1.55fr_1fr] items-start gap-3.5">
-          <WhatChanged comingSoon={portfolio.activityComingSoon} />
+          <WeekCard />
           <section className="bg-card rounded-[26px] px-[22px] py-5">
             <h2 className="font-heading m-0 text-xl font-normal">The shape you asked for</h2>
             <p className="text-ink2 mt-1 mb-4 text-[12.5px] font-medium">
@@ -240,36 +234,9 @@ function PotsLoaded({
       </section>
 
       <div className="mt-6">
-        <WhatChanged comingSoon={portfolio.activityComingSoon} />
+        <WeekCard />
       </div>
     </div>
-  );
-}
-
-function WhatChanged({ comingSoon = false }: { comingSoon?: boolean }) {
-  const activity = useActivity();
-
-  return (
-    <section>
-      <div className="mb-[11px] flex items-center justify-between">
-        <h2 className="font-heading m-0 text-[19px] font-normal">What changed</h2>
-        <span className="text-ink2 text-xs font-medium">Last 7 days</span>
-      </div>
-      {comingSoon ? (
-        <p className="bg-card text-ink2 m-0 rounded-[26px] px-5 py-4 text-[13px] leading-normal font-medium">
-          Coming soon. Once Pip reads your account history, the week's buys, sells and money in will
-          show up here.
-        </p>
-      ) : activity.isPending ? (
-        <Skeleton height={180} rounded="rounded-[26px]" />
-      ) : activity.isError ? (
-        <p className="bg-card text-ink2 m-0 rounded-[26px] px-5 py-4 text-[13px] font-medium">
-          Couldn't load what changed. Everything above is still current.
-        </p>
-      ) : (
-        <ActivityFeed entries={activity.data} />
-      )}
-    </section>
   );
 }
 

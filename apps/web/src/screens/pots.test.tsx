@@ -1,9 +1,4 @@
-import type {
-  ActivityEntry,
-  BucketSummary,
-  PortfolioSummary,
-  Timeframe,
-} from "@finance-app/shared";
+import type { BucketSummary, PortfolioSummary, Timeframe, WeekResponse } from "@finance-app/shared";
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { WAQAR } from "../test/fake-auth";
@@ -62,22 +57,35 @@ function portfolio(
   };
 }
 
-const activity: ActivityEntry[] = [
-  {
-    id: "1",
-    bucket: "Base",
-    kind: "money_in",
-    text: "£140 of your ISA bought Vanguard FTSE Global All Cap",
-    when: "Monday · automatic",
+const week: WeekResponse = {
+  week: {
+    weekOf: "2026-09-14",
+    builtAt: "2026-09-14T08:00:00Z",
+    opening: "Here's your week.",
+    nudges: [
+      {
+        id: "n1",
+        cadence: "weekly",
+        kind: "shape",
+        reason: "cap",
+        bucket: "Degen",
+        instrumentId: null,
+        title: "Side Bet is £209 over its cap",
+        body: "That's 1.8% past the line you set.",
+        basis: null,
+        sources: [],
+        checks: [],
+        response: null,
+        createdAt: "2026-09-14T08:00:00Z",
+      },
+    ],
+    heldBack: [],
+    counts: { holdingsChecked: 4, reportsRead: 14, reportsCounted: 2 },
+    next: null,
   },
-  {
-    id: "2",
-    bucket: "Degen",
-    kind: "alert",
-    text: "Side Bet crept 1.8% over its 5% cap",
-    when: "Wednesday · needs a look",
-  },
-];
+  today: [],
+  pastWeeks: [],
+};
 
 function api(extra: Record<string, Handler> = {}): Record<string, Handler> {
   return {
@@ -85,7 +93,7 @@ function api(extra: Record<string, Handler> = {}): Record<string, Handler> {
     "/portfolio": (_init, url) => ({
       body: portfolio((url.searchParams.get("tf") as Timeframe) ?? "day"),
     }),
-    "/activity": { body: activity },
+    "/week": { body: week },
     ...extra,
   };
 }
@@ -166,11 +174,22 @@ describe("the pots screen", () => {
     expect(line.textContent).not.toMatch(/Trading 212|Kraken/);
   });
 
-  it("lists what changed, and says when the list is done", async () => {
+  it("shows your week where What changed was, says when it's done, and opens the week", async () => {
     renderRoute("/", { session: WAQAR, api: api() });
 
-    expect(await screen.findByText("Side Bet crept 1.8% over its 5% cap")).toBeInTheDocument();
-    expect(screen.getByText("That's the lot. Quiet week.")).toBeInTheDocument();
+    const row = await screen.findByText("Side Bet is £209 over its cap");
+    expect(screen.getByText("That's the lot.")).toBeInTheDocument();
+    expect(row.closest("a")).toHaveAttribute("href", "/week");
+  });
+
+  it("says when the first week will arrive", async () => {
+    renderRoute("/", {
+      session: WAQAR,
+      api: api({ "/week": { body: { week: null, today: [], pastWeeks: [] } } }),
+    });
+    expect(
+      await screen.findByText("Your first week arrives on Monday morning, by 8am."),
+    ).toBeInTheDocument();
   });
 
   it("ends by saying Pip can't trade", async () => {

@@ -8,7 +8,7 @@ export interface NavDestination {
   path: string;
   label: string;
   icon: typeof House;
-  /** Pot detail and instrument detail live under Pots, so it stays lit there. */
+  /** Pot detail, instrument detail and Your week live under Pots, so it stays lit there. */
   matches: (pathname: string) => boolean;
 }
 
@@ -18,7 +18,10 @@ export const NAV: NavDestination[] = [
     label: "Pots",
     icon: House,
     matches: (pathname) =>
-      pathname === "/" || pathname.startsWith("/pots") || pathname.startsWith("/instruments"),
+      pathname === "/" ||
+      pathname.startsWith("/pots") ||
+      pathname.startsWith("/instruments") ||
+      pathname.startsWith("/week"),
   },
   {
     path: "/rules",

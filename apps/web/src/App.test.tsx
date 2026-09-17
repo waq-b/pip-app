@@ -85,6 +85,8 @@ describe("the route table", () => {
       "index",
       "pots/:bucket",
       "instruments/:id",
+      "week",
+      "week/:weekOf",
       "rules",
       "setup",
     ]);

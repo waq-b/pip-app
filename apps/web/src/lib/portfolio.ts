@@ -1,7 +1,6 @@
 import {
   DRIFT_THRESHOLD_POINTS,
   displayNameFor,
-  type ActivityEntry,
   type BucketSummary,
   type PortfolioSummary,
   type Timeframe,
@@ -23,13 +22,6 @@ export function usePortfolio(timeframe: Timeframe) {
     // Switching timeframe keeps the last numbers on screen until the new ones
     // land, rather than flashing back to skeletons.
     placeholderData: (previous) => previous,
-  });
-}
-
-export function useActivity() {
-  return useQuery({
-    queryKey: ["activity"],
-    queryFn: () => apiGet<ActivityEntry[]>("/activity"),
   });
 }
 

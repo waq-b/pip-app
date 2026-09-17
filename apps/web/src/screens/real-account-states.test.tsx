@@ -78,7 +78,7 @@ describe("Pots with real accounts", () => {
       api: {
         ...ME_ALLOWED,
         "/portfolio": { body: portfolio() },
-        "/activity": { body: [] },
+        "/week": { body: { week: null, today: [], pastWeeks: [] } },
         "/rules": { body: { rules: [], monthlySplit: { total: 0, perBucket: [] } } },
       },
     });
@@ -110,28 +110,13 @@ describe("Pots with real accounts", () => {
       api: {
         ...ME_ALLOWED,
         "/portfolio": { body: empty },
-        "/activity": { body: [] },
+        "/week": { body: { week: null, today: [], pastWeeks: [] } },
         "/rules": { body: { rules: [], monthlySplit: { total: 0, perBucket: [] } } },
       },
     });
     const sideBet = (await screen.findByText("Your Kraken account")).closest("a")!;
     expect(sideBet).toHaveTextContent("Nothing in it yet");
     expect(sideBet).not.toHaveTextContent("£0.00 ·");
-  });
-
-  it("says what changed is coming soon", async () => {
-    renderRoute("/", {
-      session: WAQAR,
-      api: {
-        ...ME_ALLOWED,
-        "/portfolio": { body: portfolio() },
-        "/activity": { body: [] },
-        "/rules": { body: { rules: [], monthlySplit: { total: 0, perBucket: [] } } },
-      },
-    });
-    expect(
-      await screen.findByText(/Coming soon\. Once Pip reads your account history/),
-    ).toBeInTheDocument();
   });
 
   it("says there isn't enough history for the timeframe rather than inventing a change", async () => {
@@ -146,7 +131,7 @@ describe("Pots with real accounts", () => {
       api: {
         ...ME_ALLOWED,
         "/portfolio": { body: noMonth },
-        "/activity": { body: [] },
+        "/week": { body: { week: null, today: [], pastWeeks: [] } },
         "/rules": { body: { rules: [], monthlySplit: { total: 0, perBucket: [] } } },
       },
     });
