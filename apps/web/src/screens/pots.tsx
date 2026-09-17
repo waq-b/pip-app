@@ -176,7 +176,9 @@ function PotsLoaded({
                     actualPercent={pot.shareOfTotal}
                     targetPercent={pot.targetPercent}
                     kind={BUCKET_META[pot.bucket].scope === "bet" ? "cap" : "target"}
-                    over={pot.ruleStatus === undefined ? undefined : pot.ruleStatus === "over_cap"}
+                    over={
+                      pot.ruleStatus === undefined ? undefined : pot.ruleStatus === "over_limit"
+                    }
                     // A 5% cap would be an invisible sliver on a 0–100 track.
                     scaleMax={BUCKET_META[pot.bucket].scope === "bet" ? 10 : 100}
                   />

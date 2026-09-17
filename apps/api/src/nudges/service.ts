@@ -111,9 +111,8 @@ async function wordsFor(
         horizonYears: gathered.profile.horizonYears,
         riskWords: gathered.profile.riskWords,
         shape: {
-          foundation: 100 - gathered.rules.handpickedTarget - gathered.rules.sideBetCap,
+          foundation: 100 - gathered.rules.handpickedTarget,
           handpicked: gathered.rules.handpickedTarget,
-          sideBetCap: gathered.rules.sideBetCap,
         },
       }
     : null;

@@ -45,7 +45,7 @@ export interface PlanForWriter {
   goals: string;
   horizonYears: number | null;
   riskWords: string;
-  shape: { foundation: number; handpicked: number; sideBetCap: number };
+  shape: { foundation: number; handpicked: number };
 }
 
 export interface NewsNudgeInput {

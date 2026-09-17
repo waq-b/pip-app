@@ -173,12 +173,19 @@ describe("GET /rules", () => {
     expect(view.rules.find((r) => r.bucket === "Base")?.kind).toBe("target");
   });
 
-  it("says how far over the cap Side Bet is, in pounds as well as percent", async () => {
+  it("says how far past its limit Side Bet is, in pounds as well as percent", async () => {
     const view = await get<RulesView>("/rules");
     const degen = view.rules.find((r) => r.bucket === "Degen");
 
-    // 78,000 of 1,143,000 against a 5% cap, judged by the rules engine.
-    expect(degen?.overBy).toEqual({ percent: 1.82, amount: 20_850 });
+    // £400 in over the year against the £350 starter limit, judged by the engine.
+    expect(degen?.overBy).toEqual({ percent: 14.29, amount: 5_000 });
+    expect(degen?.limit).toMatchObject({
+      limit: 35_000,
+      moneyIn: 40_000,
+      value: 78_000,
+      starter: true,
+      grownBy: 38_000,
+    });
   });
 
   it("marks no other pot as over", async () => {

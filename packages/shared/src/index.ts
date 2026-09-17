@@ -7,13 +7,7 @@ export {
   type BucketScope,
 } from "./buckets.js";
 
-export {
-  DEFAULT_RULES,
-  DRIFT_THRESHOLD_POINTS,
-  SIDE_BET_CAP_MAX,
-  SIDE_BET_CAP_NOTE_ABOVE,
-  type RuleSettings,
-} from "./rules.js";
+export { DEFAULT_RULES, DRIFT_THRESHOLD_POINTS, type RuleSettings } from "./rules.js";
 
 export {
   DAILY_RECENCY_HOURS,
@@ -114,6 +108,7 @@ export type {
   RuleKind,
   RuleStatus,
   RulesView,
+  SideBetLimit,
   SeriesPoint,
   Timeframe,
 } from "./api.js";

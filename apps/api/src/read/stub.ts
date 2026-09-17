@@ -22,6 +22,7 @@ import type { MarketData } from "../market/market.js";
 import { allStubPositions, StubProvider } from "../providers/stub/index.js";
 import { evaluateRules } from "../rules/engine.js";
 import { memoryRulesStore, type RulesStore } from "../rules/store.js";
+import { fixedSideBetLimits, type SideBetLimitReader } from "../rules/side-bet.js";
 import { ruleFlagFor, rulesView } from "../rules/view.js";
 import type { ReadModel, ReadUser } from "./model.js";
 
@@ -34,9 +35,17 @@ import type { ReadModel, ReadUser } from "./model.js";
 export function stubReadModel(
   market: MarketData,
   rulesStore: RulesStore = memoryRulesStore(),
+  sideBetLimits: SideBetLimitReader = fixedSideBetLimits({
+    // The sample Side Bet has £400 in over the year, past the £350 starter limit —
+    // the design's story, where Side Bet is the one thing needing a look.
+    moneyInPence: 40_000,
+  }),
 ): ReadModel {
   async function judge(user: ReadUser) {
-    const stored = await rulesStore.get(user);
+    const [stored, sideBet] = await Promise.all([
+      rulesStore.get(user),
+      sideBetLimits.read(user, new Date()),
+    ]);
     const evaluation = evaluateRules(
       BUCKETS.map((bucket) => ({
         bucket,
@@ -44,6 +53,7 @@ export function stubReadModel(
         valuePence: BUCKET_FIXTURES[bucket].value,
       })),
       stored.settings,
+      sideBet,
     );
     return { stored, evaluation };
   }

@@ -32,7 +32,7 @@ beforeEach(async () => {
 describe("rules in the database", () => {
   it("gives the defaults, never changed, until someone saves", async () => {
     expect(await dbRulesStore(db).get(ALICE)).toEqual({
-      settings: { handpickedTarget: 25, sideBetCap: 5 },
+      settings: { handpickedTarget: 25 },
       updatedAt: null,
     });
   });
@@ -41,10 +41,10 @@ describe("rules in the database", () => {
     const store = dbRulesStore(db);
     const first = new Date("2026-09-16T20:00:00Z");
     const second = new Date("2026-09-16T21:00:00Z");
-    await store.set(ALICE, { handpickedTarget: 30, sideBetCap: 8 }, first);
-    await store.set(ALICE, { handpickedTarget: 20, sideBetCap: 12 }, second);
+    await store.set(ALICE, { handpickedTarget: 30 }, first);
+    await store.set(ALICE, { handpickedTarget: 20 }, second);
     expect(await store.get(ALICE)).toEqual({
-      settings: { handpickedTarget: 20, sideBetCap: 12 },
+      settings: { handpickedTarget: 20 },
       updatedAt: second,
     });
     expect(await db.select().from(userRules)).toHaveLength(1);
@@ -52,16 +52,16 @@ describe("rules in the database", () => {
 
   it("never shows one person's rules to another", async () => {
     const store = dbRulesStore(db);
-    await store.set(ALICE, { handpickedTarget: 40, sideBetCap: 15 }, new Date());
-    expect((await store.get(BOB)).settings).toEqual({ handpickedTarget: 25, sideBetCap: 5 });
+    await store.set(ALICE, { handpickedTarget: 40 }, new Date());
+    expect((await store.get(BOB)).settings).toEqual({ handpickedTarget: 25 });
   });
 
-  it("refuses a cap above 20% in the database too", async () => {
+  it("refuses a target outside 0–100 in the database too", async () => {
     await expect(
-      db.insert(userRules).values({ userId: ALICE.userId, handpickedTarget: 25, sideBetCap: 21 }),
+      db.insert(userRules).values({ userId: ALICE.userId, handpickedTarget: 101 }),
     ).rejects.toThrow();
     await expect(
-      db.insert(userRules).values({ userId: ALICE.userId, handpickedTarget: 90, sideBetCap: 20 }),
+      db.insert(userRules).values({ userId: ALICE.userId, handpickedTarget: -1 }),
     ).rejects.toThrow();
     const rows = await db.select().from(userRules).where(eq(userRules.userId, ALICE.userId));
     expect(rows).toHaveLength(0);

@@ -4,6 +4,7 @@ import { stubSeriesAnchors } from "../market/stub/anchors.js";
 import { createStubMarketData } from "../market/stub/index.js";
 import { stubReadModel } from "../read/stub.js";
 import { memoryRulesStore } from "../rules/store.js";
+import { fixedSideBetLimits } from "../rules/side-bet.js";
 import { memoryTrustSettingsStore } from "../rules/trust-settings.js";
 import { stubWriter, type NudgeWriter } from "../research/writer.js";
 import { moveSince, stubFactsReader } from "./gather.js";
@@ -16,7 +17,7 @@ const MONDAY = new Date("2026-09-14T08:00:00Z");
 const waqar: NudgeUser = { userId: "user-1", authUserId: "auth-1", personalResearch: true };
 const friend: NudgeUser = { userId: "user-2", authUserId: "auth-2", personalResearch: false };
 
-function setup(writer: NudgeWriter = stubWriter()) {
+function setup(writer: NudgeWriter = stubWriter(), moneyInPence = 40_000) {
   const rulesStore = memoryRulesStore();
   const trustStore = memoryTrustSettingsStore();
   const profileStore = memoryProfileStore();
@@ -24,6 +25,7 @@ function setup(writer: NudgeWriter = stubWriter()) {
   const service = createNudgeService({
     readModel: stubReadModel(createStubMarketData({ anchors: stubSeriesAnchors() }), rulesStore),
     rulesStore,
+    sideBetLimits: fixedSideBetLimits({ moneyInPence }),
     trustStore,
     profileStore,
     facts: stubFactsReader(),
@@ -56,7 +58,7 @@ describe("building a week", () => {
     const week = (await service.week(waqar, "latest", MONDAY))!;
     expect(week.weekOf).toBe("2026-09-14");
     expect(titles(week.nudges)).toEqual([
-      "Side Bet is £209 over its cap",
+      "Side Bet has reached its starter limit",
       "Apple is up £50 this week",
       "ASML in the news",
     ]);
@@ -133,8 +135,9 @@ describe("building a week", () => {
       ...stubWriter(),
       news: async () => ({ material: false, model: "groq:m", promptVersion: "awareness.v2" }),
     };
-    const { service, rulesStore, profileStore } = setup(writer);
-    await rulesStore.set(waqar, { handpickedTarget: 21, sideBetCap: 10 }, MONDAY);
+    // Side Bet well under its limit too, so a quiet week really is quiet.
+    const { service, rulesStore, profileStore } = setup(writer, 10_000);
+    await rulesStore.set(waqar, { handpickedTarget: 21 }, MONDAY);
     await profileStore.set(waqar, { ...EMPTY_PROFILE, exclusions: ["Apple"] }, MONDAY);
     await service.buildWeekIfDue(waqar, MONDAY);
     const week = (await service.week(waqar, "latest", MONDAY))!;
@@ -161,7 +164,7 @@ describe("reading a week with today's trust rules", () => {
     );
     const week = (await service.week(waqar, "latest", MONDAY))!;
     expect(titles(week.nudges)).toEqual([
-      "Side Bet is £209 over its cap",
+      "Side Bet has reached its starter limit",
       "Apple is up £50 this week",
     ]);
     expect(week.heldBack.find((n) => n.title === "ASML in the news")?.heldBackBecause).toBe(
@@ -221,7 +224,7 @@ describe("daily nudges", () => {
     expect(await service.buildDaily(waqar, tuesday)).toBeGreaterThan(0);
     expect(await service.buildDaily(waqar, new Date("2026-09-15T09:30:00Z"))).toBe(0);
     const response = await service.thisWeek(waqar, tuesday);
-    expect(titles(response.today)).toEqual(["Side Bet is £209 over its cap"]);
+    expect(titles(response.today)).toEqual(["Side Bet has reached its starter limit"]);
     await service.buildDaily(waqar, new Date("2026-09-17T09:00:00Z"));
     expect(store.all().filter((n) => n.reason === "cap" && n.shown)).toHaveLength(1);
   });

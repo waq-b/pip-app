@@ -51,6 +51,7 @@ export function rulesView(
       ...(pot.overBy
         ? { overBy: { percent: pot.overBy.percent, amount: pot.overBy.amountPence } }
         : {}),
+      ...(pot.limit ? { limit: pot.limit } : {}),
       plain: available ? plainFor(pot, evaluation.scaled) : unavailablePlain(bucket),
     };
   });
@@ -61,14 +62,7 @@ export function rulesView(
     ...(stored.updatedAt ? { lastChangedAt: stored.updatedAt.toISOString() } : {}),
     needsAttention: evaluation.needsAttention,
     leftOut: evaluation.leftOut,
-    ...(evaluation.fixIt
-      ? {
-          fixIt: {
-            outOfSideBet: evaluation.fixIt.outOfSideBetPence,
-            intoOtherPots: evaluation.fixIt.intoOtherPotsPence,
-          },
-        }
-      : {}),
+    ...(evaluation.fixIt ? { fixIt: { outOfSideBet: evaluation.fixIt.outOfSideBetPence } } : {}),
     monthlySplit,
   };
 }
@@ -76,11 +70,7 @@ export function rulesView(
 function plainFor(pot: RulesEvaluation["pots"][number], scaled: boolean): string {
   const name = displayNameFor(pot.bucket);
   const actual = percentPlain(pot.actualPercent);
-  if (pot.kind === "cap") {
-    return pot.status === "over_cap"
-      ? `${name} is ${actual} of your money — over the ${pot.linePercent}% cap you set.`
-      : `${name} is ${actual} of your money, under the ${pot.linePercent}% cap you set.`;
-  }
+  if (pot.kind === "cap") return sideBetPlain(pot, name);
   const against = scaled
     ? `${percentPlain(pot.judgedAgainstPercent)} — your ${pot.linePercent}% scaled to the pots Pip can see`
     : `the ${pot.linePercent}% you set`;
@@ -90,6 +80,35 @@ function plainFor(pot: RulesEvaluation["pots"][number], scaled: boolean): string
     return `${name} is ${actual} of your money, ${points} points ${way} ${against}.`;
   }
   return `${name} is ${actual} of your money, against ${against}.`;
+}
+
+/**
+ * Side Bet is money in, less taken out, against a limit in pounds — never a
+ * share of everything. The limit is "the FCA's 10% guide", never "the law", and
+ * Pip says plainly that it only counts what it can see.
+ */
+function sideBetPlain(pot: RulesEvaluation["pots"][number], name: string): string {
+  const limit = pot.limit!;
+  const line = limit.starter
+    ? `the £${pounds(limit.limit)} starter limit`
+    : `your £${pounds(limit.limit)} limit`;
+  const moneyIn = `£${pounds(limit.moneyIn)} of ${line}`;
+  const grown = limit.grownBy
+    ? ` It has grown to £${pounds(limit.value)} — more than you put in. That's good news.`
+    : "";
+
+  if (pot.status === "over_limit") {
+    return `${name} has reached ${line}: you've put in £${pounds(limit.moneyIn)} over the last year.${grown}`;
+  }
+  if (pot.status === "near_limit") {
+    return `${name} is near ${line}: ${moneyIn} in the last year.${grown}`;
+  }
+  return `${name} is ${moneyIn}, counting money in less what you've taken out over the last year.${grown}`;
+}
+
+/** Whole pounds, with thousands separated — pence never appear on this line. */
+function pounds(pence: number): string {
+  return Math.round(pence / 100).toLocaleString("en-GB");
 }
 
 function percentPlain(value: number): string {

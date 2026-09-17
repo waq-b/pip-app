@@ -36,6 +36,8 @@ import {
   webPushSender,
 } from "./notify/senders.js";
 import { dbNotificationStore } from "./notify/store.js";
+import { dbNetAssetsStore } from "./rules/net-assets.js";
+import { dbSideBetLimits } from "./rules/side-bet.js";
 
 const config = loadConfig();
 
@@ -93,13 +95,16 @@ function realAccounts(): Partial<BuildAppOptions> {
     : undefined;
 
   const notifications = dbNotificationStore(db);
+  const netAssets = dbNetAssetsStore(db, box, config.masterKeyVersion);
+  const sideBetLimits = dbSideBetLimits(db, netAssets);
   const rulesStore = dbRulesStore(db);
   const profileStore = dbProfileStore(db);
   const trustSettingsStore = dbTrustSettingsStore(db);
-  const readModel = liveReadModel({ db, marketFor, rulesStore });
+  const readModel = liveReadModel({ db, marketFor, rulesStore, sideBetLimits });
   const nudges = createNudgeService({
     readModel,
     rulesStore,
+    sideBetLimits,
     trustStore: trustSettingsStore,
     profileStore,
     facts: dbFactsReader(db),
@@ -133,6 +138,8 @@ function realAccounts(): Partial<BuildAppOptions> {
       },
     }),
     notifications,
+    netAssets,
+    sideBetLimits,
     notifier: createNotifier({ store: notifications, ...senders() }),
     refreshJob: createRefreshJob({
       db,

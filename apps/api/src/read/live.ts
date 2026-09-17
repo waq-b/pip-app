@@ -42,6 +42,7 @@ import { londonDay } from "../sync/poll.js";
 import { bucketForAccountKind, poundsPerUnit } from "../valuation/value.js";
 import { evaluateRules } from "../rules/engine.js";
 import { dbRulesStore, type RulesStore } from "../rules/store.js";
+import type { SideBetLimitReader } from "../rules/side-bet.js";
 import { rulesView, ruleFlagFor } from "../rules/view.js";
 import type { ReadModel, ReadUser } from "./model.js";
 
@@ -69,6 +70,8 @@ export interface LiveReadOptions {
   refreshWaitMs?: number;
   /** Where the user's rules are kept; defaults to the database. */
   rulesStore?: RulesStore;
+  /** Side Bet's limit and money in, less taken out (Phase 6). */
+  sideBetLimits: SideBetLimitReader;
 }
 
 const COPY: Record<Bucket, { blurb: string; plain: string }> = {
@@ -136,10 +139,15 @@ export function liveReadModel(options: LiveReadOptions): ReadModel {
   const now = options.now ?? (() => new Date());
   const waitMs = options.refreshWaitMs ?? 2_000;
   const rulesStore = options.rulesStore ?? dbRulesStore(options.db);
+  // Side Bet's limit: net assets (sealed) and money in, less taken out.
+  const sideBetLimits = options.sideBetLimits;
 
   /** One engine for every route: the same snapshot and rules give the same answer. */
   async function judge(user: ReadUser, snapshot: Snapshot) {
-    const stored = await rulesStore.get(user);
+    const [stored, sideBet] = await Promise.all([
+      rulesStore.get(user),
+      sideBetLimits.read(user, now()),
+    ]);
     const evaluation = evaluateRules(
       BUCKETS.map((bucket) => ({
         bucket,
@@ -147,6 +155,7 @@ export function liveReadModel(options: LiveReadOptions): ReadModel {
         valuePence: snapshot.pots[bucket].investedPence + snapshot.pots[bucket].cashPence,
       })),
       stored.settings,
+      sideBet,
     );
     return { stored, evaluation };
   }

@@ -218,6 +218,6 @@ describe("trust rules", () => {
     await call("PUT", "/trust-rules", valid({ minSources: 5 }));
     await call("PUT", "/profile", plan);
     const rules = (await call("GET", "/rules")).json() as { settings: unknown };
-    expect(rules.settings).toEqual({ handpickedTarget: 25, sideBetCap: 5 });
+    expect(rules.settings).toEqual({ handpickedTarget: 25 });
   });
 });

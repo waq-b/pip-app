@@ -28,7 +28,7 @@ export function dbRulesStore(db: Db): RulesStore {
       const [row] = await asUser(db, user.authUserId, (tx) => tx.select().from(userRules));
       return row
         ? {
-            settings: { handpickedTarget: row.handpickedTarget, sideBetCap: row.sideBetCap },
+            settings: { handpickedTarget: row.handpickedTarget },
             updatedAt: row.updatedAt,
           }
         : { settings: DEFAULT_RULES, updatedAt: null };
@@ -41,7 +41,7 @@ export function dbRulesStore(db: Db): RulesStore {
         .onConflictDoUpdate({ target: userRules.userId, set: values });
       const [row] = await db.select().from(userRules).where(eq(userRules.userId, user.userId));
       return {
-        settings: { handpickedTarget: row!.handpickedTarget, sideBetCap: row!.sideBetCap },
+        settings: { handpickedTarget: row!.handpickedTarget },
         updatedAt: row!.updatedAt,
       };
     },

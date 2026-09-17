@@ -1,14 +1,12 @@
 import {
   BUCKET_META,
-  SIDE_BET_CAP_MAX,
-  SIDE_BET_CAP_NOTE_ABOVE,
   displayNameFor,
   type Bucket,
   type BucketRule,
   type RulesView,
 } from "@finance-app/shared";
 import { TriangleAlert } from "lucide-react";
-import { useEffect, useRef, useState, type RefObject } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NotAdviceLabel } from "../components/not-advice-label";
 import { ProgressCapBar } from "../components/progress-cap-bar";
 import { Skeleton } from "../components/skeleton";
@@ -76,44 +74,30 @@ function RulesLoaded({ view, isDesktop }: { view: RulesView; isDesktop: boolean 
     setSettings(saved);
     // Only when the saved rules themselves change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [saved?.handpickedTarget, saved?.sideBetCap]);
+  }, [saved?.handpickedTarget]);
   const unsaved =
     settings !== undefined &&
     saved !== undefined &&
-    (settings.handpickedTarget !== saved.handpickedTarget ||
-      settings.sideBetCap !== saved.sideBetCap);
+    settings.handpickedTarget !== saved.handpickedTarget;
   const leftOut = view.leftOut ?? [];
   const judged = view.rules.some((rule) => rule.available !== false);
-
-  const [raisingCap, setRaisingCap] = useState(false);
-  const raiseCapButton = useRef<HTMLInputElement>(null);
 
   const change = (next: RuleSettings) => {
     save.reset();
     setSettings(next);
   };
 
-  const raiseTheCap = () => {
-    setRaisingCap(true);
-    raiseCapButton.current?.scrollIntoView?.({ block: "center", behavior: "smooth" });
-    raiseCapButton.current?.focus();
-  };
-
   return (
     <div className="flex flex-col gap-3">
       {breached ? (
-        <OverCapBanner
-          rule={breached}
-          fixIt={view.fixIt}
-          isDesktop={isDesktop}
-          onRaiseCap={settings ? raiseTheCap : undefined}
-        />
+        <OverLimitBanner rule={breached} fixIt={view.fixIt} isDesktop={isDesktop} />
       ) : null}
 
       {judged && leftOut.length > 0 ? (
         <p className="bg-sunk text-ink2 m-0 rounded-[18px] px-4 py-3 text-[12.5px] leading-normal font-medium">
           {listNames(leftOut)} {leftOut.length === 1 ? "isn't" : "aren't"} connected, so your
-          targets are judged against the pots Pip can see. Side Bet's cap stays as you set it.
+          targets are judged against the pots Pip can see. Side Bet's limit is in pounds, so it
+          doesn't change.
         </p>
       ) : null}
 
@@ -123,14 +107,7 @@ function RulesLoaded({ view, isDesktop }: { view: RulesView; isDesktop: boolean 
 
       <div className={isDesktop ? "grid grid-cols-3 gap-3.5" : "flex flex-col gap-[11px]"}>
         {view.rules.map((rule) => (
-          <RuleCard
-            key={rule.bucket}
-            rule={rule}
-            settings={settings}
-            onChange={change}
-            raisingCap={raisingCap}
-            raiseCapButton={raiseCapButton}
-          />
+          <RuleCard key={rule.bucket} rule={rule} settings={settings} onChange={change} />
         ))}
       </div>
 
@@ -202,16 +179,14 @@ function RulesLoaded({ view, isDesktop }: { view: RulesView; isDesktop: boolean 
  * "Raise the cap" only takes you to the stepper. Nothing here moves money; you'd
  * do either at your broker (hard lines 1, 12).
  */
-function OverCapBanner({
+function OverLimitBanner({
   rule,
   fixIt,
   isDesktop,
-  onRaiseCap,
 }: {
   rule: BucketRule;
   fixIt: RulesView["fixIt"];
   isDesktop: boolean;
-  onRaiseCap?: () => void;
 }) {
   const overBy = rule.overBy!;
   const [showingFix, setShowingFix] = useState(false);
@@ -227,35 +202,27 @@ function OverCapBanner({
       <TriangleAlert size={22} strokeWidth={ICON_STROKE} className="mt-px flex-none" aria-hidden />
       <div className="min-w-0 flex-1">
         <h2 className="font-heading m-0 text-[19px] leading-tight font-normal">
-          {name} is {formatPounds(overBy.amount, { whole: true })} over its cap
+          {name} has reached {rule.limit?.starter ? "its starter limit" : "its limit"}
         </h2>
         <p className="m-0 mt-1.5 text-[13.5px] leading-normal font-medium">
-          It's grown to {formatPercent(rule.actualPercent)} of your money, against the{" "}
-          {formatPercent(rule.targetPercent)} you set —{" "}
-          {formatPounds(overBy.amount, { whole: true })} more than you meant to have riding on it.
+          You've put in {formatPounds(rule.limit?.moneyIn ?? 0, { whole: true })} over the last
+          year, against a limit of {formatPounds(rule.limit?.limit ?? 0, { whole: true })} —{" "}
+          {formatPounds(overBy.amount, { whole: true })} more than the FCA's 10% guide allows for.
+          Pip can't stop anything; it can only tell you where the line is.
         </p>
-        {fixIt || onRaiseCap ? (
+        {fixIt ? (
           <div className="mt-3 flex flex-wrap gap-2">
-            {fixIt ? (
-              <button
-                type="button"
-                aria-expanded={showingFix}
-                onClick={() => setShowingFix((open) => !open)}
-                className={action}
-              >
-                Show me how to fix it
-              </button>
-            ) : null}
-            {onRaiseCap ? (
-              <button type="button" onClick={onRaiseCap} className={action}>
-                Raise the cap
-              </button>
-            ) : null}
+            <button
+              type="button"
+              aria-expanded={showingFix}
+              onClick={() => setShowingFix((open) => !open)}
+              className={action}
+            >
+              Show me how to fix it
+            </button>
           </div>
         ) : null}
-        {showingFix && fixIt ? (
-          <FixItPanel name={name} cap={rule.targetPercent} fixIt={fixIt} />
-        ) : null}
+        {showingFix && fixIt ? <FixItPanel name={name} fixIt={fixIt} /> : null}
         <div className="mt-3 opacity-85">
           <NotAdviceLabel />
         </div>
@@ -264,37 +231,25 @@ function OverCapBanner({
   );
 }
 
-/** The two amounts, side by side at the same size. Neither is the answer. */
-function FixItPanel({
-  name,
-  cap,
-  fixIt,
-}: {
-  name: string;
-  cap: number;
-  fixIt: NonNullable<RulesView["fixIt"]>;
-}) {
+/**
+ * One amount now the limit is in pounds: taking that much out of Side Bet
+ * brings money in, less taken out, back under the line. Arithmetic, not advice.
+ */
+function FixItPanel({ name, fixIt }: { name: string; fixIt: NonNullable<RulesView["fixIt"]> }) {
   return (
     <div
       role="region"
-      aria-label="What would bring it back to its cap"
+      aria-label="What would bring it back under its limit"
       className="bg-card text-ink mt-3 rounded-[18px] px-4 py-3.5"
     >
       <p className="m-0 text-[12.5px] font-semibold">
-        What would bring {name} back to {formatPercent(cap)}:
+        What would bring {name} back under its limit:
       </p>
-      <div className="mt-2.5 grid grid-cols-2 gap-2.5">
-        <FixItAmount amount={fixIt.outOfSideBet} words={`leaving ${name}`} />
-        {fixIt.intoOtherPots === null ? (
-          <div className="bg-sunk rounded-[14px] px-3 py-2.5 text-[12.5px] font-medium">
-            With a 0% cap, no amount added elsewhere would do it.
-          </div>
-        ) : (
-          <FixItAmount amount={fixIt.intoOtherPots} words="going into Foundation or Handpicked" />
-        )}
+      <div className="mt-2.5">
+        <FixItAmount amount={fixIt.outOfSideBet} words={`taken out of ${name}`} />
       </div>
       <p className="text-ink2 m-0 mt-2.5 text-[12px] leading-normal font-medium">
-        Either one on its own would do it. You'd do either at your broker.
+        Taking money out counts against what you've put in. You'd do that at your broker.
       </p>
     </div>
   );
@@ -315,25 +270,19 @@ function RuleCard({
   rule,
   settings,
   onChange,
-  raisingCap,
-  raiseCapButton,
 }: {
   rule: BucketRule;
   settings: RuleSettings | undefined;
   onChange: (next: RuleSettings) => void;
-  raisingCap: boolean;
-  raiseCapButton: RefObject<HTMLInputElement | null>;
 }) {
   const { scope } = BUCKET_META[rule.bucket];
   const isSideBet = scope === "bet";
-  const kind = rule.kind === "cap" ? "Hard cap" : "Target";
-  // While a slider moves, the numbers follow it before the save lands.
+  const kind = isSideBet ? "Limit" : "Target";
+  // While the slider moves, the numbers follow it before the save lands.
   const line = settings
     ? rule.bucket === "Base"
-      ? 100 - settings.handpickedTarget - settings.sideBetCap
-      : rule.bucket === "Medium"
-        ? settings.handpickedTarget
-        : settings.sideBetCap
+      ? 100 - settings.handpickedTarget
+      : settings.handpickedTarget
     : rule.targetPercent;
 
   // Foundation is the rest: when a slider changes it, its number briefly lights so the link is visible.
@@ -371,50 +320,48 @@ function RuleCard({
             changed ? "bg-tint text-aink" : "bg-transparent"
           }`}
         >
-          {formatPercent(line)}
+          {isSideBet && rule.limit
+            ? formatPounds(rule.limit.limit, { whole: true })
+            : formatPercent(line)}
         </span>
       </div>
-      {settings ? (
-        <RuleSlider
-          bucket={rule.bucket}
-          settings={settings}
-          onChange={onChange}
-          inputRef={rule.bucket === "Degen" ? raiseCapButton : undefined}
-        />
+      {settings && !isSideBet ? (
+        <RuleSlider bucket={rule.bucket} settings={settings} onChange={onChange} />
       ) : null}
       {settings && rule.bucket === "Base" ? (
         <p className="text-ink3 m-0 -mt-1.5 mb-3 text-[11.5px] font-semibold">
-          The rest, after Handpicked and Side Bet
+          The rest, after Handpicked
         </p>
       ) : null}
-      {settings && rule.bucket === "Degen" && raisingCap ? (
-        <p className="text-ink2 m-0 -mt-1.5 mb-3 text-[11.5px] leading-normal font-semibold">
-          Raising the cap changes what Pip tells you. It doesn't move any money.
-        </p>
-      ) : null}
-      {settings && rule.bucket === "Degen" && settings.sideBetCap > SIDE_BET_CAP_NOTE_ABOVE ? (
-        <p className="text-ink2 m-0 -mt-1.5 mb-3 text-[11.5px] leading-normal font-semibold">
-          Above the 10% the FCA restricted-investor rules assume.
+      {isSideBet && rule.limit ? (
+        <p className="text-ink3 m-0 -mt-1.5 mb-3 text-[11.5px] leading-normal font-semibold">
+          {rule.limit.starter
+            ? "Starter limit — add your net assets in Setup and Pip will use the FCA's 10% guide."
+            : "The FCA's 10% guide on the net assets you gave Pip. It only counts Side Bet."}
         </p>
       ) : null}
 
       {rule.available === false ? (
         <p className="text-ink3 m-0 text-[12.5px] font-semibold">Not connected yet</p>
+      ) : isSideBet && rule.limit ? (
+        <ProgressCapBar
+          label="Money in, less taken out"
+          actualPercent={Math.min(rule.limit.usedPercent, 100)}
+          targetPercent={100}
+          kind="cap"
+          over={rule.status === "over_limit"}
+          scaleMax={100}
+          overByAmount={rule.overBy?.amount}
+        />
       ) : (
         <ProgressCapBar
           label="Where it sits"
           actualPercent={rule.actualPercent}
           // A target is judged against its scaled figure when a pot isn't connected; show that line.
-          targetPercent={
-            rule.kind === "target"
-              ? (rule.judgedAgainstPercent ?? rule.targetPercent)
-              : rule.targetPercent
-          }
-          kind={rule.kind}
-          over={rule.status === undefined ? undefined : rule.status === "over_cap"}
-          // A 5% cap would be an invisible sliver on a 0–100 track.
-          scaleMax={rule.kind === "cap" ? rule.targetPercent * 2 : 100}
-          overByAmount={rule.overBy?.amount}
+          targetPercent={rule.judgedAgainstPercent ?? rule.targetPercent}
+          kind="target"
+          over={false}
+          scaleMax={100}
         />
       )}
 
@@ -433,47 +380,33 @@ function RuleSlider({
   bucket,
   settings,
   onChange,
-  inputRef,
 }: {
   bucket: Bucket;
   settings: RuleSettings;
   onChange: (next: RuleSettings) => void;
-  inputRef?: RefObject<HTMLInputElement | null>;
 }) {
-  if (bucket === "Base") return null;
-  const isCap = bucket === "Degen";
-  const value = isCap ? settings.sideBetCap : settings.handpickedTarget;
-  // Each slider keeps its own fixed range, so moving one never shifts the other's
-  // thumb. The shape can't go past 100: the slider being moved stops where the
-  // other number leaves room.
-  const max = isCap ? SIDE_BET_CAP_MAX : 100;
-  const room = isCap
-    ? Math.min(SIDE_BET_CAP_MAX, 100 - settings.handpickedTarget)
-    : 100 - settings.sideBetCap;
-  const name = `${displayNameFor(bucket)}'s ${isCap ? "cap" : "target"}`;
+  // Foundation is the rest, and Side Bet isn't in the shape at all (Phase 6):
+  // Handpicked's target is the only number anyone sets.
+  if (bucket !== "Medium") return null;
+  const value = settings.handpickedTarget;
+  const name = `${displayNameFor(bucket)}'s target`;
 
   return (
     <div className="mb-3">
       <input
-        ref={inputRef}
         type="range"
         min={0}
-        max={max}
+        max={100}
         step={1}
         value={value}
         aria-label={name}
         aria-valuetext={`${value}%`}
-        onChange={(event) => {
-          const next = Math.min(Number(event.target.value), room);
-          onChange(
-            isCap ? { ...settings, sideBetCap: next } : { ...settings, handpickedTarget: next },
-          );
-        }}
+        onChange={(event) => onChange({ handpickedTarget: Number(event.target.value) })}
         className="accent-acc h-7 w-full cursor-pointer"
       />
       <div className="text-ink3 flex justify-between text-[11px] font-semibold">
         <span>0%</span>
-        <span>{max}%</span>
+        <span>100%</span>
       </div>
       <p className="text-ink2 m-0 mt-1.5 text-[11.5px] font-semibold">
         Foundation takes whatever's left.

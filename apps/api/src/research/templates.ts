@@ -16,7 +16,9 @@ export type TemplateFacts =
       type: "cap";
       bucket: Bucket;
       overBy: { percent: number; pence: Pence };
-      fixIt: { outOfSideBetPence: Pence; intoOtherPotsPence: Pence | null } | null;
+      /** Since Phase 6 the limit is in pounds, so one amount brings it back. */
+      fixIt: { outOfSideBetPence: Pence } | null;
+      starterLimit: boolean;
     }
   | {
       type: "drift";
@@ -73,15 +75,14 @@ export function templateFor(
 ): NudgeDraft {
   switch (facts.type) {
     case "cap": {
-      const title = `Side Bet is ${wholePounds(facts.overBy.pence)} over its cap`;
+      const line = facts.starterLimit ? "its starter limit" : "its limit";
+      const title = `Side Bet has reached ${line}`;
       const amounts = facts.fixIt
-        ? facts.fixIt.intoOtherPotsPence === null
-          ? ` ${wholePounds(facts.fixIt.outOfSideBetPence)} leaving Side Bet would bring it back.`
-          : ` ${wholePounds(facts.fixIt.outOfSideBetPence)} leaving Side Bet, or ${wholePounds(facts.fixIt.intoOtherPotsPence)} going into Foundation or Handpicked, would bring it back — either on its own.`
+        ? ` Taking ${wholePounds(facts.fixIt.outOfSideBetPence)} out of Side Bet would bring it back under.`
         : "";
       return draft(
         title,
-        `That's ${percentText(facts.overBy.percent)} past the line you set.${amounts} You'd do either at your broker.`,
+        `You've put in ${wholePounds(facts.overBy.pence)} more than ${line} over the last year.${amounts} You'd do that at your broker.`,
       );
     }
     case "drift": {

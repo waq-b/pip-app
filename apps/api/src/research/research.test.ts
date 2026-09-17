@@ -22,7 +22,7 @@ const plan = {
   goals: "Grow long-term savings",
   horizonYears: 15,
   riskWords: "Happy to ride dips",
-  shape: { foundation: 70, handpicked: 25, sideBetCap: 5 },
+  shape: { foundation: 70, handpicked: 25 },
 };
 
 const asml = (overrides: Partial<NewsNudgeInput> = {}): NewsNudgeInput => ({
@@ -273,13 +273,15 @@ describe("Pip's own sentences", () => {
       type: "cap",
       bucket: "Degen",
       overBy: { percent: 1.82, pence: 20_850 },
-      fixIt: { outOfSideBetPence: 21_947, intoOtherPotsPence: 417_000 },
+      fixIt: { outOfSideBetPence: 20_850 },
+      starterLimit: false,
     }),
     templateFor({
       type: "cap",
       bucket: "Degen",
       overBy: { percent: 3, pence: 30_000 },
-      fixIt: { outOfSideBetPence: 30_000, intoOtherPotsPence: null },
+      fixIt: { outOfSideBetPence: 30_000 },
+      starterLimit: true,
     }),
     templateFor({
       type: "drift",
@@ -332,12 +334,12 @@ describe("Pip's own sentences", () => {
   it("read as intended", () => {
     expect(all.map((d) => [d.title, d.body])).toEqual([
       [
-        "Side Bet is £209 over its cap",
-        "That's 1.8% past the line you set. £219 leaving Side Bet, or £4,170 going into Foundation or Handpicked, would bring it back — either on its own. You'd do either at your broker.",
+        "Side Bet has reached its limit",
+        "You've put in £209 more than its limit over the last year. Taking £209 out of Side Bet would bring it back under. You'd do that at your broker.",
       ],
       [
-        "Side Bet is £300 over its cap",
-        "That's 3% past the line you set. £300 leaving Side Bet would bring it back. You'd do either at your broker.",
+        "Side Bet has reached its starter limit",
+        "You've put in £300 more than its starter limit over the last year. Taking £300 out of Side Bet would bring it back under. You'd do that at your broker.",
       ],
       [
         "Foundation has drifted 6 points under",

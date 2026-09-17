@@ -63,7 +63,7 @@ export function awarenessUser(input: NewsNudgeInput): string {
 Goals: ${quoted(plan.goals) || "not given"}
 Time horizon: ${plan.horizonYears === null ? "not given" : `${plan.horizonYears} years`}
 Risk, in their words: ${quoted(plan.riskWords) || "not given"}
-Shape they set: Foundation ${plan.shape.foundation}% · Handpicked ${plan.shape.handpicked}% · Side Bet cap ${plan.shape.sideBetCap}%
+Shape they set: Foundation ${plan.shape.foundation}% · Handpicked ${plan.shape.handpicked}% (Side Bet sits outside it, with a limit in pounds)
 </plan>
 <holding>
 ${quoted(input.name)} (${quoted(input.shortName)}) — in ${displayNameFor(input.bucket)}${input.potSharePercent === null ? "" : `, which is ${Math.round(input.potSharePercent)}% of what Pip can see`}.

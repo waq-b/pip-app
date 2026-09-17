@@ -18,6 +18,7 @@ import { factsTarget } from "../facts/targets.js";
 import type { ReadModel, ReadUser } from "../read/model.js";
 import { evaluateRules, type RulesEvaluation } from "../rules/engine.js";
 import type { RulesStore } from "../rules/store.js";
+import type { SideBetLimitReader } from "../rules/side-bet.js";
 import type { TrustSettingsStore } from "../rules/trust-settings.js";
 import type { NewsItem } from "../rules/trust.js";
 import type { CandidateInput, HoldingInput, MoveFigures, NudgeHistory } from "./candidates.js";
@@ -120,6 +121,8 @@ export function stubFactsReader(): FactsReader {
 export interface GatherDeps {
   readModel: ReadModel;
   rulesStore: RulesStore;
+  /** Side Bet's limit and money in, so the engine judges it the same way here. */
+  sideBetLimits: SideBetLimitReader;
   trustStore: TrustSettingsStore;
   profileStore: ProfileStore;
   facts: FactsReader;
@@ -174,6 +177,7 @@ export async function gather(
       valuePence: portfolio.buckets.find((b) => b.bucket === bucket)?.value ?? 0,
     })),
     storedRules.settings,
+    await deps.sideBetLimits.read(user, now),
   );
 
   const details: Gathered["details"] = new Map();

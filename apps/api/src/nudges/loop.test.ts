@@ -9,6 +9,7 @@ import { stubSeriesAnchors } from "../market/stub/anchors.js";
 import { createStubMarketData } from "../market/stub/index.js";
 import { stubReadModel } from "../read/stub.js";
 import { memoryRulesStore } from "../rules/store.js";
+import { fixedSideBetLimits } from "../rules/side-bet.js";
 import { memoryTrustSettingsStore } from "../rules/trust-settings.js";
 import { stubWriter } from "../research/writer.js";
 import { testAuth } from "../test-support/auth.js";
@@ -34,17 +35,20 @@ function stubApp() {
   const auth = testAuth(["test@example.com"]);
   auth.allowlistStore.rows.get("test@example.com")!.personalResearch = true;
   const rulesStore = memoryRulesStore();
+  const sideBetLimits = fixedSideBetLimits({ moneyInPence: 40_000 });
   const trustSettingsStore = memoryTrustSettingsStore();
   const profileStore = memoryProfileStore();
   const log = memoryNudgeStore();
   const readModel = stubReadModel(
     createStubMarketData({ anchors: stubSeriesAnchors() }),
     rulesStore,
+    sideBetLimits,
   );
   const nudges = createNudgeService(
     {
       readModel,
       rulesStore,
+      sideBetLimits,
       trustStore: trustSettingsStore,
       profileStore,
       facts: stubFactsReader(),
@@ -94,7 +98,7 @@ describe("the loop", () => {
     expect((logged.facts as { reports: unknown[] }).reports).toHaveLength(2);
 
     // The sample's broken cap is there too.
-    expect(before.nudges.map((n) => n.title)).toContain("Side Bet is £209 over its cap");
+    expect(before.nudges.map((n) => n.title)).toContain("Side Bet has reached its starter limit");
 
     // 3. One trust rule changed, through the API.
     const saved = await app.inject({
@@ -111,7 +115,7 @@ describe("the loop", () => {
     expect(after.heldBack.find((n) => n.id === asml!.id)?.heldBackBecause).toBe(
       "Not enough different publishers — 2 publishers: Financial Times, Reuters",
     );
-    expect(after.nudges.map((n) => n.title)).toContain("Side Bet is £209 over its cap");
+    expect(after.nudges.map((n) => n.title)).toContain("Side Bet has reached its starter limit");
 
     // 5. The log still has it exactly as it was built — nothing is rewritten.
     expect(log.all().find((n) => n.id === asml!.id)).toMatchObject({ shown: true });

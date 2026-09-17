@@ -6,13 +6,13 @@ import { WAQAR } from "../test/fake-auth";
 import { ME_ALLOWED, renderRoute, type Handler } from "../test/render-route";
 import { DESKTOP_WIDTH, PHONE_WIDTH, setViewportWidth } from "../test/setup";
 
-function view(overCap = true): RulesView {
+function view(overLimit = true): RulesView {
   return {
     rules: [
       {
         bucket: "Base",
         kind: "target",
-        targetPercent: 70,
+        targetPercent: 75,
         actualPercent: 72,
         plain: "It's 2% over target, which is nothing to worry about.",
       },
@@ -26,12 +26,21 @@ function view(overCap = true): RulesView {
       {
         bucket: "Degen",
         kind: "cap",
-        targetPercent: 5,
-        actualPercent: overCap ? 6.8 : 4,
-        plain: overCap
-          ? "Over the line you set. Nothing new has gone in since June."
-          : "Comfortably inside.",
-        ...(overCap ? { overBy: { percent: 1.8, amount: 20_800 } } : {}),
+        targetPercent: 0,
+        actualPercent: 6.8,
+        status: overLimit ? "over_limit" : "ok",
+        plain: overLimit
+          ? "Side Bet has reached the £350 starter limit: you've put in £400 over the last year."
+          : "Side Bet is £200 of the £350 starter limit, counting money in less what you've taken out over the last year.",
+        limit: {
+          limit: 35_000,
+          moneyIn: overLimit ? 40_000 : 20_000,
+          value: 78_000,
+          usedPercent: overLimit ? 114.29 : 57.14,
+          starter: true,
+          grownBy: overLimit ? 38_000 : 58_000,
+        },
+        ...(overLimit ? { overBy: { percent: 14.29, amount: 5_000 } } : {}),
       },
     ],
     monthlySplit: {
@@ -58,7 +67,7 @@ beforeEach(() => {
 });
 
 describe("the rules screen", () => {
-  it("shows each pot's line — targets for two, a hard cap for Side Bet", async () => {
+  it("shows each pot's line — targets for two, a limit in pounds for Side Bet", async () => {
     renderRoute("/rules", { session: WAQAR, api: api() });
 
     expect(
@@ -69,22 +78,34 @@ describe("the rules screen", () => {
       "section",
     )!;
     expect(within(foundation).getAllByText("Target").length).toBeGreaterThan(0);
-    expect(within(foundation).getByText("70%")).toBeInTheDocument();
+    expect(within(foundation).getByText("75%")).toBeInTheDocument();
 
     const sideBet = screen.getByRole("heading", { name: "Side Bet" }).closest("section")!;
-    expect(within(sideBet).getAllByText("Hard cap").length).toBeGreaterThan(0);
+    expect(within(sideBet).getAllByText("Limit").length).toBeGreaterThan(0);
+    // Its line is pounds, not a percentage, and there's no slider to set it.
+    expect(within(sideBet).getByText("£350")).toBeInTheDocument();
+    expect(within(sideBet).queryByRole("slider")).not.toBeInTheDocument();
     expect(sideBet).toHaveClass("hatch", "border-acc");
   });
 
-  it("states a breached cap in pounds first, and marks it as information, not advice", async () => {
+  it("states a reached limit in pounds first, and marks it as information, not advice", async () => {
     renderRoute("/rules", { session: WAQAR, api: api() });
 
     const banner = await screen.findByRole("alert");
     expect(
-      within(banner).getByRole("heading", { name: "Side Bet is £208 over its cap" }),
+      within(banner).getByRole("heading", { name: "Side Bet has reached its starter limit" }),
     ).toBeInTheDocument();
-    expect(banner).toHaveTextContent("grown to 6.8% of your money, against the 5% you set");
+    expect(banner).toHaveTextContent("You've put in £400 over the last year");
+    expect(banner).toHaveTextContent("Pip can't stop anything");
     expect(within(banner).getByText(/information, not advice/i)).toBeInTheDocument();
+  });
+
+  it("says the limit is a starter until net assets are given", async () => {
+    renderRoute("/rules", { session: WAQAR, api: api() });
+    const sideBet = (await screen.findByRole("heading", { name: "Side Bet" })).closest("section")!;
+    expect(
+      within(sideBet).getByText(/Starter limit — add your net assets in Setup/),
+    ).toBeInTheDocument();
   });
 
   it("offers nothing that acts on money — only rules to change, and sums to read", async () => {
@@ -93,9 +114,9 @@ describe("the rules screen", () => {
       api: api({
         body: {
           ...view(),
-          settings: { handpickedTarget: 25, sideBetCap: 5 },
+          settings: { handpickedTarget: 25 },
           needsAttention: true,
-          fixIt: { outOfSideBet: 18_950, intoOtherPots: 416_600 },
+          fixIt: { outOfSideBet: 5_000 },
         },
       }),
     });
@@ -160,7 +181,7 @@ describe("the rules screen's other states", () => {
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(
-      await screen.findByRole("heading", { name: "Side Bet is £208 over its cap" }),
+      await screen.findByRole("heading", { name: "Side Bet has reached its starter limit" }),
     ).toBeInTheDocument();
   });
 
@@ -176,7 +197,7 @@ describe("the rules screen's other states", () => {
 });
 
 describe("the red dot on Rules", () => {
-  it("lights up in the navigation when a cap is breached, on any screen", async () => {
+  it("lights up in the navigation when Side Bet has reached its limit, on any screen", async () => {
     renderRoute("/", { session: WAQAR, api: api() });
 
     expect(await screen.findByRole("status", { name: "A rule needs a look" })).toBeInTheDocument();
@@ -197,7 +218,7 @@ describe("changing your rules", () => {
   function editable(overrides: Partial<RulesView> = {}): RulesView {
     return {
       ...view(false),
-      settings: { handpickedTarget: 25, sideBetCap: 5 },
+      settings: { handpickedTarget: 25 },
       needsAttention: false,
       leftOut: [],
       ...overrides,
@@ -217,7 +238,7 @@ describe("changing your rules", () => {
             const { status = 200 } = respond(body);
             return {
               status,
-              body: status === 200 ? { settings: body } : { error: "cap_out_of_range" },
+              body: status === 200 ? { settings: body } : { error: "target_out_of_range" },
             };
           }
           return { body: initial };
@@ -227,29 +248,26 @@ describe("changing your rules", () => {
     return sent;
   }
 
-  it("moves the sliders freely and saves nothing until Save — then once", async () => {
+  it("moves the slider freely and saves nothing until Save — then once", async () => {
     const sent = withSaving(editable(), () => ({}));
     const target = await screen.findByRole("slider", { name: "Handpicked's target" });
     fireEvent.change(target, { target: { value: "26" } });
     fireEvent.change(target, { target: { value: "30" } });
-    fireEvent.change(screen.getByRole("slider", { name: "Side Bet's cap" }), {
-      target: { value: "4" },
-    });
-    // The numbers follow at once; Foundation is 100 − 30 − 4.
+    // The numbers follow at once; Foundation is 100 − 30.
     expect(screen.getByText("30%")).toBeInTheDocument();
-    expect(screen.getByText("66%")).toBeInTheDocument();
+    expect(screen.getByText("70%")).toBeInTheDocument();
     expect(sent).toEqual([]);
 
     fireEvent.click(screen.getByRole("button", { name: "Save rules" }));
-    await waitFor(() => expect(sent).toEqual([{ handpickedTarget: 30, sideBetCap: 4 }]));
+    await waitFor(() => expect(sent).toEqual([{ handpickedTarget: 30 }]));
   });
 
   it("shows no Save until something has changed", async () => {
     const sent = withSaving(editable(), () => ({}));
-    const cap = await screen.findByRole("slider", { name: "Side Bet's cap" });
+    const target = await screen.findByRole("slider", { name: "Handpicked's target" });
     expect(screen.queryByRole("button", { name: "Save rules" })).not.toBeInTheDocument();
 
-    fireEvent.change(cap, { target: { value: "12" } });
+    fireEvent.change(target, { target: { value: "32" } });
     expect(
       screen.getByText("You've changed your rules. Nothing is saved until you save."),
     ).toBeInTheDocument();
@@ -258,69 +276,41 @@ describe("changing your rules", () => {
     expect(sent).toEqual([]);
   });
 
-  it("says Foundation takes whatever's left, and lights its number when a slider changes it", async () => {
+  it("says Foundation takes whatever's left, and lights its number when the slider changes it", async () => {
     withSaving(editable(), () => ({}));
     const target = await screen.findByRole("slider", { name: "Handpicked's target" });
-    expect(screen.getAllByText("Foundation takes whatever's left.")).toHaveLength(2);
-    expect(screen.getByText("70%")).not.toHaveAttribute("data-changed");
+    expect(screen.getByText("75%")).not.toHaveAttribute("data-changed");
 
     fireEvent.change(target, { target: { value: "35" } });
-    expect(screen.getByText("60%")).toHaveAttribute("data-changed", "true");
-    // Side Bet's cap stays as it was.
-    expect(screen.getByRole("slider", { name: "Side Bet's cap" })).toHaveValue("5");
-    await waitFor(() => expect(screen.getByText("60%")).not.toHaveAttribute("data-changed"), {
+    expect(screen.getByText("65%")).toHaveAttribute("data-changed", "true");
+    await waitFor(() => expect(screen.getByText("65%")).not.toHaveAttribute("data-changed"), {
       timeout: 2000,
     });
   });
 
-  it("gives Foundation no slider — it's the rest", async () => {
+  it("gives Foundation no slider — it's the rest — and Side Bet none at all", async () => {
     withSaving(editable(), () => ({}));
-    expect(await screen.findByText("The rest, after Handpicked and Side Bet")).toBeInTheDocument();
-    expect(screen.getAllByRole("slider")).toHaveLength(2);
+    expect(await screen.findByText("The rest, after Handpicked")).toBeInTheDocument();
+    expect(screen.getAllByRole("slider")).toHaveLength(1);
     expect(screen.queryByRole("slider", { name: /Foundation/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("slider", { name: /Side Bet/ })).not.toBeInTheDocument();
   });
 
-  it("gives each slider a fixed range, so moving one never shifts the other", async () => {
+  it("lets Handpicked take all of it, or none", async () => {
     withSaving(editable(), () => ({}));
     const target = await screen.findByRole("slider", { name: "Handpicked's target" });
-    const cap = screen.getByRole("slider", { name: "Side Bet's cap" });
     expect(target).toHaveAttribute("max", "100");
-    expect(cap).toHaveAttribute("max", "20");
-
-    fireEvent.change(target, { target: { value: "60" } });
-    expect(cap).toHaveAttribute("max", "20");
-    expect(cap).toHaveValue("5");
-    fireEvent.change(cap, { target: { value: "15" } });
-    expect(target).toHaveAttribute("max", "100");
-    expect(target).toHaveValue("60");
-  });
-
-  it("stops the slider being moved where the other number leaves room", async () => {
-    withSaving(editable({ settings: { handpickedTarget: 90, sideBetCap: 5 } }), () => ({}));
-    const cap = await screen.findByRole("slider", { name: "Side Bet's cap" });
-    fireEvent.change(cap, { target: { value: "18" } });
-    // 90 + 18 would pass 100, so the cap stops at 10.
-    expect(cap).toHaveValue("10");
-    const target = screen.getByRole("slider", { name: "Handpicked's target" });
-    fireEvent.change(target, { target: { value: "95" } });
-    expect(target).toHaveValue("90");
-  });
-
-  it("notes the FCA restricted-investor assumption above a 10% cap, without blocking", async () => {
-    withSaving(editable({ settings: { handpickedTarget: 25, sideBetCap: 10 } }), () => ({}));
-    const cap = await screen.findByRole("slider", { name: "Side Bet's cap" });
-    expect(screen.queryByText(/FCA restricted-investor/)).not.toBeInTheDocument();
-    fireEvent.change(cap, { target: { value: "11" } });
-    expect(
-      screen.getByText("Above the 10% the FCA restricted-investor rules assume."),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Save rules" })).toBeEnabled();
+    fireEvent.change(target, { target: { value: "100" } });
+    expect(target).toHaveValue("100");
+    // Foundation is left with nothing, which is allowed.
+    const foundation = screen.getByRole("heading", { name: "Foundation" }).closest("section")!;
+    expect(within(foundation).getByText("0%")).toBeInTheDocument();
   });
 
   it("says a failed save changed nothing", async () => {
     withSaving(editable(), () => ({ status: 400 }));
-    fireEvent.change(await screen.findByRole("slider", { name: "Side Bet's cap" }), {
-      target: { value: "9" },
+    fireEvent.change(await screen.findByRole("slider", { name: "Handpicked's target" }), {
+      target: { value: "31" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Save rules" }));
     expect(
@@ -344,55 +334,40 @@ describe("changing your rules", () => {
   });
 });
 
-describe("a broken cap", () => {
-  function broken(fixIt: RulesView["fixIt"] = { outOfSideBet: 18_950, intoOtherPots: 416_600 }) {
+describe("Side Bet past its limit", () => {
+  function broken(fixIt: RulesView["fixIt"] = { outOfSideBet: 5_000 }) {
     return {
       ...view(),
-      settings: { handpickedTarget: 25, sideBetCap: 5 },
+      settings: { handpickedTarget: 25 },
       needsAttention: true,
       leftOut: [],
       fixIt,
     } satisfies RulesView;
   }
 
-  it("shows the two amounts that would fix it, at equal weight, as information", async () => {
+  it("shows the one amount that would bring it back, as information", async () => {
     renderRoute("/rules", { session: WAQAR, api: api({ body: broken() }) });
     const toggle = await screen.findByRole("button", { name: "Show me how to fix it" });
     expect(toggle).toHaveAttribute("aria-expanded", "false");
     fireEvent.click(toggle);
 
-    const panel = screen.getByRole("region", { name: "What would bring it back to its cap" });
-    const leaving = within(panel).getByText("£190");
-    const into = within(panel).getByText("£4,166");
-    // Same element, same classes: neither amount is dressed up as the answer.
-    expect(leaving.className).toBe(into.className);
-    expect(within(panel).getByText("leaving Side Bet")).toBeInTheDocument();
-    expect(within(panel).getByText("going into Foundation or Handpicked")).toBeInTheDocument();
-    expect(panel).toHaveTextContent("You'd do either at your broker.");
+    const panel = screen.getByRole("region", {
+      name: "What would bring it back under its limit",
+    });
+    expect(within(panel).getByText("£50")).toBeInTheDocument();
+    expect(within(panel).getByText("taken out of Side Bet")).toBeInTheDocument();
+    expect(panel).toHaveTextContent("You'd do that at your broker.");
     expect(panel).not.toHaveTextContent(/should|recommend|best|better/i);
     expect(
       within(screen.getByRole("alert")).getByText(/information, not advice/i),
     ).toBeInTheDocument();
   });
 
-  it("with a 0% cap, says no amount added elsewhere would do it", async () => {
-    renderRoute("/rules", {
-      session: WAQAR,
-      api: api({ body: broken({ outOfSideBet: 78_000, intoOtherPots: null }) }),
-    });
-    fireEvent.click(await screen.findByRole("button", { name: "Show me how to fix it" }));
-    expect(
-      screen.getByText("With a 0% cap, no amount added elsewhere would do it."),
-    ).toBeInTheDocument();
-  });
-
-  it("'Raise the cap' only takes you to the cap's slider, saying it moves no money", async () => {
+  it("never offers to raise the limit — it follows your net assets, not a slider", async () => {
     renderRoute("/rules", { session: WAQAR, api: api({ body: broken() }) });
-    fireEvent.click(await screen.findByRole("button", { name: "Raise the cap" }));
-    expect(screen.getByRole("slider", { name: "Side Bet's cap" })).toHaveFocus();
-    expect(
-      screen.getByText("Raising the cap changes what Pip tells you. It doesn't move any money."),
-    ).toBeInTheDocument();
+    await screen.findByRole("alert");
+    const names = screen.queryAllByRole("button").map((button) => button.textContent ?? "");
+    expect(names.join(" | ")).not.toMatch(/raise|cap/i);
   });
 
   it("goes red from the engine's answer, not the rounded percentages", async () => {
@@ -400,7 +375,7 @@ describe("a broken cap", () => {
       ...broken(),
       rules: view().rules.map((rule) =>
         rule.bucket === "Degen"
-          ? { ...rule, actualPercent: 5, status: "over_cap", overBy: { percent: 0, amount: 1 } }
+          ? { ...rule, status: "over_limit", overBy: { percent: 0, amount: 1 } }
           : rule,
       ),
     };

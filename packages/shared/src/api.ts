@@ -75,12 +75,39 @@ export type BucketStatus = "live" | "not_connected" | "syncing";
  * What the rules engine says about a pot (Phase 4): on its line, drifted from
  * its target, over its cap, or not judged because it isn't connected.
  */
-export type RuleStatus = "ok" | "drifted" | "over_cap" | "unavailable";
+/**
+ * `near_limit` and `over_limit` are Side Bet's (Phase 6); `drifted` is a
+ * target's. Only `over_limit` turns anything red.
+ */
+export type RuleStatus = "ok" | "drifted" | "near_limit" | "over_limit" | "unavailable";
 
-/** How far Side Bet is over its cap — pounds first. */
+/** How far Side Bet is past its limit — pounds first. */
 export interface OverBy {
   percent: Percent;
   amount: Pence;
+}
+
+/**
+ * Side Bet's limit and what it's judged against (Phase 6). The limit is the
+ * FCA's 10% guide on the net assets you told Pip, or the starter limit until
+ * you have. It is judged on money in, less taken out, over 12 months — not on
+ * what Side Bet is worth, which only matters for the growth line.
+ */
+export interface SideBetLimit {
+  limit: Pence;
+  /** Money into Side Bet minus money taken out, over the last 12 months. */
+  moneyIn: Pence;
+  /** What Side Bet is worth now. */
+  value: Pence;
+  /** Share of the limit used, to 2 dp: 80 is the first alert, 100 the second. */
+  usedPercent: Percent;
+  /** True while net assets aren't set and the flat starter limit applies. */
+  starter: boolean;
+  /**
+   * Set when Side Bet is worth more than went into it — good news, never red:
+   * "Side Bet has grown to £910. That's good news."
+   */
+  grownBy?: Pence;
 }
 
 /** A pot as it appears on the home screen. */
@@ -213,27 +240,25 @@ export interface BucketRule {
   driftPoints?: number;
   /** Degen only, and only when it is over: drives the one red thing in the app. */
   overBy?: OverBy;
+  /** Degen only: its limit, and what has gone into it (Phase 6). */
+  limit?: SideBetLimit;
 }
 
 export interface RulesView {
   rules: BucketRule[];
-  /** The two numbers the user sets; Foundation is the rest. */
-  settings?: { handpickedTarget: number; sideBetCap: number };
+  /** The one number the user sets; Foundation is the rest, Side Bet is outside it. */
+  settings?: { handpickedTarget: number };
   /** ISO timestamp of the last change; absent until the user first changes a rule. */
   lastChangedAt?: string;
-  /** A cap is broken. */
+  /** Side Bet has reached its limit. */
   needsAttention?: boolean;
   /** Pots left out of the shape because they aren't connected — targets are scaled over the rest. */
   leftOut?: Bucket[];
   /**
-   * When the cap is broken: the two amounts that would bring Side Bet back to
-   * it. Arithmetic, not advice; shown with equal weight.
+   * When Side Bet is past its limit: what taking that much out would bring it
+   * back under. Arithmetic, not advice — and Pip can't do it (hard line 1).
    */
-  fixIt?: {
-    outOfSideBet: Pence;
-    /** Null when the cap is 0 — no amount would do. */
-    intoOtherPots: Pence | null;
-  };
+  fixIt?: { outOfSideBet: Pence };
   /** What the user pays in monthly, as set up at their broker — Pip only reads it. */
   monthlySplit: {
     total: Pence;

@@ -100,6 +100,7 @@ export type CandidateFacts =
       bucket: Bucket;
       overBy: { percent: number; pence: Pence };
       fixIt: RulesEvaluation["fixIt"];
+      starterLimit: boolean;
     }
   | {
       type: "drift";
@@ -198,6 +199,7 @@ export function buildCandidates(input: CandidateInput): CandidateBuild {
             bucket: "Degen",
             overBy: { percent: sideBet.overBy.percent, pence: sideBet.overBy.amountPence },
             fixIt: rules.fixIt,
+            starterLimit: sideBet.limit?.starter ?? true,
           },
           checks: [exclusionsCheck(exclusions, potName("Degen"))],
           basis: null,

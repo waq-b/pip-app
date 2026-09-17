@@ -23,25 +23,23 @@ function setup() {
 describe("PUT /rules", () => {
   it("needs a session", async () => {
     const { put } = setup();
-    expect((await put({ handpickedTarget: 25, sideBetCap: 5 }, {})).statusCode).toBe(401);
+    expect((await put({ handpickedTarget: 25 }, {})).statusCode).toBe(401);
   });
 
   it("saves a valid shape and says when", async () => {
     const { put } = setup();
-    const response = await put({ handpickedTarget: 30, sideBetCap: 8 });
+    const response = await put({ handpickedTarget: 30 });
     expect(response.statusCode).toBe(200);
     const body = response.json() as { settings: unknown; lastChangedAt: string };
-    expect(body.settings).toEqual({ handpickedTarget: 30, sideBetCap: 8 });
+    expect(body.settings).toEqual({ handpickedTarget: 30 });
     expect(Number.isNaN(Date.parse(body.lastChangedAt))).toBe(false);
   });
 
   it.each([
-    ["a cap above 20%", { handpickedTarget: 25, sideBetCap: 21 }, "cap_out_of_range"],
-    ["a negative cap", { handpickedTarget: 25, sideBetCap: -1 }, "cap_out_of_range"],
-    ["a shape over 100", { handpickedTarget: 85, sideBetCap: 20 }, "shape_over_100"],
-    ["a negative target", { handpickedTarget: -5, sideBetCap: 5 }, "target_out_of_range"],
-    ["fractions", { handpickedTarget: 25.5, sideBetCap: 5 }, "whole_numbers_needed"],
-    ["numbers as text", { handpickedTarget: "25", sideBetCap: "5" }, "whole_numbers_needed"],
+    ["a target above 100", { handpickedTarget: 101 }, "target_out_of_range"],
+    ["a negative target", { handpickedTarget: -5 }, "target_out_of_range"],
+    ["fractions", { handpickedTarget: 25.5 }, "whole_numbers_needed"],
+    ["numbers as text", { handpickedTarget: "25" }, "whole_numbers_needed"],
     ["nothing", {}, "whole_numbers_needed"],
   ])("refuses %s, whatever the screen allowed", async (_label, payload, error) => {
     const { put } = setup();
@@ -50,18 +48,17 @@ describe("PUT /rules", () => {
     expect(response.json()).toEqual({ error });
   });
 
-  it("accepts the edges: a 20% cap, a 0% cap, and nothing left for Foundation", async () => {
+  it("accepts the edges: all of it to Handpicked, and none of it", async () => {
     const { put } = setup();
-    expect((await put({ handpickedTarget: 25, sideBetCap: 20 })).statusCode).toBe(200);
-    expect((await put({ handpickedTarget: 25, sideBetCap: 0 })).statusCode).toBe(200);
-    expect((await put({ handpickedTarget: 80, sideBetCap: 20 })).statusCode).toBe(200);
+    expect((await put({ handpickedTarget: 0 })).statusCode).toBe(200);
+    expect((await put({ handpickedTarget: 100 })).statusCode).toBe(200);
   });
 
   it("keeps each person's rules to themselves", async () => {
     const { store, put } = setup();
-    await put({ handpickedTarget: 40, sideBetCap: 10 });
+    await put({ handpickedTarget: 40 });
     const other = { userId: "someone-else", authUserId: "x" };
-    expect((await store.get(other)).settings).toEqual({ handpickedTarget: 25, sideBetCap: 5 });
+    expect((await store.get(other)).settings).toEqual({ handpickedTarget: 25 });
   });
 });
 
@@ -75,13 +72,13 @@ describe("one engine, one answer", () => {
       return response.json() as T;
     };
 
-    // Once over the default 5% cap, once back under a raised one.
-    for (const cap of [5, 10]) {
+    // Once on the default target, once well off it, so a pot drifts.
+    for (const target of [25, 60]) {
       const saved = await app.inject({
         method: "PUT",
         url: "/rules",
         headers: SIGNED_IN,
-        payload: { handpickedTarget: 25, sideBetCap: cap },
+        payload: { handpickedTarget: target },
       });
       expect(saved.statusCode).toBe(200);
 
@@ -102,7 +99,8 @@ describe("one engine, one answer", () => {
       }
       expect(summary.rulesNeedAttention).toBe(view.needsAttention);
       expect(summary.verdict.includes("Side Bet needs a look")).toBe(view.needsAttention);
-      expect(view.needsAttention).toBe(cap === 5);
+      // The sample Side Bet is past its starter limit, whatever the target is.
+      expect(view.needsAttention).toBe(true);
     }
   });
 });

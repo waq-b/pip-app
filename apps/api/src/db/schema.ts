@@ -278,14 +278,11 @@ export const userRules = pgTable(
       .primaryKey()
       .references(() => users.id, { onDelete: "cascade" }),
     handpickedTarget: integer("handpicked_target").notNull(),
-    sideBetCap: integer("side_bet_cap").notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [
-    check("user_rules_cap_range", sql`${table.sideBetCap} between 0 and 20`),
-    check("user_rules_target_range", sql`${table.handpickedTarget} between 0 and 100`),
-    check("user_rules_shape", sql`${table.handpickedTarget} + ${table.sideBetCap} <= 100`),
-  ],
+  // Side Bet left the shape in Phase 6: it has a limit in pounds (`net_assets`,
+  // `limit_alerts`), so Foundation is simply the rest of Handpicked's target.
+  (table) => [check("user_rules_target_range", sql`${table.handpickedTarget} between 0 and 100`)],
 );
 
 /**

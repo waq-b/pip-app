@@ -36,7 +36,7 @@ function row(overrides: Partial<NewNudge> = {}): NewNudge {
     reason: "cap",
     bucket: "Degen",
     instrumentId: null,
-    title: "Side Bet is £209 over its cap",
+    title: "Side Bet has reached its starter limit",
     body: "That's 1.8% past the line you set.",
     basis: null,
     facts: { type: "cap" },

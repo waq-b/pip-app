@@ -41,10 +41,15 @@ function holding(overrides: Partial<HoldingInput> & Pick<HoldingInput, "shortNam
   };
 }
 
-/** 70 / 25 / 5 exactly on shape unless told otherwise. */
+/**
+ * 75 / 25 exactly on shape unless told otherwise, with Side Bet outside it.
+ * A bigger Side Bet stands for more money in: past the £350 starter limit at
+ * £9 and up, which is how these tests ask for a Side Bet that needs a look.
+ */
 function input(
   overrides: Partial<CandidateInput> = {},
   pots = { Base: 7_000, Medium: 2_500, Degen: 500 },
+  moneyIn = (pots.Degen ?? 0) >= 900 ? 40_000 : 10_000,
 ): CandidateInput {
   return {
     now: NOW,
@@ -58,6 +63,7 @@ function input(
         { bucket: "Degen", connected: true, valuePence: pots.Degen },
       ],
       DEFAULT_RULES,
+      { limitPence: 35_000, moneyInPence: moneyIn, starterLimit: true },
     ),
     holdings: [],
     history: { dailyShownToday: 0, dailyShownThisWeek: 0, lastCapNudgeAt: null, shownKeys: [] },
