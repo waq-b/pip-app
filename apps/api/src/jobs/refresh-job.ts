@@ -4,6 +4,8 @@ import { holdings, providerCredentials } from "../db/schema.js";
 import type { Db } from "../db/user-scope.js";
 import { collectFacts } from "../facts/collect.js";
 import type { FactsAdapter } from "../facts/types.js";
+import type { NudgeService } from "../nudges/service.js";
+import { users } from "../db/schema.js";
 import { refreshDue, type PricedInstrument } from "../market/refresh.js";
 import type { withFallback } from "../market/sources/fallback.js";
 import { backfillHistory } from "../sync/backfill.js";
@@ -29,6 +31,9 @@ import {
  * 4. Save today's pot values for everyone with a live account.
  * 5. Collect facts — news and results dates — for what's held (Phase 5), from
  *    whichever sources are due and within budget.
+ * 6. Build "Your week" for everyone with a live account once it's due (from
+ *    07:00 UTC Monday), and today's daily nudges from 07:00 UTC — after facts,
+ *    so a week is built from the freshest reports.
  */
 
 type Market = ReturnType<typeof withFallback>;
@@ -41,6 +46,8 @@ export interface RefreshJobDeps {
   marketFor: (instrument: PricedInstrument | null) => Market;
   /** Facts sources (Phase 5). Without them, no facts are collected. */
   facts?: FactsAdapter[];
+  /** Phase 5 nudges. Without it, no weeks are built. */
+  nudges?: NudgeService;
   now?: () => Date;
 }
 
@@ -52,6 +59,8 @@ export interface RefreshJobSummary {
   snapshots: number;
   /** Facts sources read, reports newly stored, results dates written. */
   facts: { read: number; stored: number; events: number };
+  /** Weeks built this run, and daily nudges newly logged. */
+  nudges: { weeks: number; daily: number };
   errors: string[];
 }
 
@@ -70,6 +79,7 @@ export function createRefreshJob(deps: RefreshJobDeps) {
       pricesFailed: 0,
       snapshots: 0,
       facts: { read: 0, stored: 0, events: 0 },
+      nudges: { weeks: 0, daily: 0 },
       errors: [],
     };
     const step = async (name: string, work: () => Promise<void>) => {
@@ -153,6 +163,30 @@ export function createRefreshJob(deps: RefreshJobDeps) {
       if (!deps.facts?.length) return;
       const result = await collectFacts({ db: deps.db, adapters: deps.facts, now: at });
       summary.facts = { read: result.read, stored: result.stored, events: result.events };
+    });
+
+    await step("nudges", async () => {
+      if (!deps.nudges) return;
+      const people = await deps.db
+        .selectDistinct({
+          userId: users.id,
+          authUserId: users.authUserId,
+          personalResearch: users.personalResearch,
+        })
+        .from(users)
+        .innerJoin(providerCredentials, eq(providerCredentials.userId, users.id))
+        .where(eq(providerCredentials.status, "live"));
+      for (const person of people) {
+        if (!person.authUserId) continue;
+        const user = { ...person, authUserId: person.authUserId };
+        // One person's failure doesn't stop anyone else's week.
+        try {
+          if ((await deps.nudges.buildWeekIfDue(user, at)) === "built") summary.nudges.weeks += 1;
+          if (at.getUTCHours() >= 7) summary.nudges.daily += await deps.nudges.buildDaily(user, at);
+        } catch {
+          summary.errors.push(`nudges:${person.userId}`);
+        }
+      }
     });
 
     return summary;

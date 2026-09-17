@@ -5,6 +5,11 @@ import { dbWaitlistStore } from "./auth/waitlist.js";
 import { loadConfig } from "./config.js";
 import { getDb } from "./db/client.js";
 import { liveFactsAdapters } from "./facts/live.js";
+import { dbFactsReader } from "./nudges/gather.js";
+import { groqChat } from "./nudges/groq-chat.js";
+import { createNudgeService } from "./nudges/service.js";
+import { dbNudgeStore } from "./nudges/store.js";
+import { llmWriter, stubWriter } from "./research/writer.js";
 import { createRefreshJob } from "./jobs/refresh-job.js";
 import { LOG_REDACT_PATHS } from "./logging.js";
 import { liveMarket } from "./market/live.js";
@@ -64,11 +69,27 @@ function realAccounts(): Partial<BuildAppOptions> {
     : undefined;
 
   const rulesStore = dbRulesStore(db);
+  const profileStore = dbProfileStore(db);
+  const trustSettingsStore = dbTrustSettingsStore(db);
+  const readModel = liveReadModel({ db, marketFor, rulesStore });
+  const nudges = createNudgeService({
+    readModel,
+    rulesStore,
+    trustStore: trustSettingsStore,
+    profileStore,
+    facts: dbFactsReader(db),
+    store: dbNudgeStore(db),
+    writer:
+      config.llm.mode === "groq"
+        ? llmWriter({ chat: groqChat({ apiKey: config.llm.apiKey }), model: config.llm.model })
+        : stubWriter(),
+  });
   return {
     rulesStore,
-    profileStore: dbProfileStore(db),
-    trustSettingsStore: dbTrustSettingsStore(db),
-    readModel: liveReadModel({ db, marketFor, rulesStore }),
+    profileStore,
+    trustSettingsStore,
+    nudges,
+    readModel,
     connections: liveConnectionService({
       db,
       box,
@@ -96,6 +117,7 @@ function realAccounts(): Partial<BuildAppOptions> {
         alphaVantageKey: config.alphaVantageKey,
         marketauxKey: config.marketauxKey,
       }),
+      nudges,
     }),
   };
 }

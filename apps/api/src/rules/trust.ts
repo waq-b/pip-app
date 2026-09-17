@@ -23,7 +23,11 @@ export type TrustRuleId =
   | "cap_room"
   | "exclusions"
   | "weekly_budget"
-  | "daily_budget";
+  | "daily_budget"
+  /** A big move no longer past the user's line (a line raised after the build). */
+  | "big_move"
+  /** Not a trust rule: the writer judged the reports routine. */
+  | "not_material";
 
 export interface TrustCheck {
   rule: TrustRuleId;

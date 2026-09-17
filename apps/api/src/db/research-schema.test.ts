@@ -94,6 +94,8 @@ function nudgeRow(userId: string, overrides: Partial<typeof nudges.$inferInsert>
     shown: true,
     model: "stub",
     personalised: false,
+    dedupeKey: `news:ASMLa_EQ:${Math.random()}`,
+    builtOn: "2026-09-14",
     ...overrides,
   };
 }

@@ -118,7 +118,14 @@ export type CandidateFacts =
       move: MoveFigures;
       threshold: number;
     }
-  | { type: "news"; name: string; shortName: string; reports: NewsItem[] }
+  | {
+      type: "news";
+      name: string;
+      shortName: string;
+      reports: NewsItem[];
+      /** One name per organisation, best-known first as seen (`independentPublishers`). */
+      publishers: string[];
+    }
   | { type: "quiet"; counts: BuildCounts; next: CalendarItem | null };
 
 export interface CalendarItem {
@@ -333,7 +340,13 @@ export function buildCandidates(input: CandidateInput): CandidateBuild {
         reason: "news",
         bucket: holding.bucket,
         instrumentId: holding.instrumentId,
-        facts: { type: "news", name: holding.name, shortName: holding.shortName, reports: kept },
+        facts: {
+          type: "news",
+          name: holding.name,
+          shortName: holding.shortName,
+          reports: kept,
+          publishers: independentPublishers(kept).map((report) => report.publisher),
+        },
         checks: [
           ...holdingChecks(),
           resultsQuietCheck(holding.resultsDates, now, settings),

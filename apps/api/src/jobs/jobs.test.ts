@@ -201,6 +201,49 @@ describe("the scheduled refresh", () => {
     expect(second.facts).toEqual({ read: 0, stored: 0, events: 0 });
   });
 
+  it("builds weeks and daily nudges for people with a live account, one person's failure not stopping others", async () => {
+    const [account] = await db.select().from(providerCredentials);
+    await db
+      .update(users)
+      .set({ authUserId: "56565656-5656-4565-8565-565656565656", personalResearch: true });
+    const buildWeekIfDue = vi.fn(async () => "built" as const);
+    const buildDaily = vi.fn(async () => 2);
+    const nudges = {
+      buildWeekIfDue,
+      buildDaily,
+      week: vi.fn(),
+      thisWeek: vi.fn(),
+      respond: vi.fn(),
+    };
+    const summary = await createRefreshJob({
+      db,
+      box,
+      clientFor: () => client,
+      marketFor: () => withFallback([{ source, symbolFor: (target) => target }]),
+      nudges,
+      now: () => NOW,
+    }).run();
+    expect(summary.nudges).toEqual({ weeks: 1, daily: 2 });
+    expect(buildWeekIfDue).toHaveBeenCalledWith(
+      {
+        userId: account!.userId,
+        authUserId: "56565656-5656-4565-8565-565656565656",
+        personalResearch: true,
+      },
+      NOW,
+    );
+    buildWeekIfDue.mockRejectedValueOnce(new Error("boom"));
+    const failed = await createRefreshJob({
+      db,
+      box,
+      clientFor: () => client,
+      marketFor: () => withFallback([{ source, symbolFor: (target) => target }]),
+      nudges,
+      now: () => NOW,
+    }).run();
+    expect(failed.errors).toEqual([`nudges:${account!.userId}`]);
+  });
+
   it("joins a run already in progress instead of starting another", async () => {
     const refresh = job();
     const [first, second] = [refresh.run(), refresh.run()];

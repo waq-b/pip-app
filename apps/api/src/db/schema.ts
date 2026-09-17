@@ -601,6 +601,13 @@ export const nudges = pgTable(
     model: text("model").notNull(),
     promptVersion: text("prompt_version"),
     personalised: boolean("personalised").notNull(),
+    /**
+     * The same nudge has the same key (`reason:subject:day-or-date`), so a daily
+     * run every half hour logs each nudge once a day and never repeats one shown.
+     */
+    dedupeKey: text("dedupe_key").notNull(),
+    /** The London day the build ran. */
+    builtOn: date("built_on").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 
     response: text("response"),
@@ -620,6 +627,7 @@ export const nudges = pgTable(
     potShare30d: numeric("pot_share_30d"),
   },
   (table) => [
+    unique("nudges_once_a_day").on(table.userId, table.cadence, table.dedupeKey, table.builtOn),
     check("nudges_cadence", oneOf(table.cadence, DB_NUDGE_CADENCES)),
     check(
       "nudges_kind_reason",

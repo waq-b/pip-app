@@ -357,7 +357,7 @@ describe("Pip's own sentences", () => {
       ],
       [
         "Nvidia was in the news",
-        "3 reports from named publishers: Reuters and CNBC. The links are below.",
+        "3 reports from 2 named publishers: Reuters and CNBC. The links are below.",
       ],
       [
         "Nothing needs you this week.",

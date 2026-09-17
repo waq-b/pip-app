@@ -23,6 +23,11 @@ import { registerResearchSettingsRoutes } from "./routes/research-settings.js";
 import { registerRulesRoutes } from "./routes/rules.js";
 import { memoryTrustSettingsStore, type TrustSettingsStore } from "./rules/trust-settings.js";
 import { memoryRulesStore, type RulesStore } from "./rules/store.js";
+import { stubFactsReader } from "./nudges/gather.js";
+import { createNudgeService, type NudgeService } from "./nudges/service.js";
+import { memoryNudgeStore } from "./nudges/store.js";
+import { registerWeekRoutes } from "./routes/week.js";
+import { stubWriter } from "./research/writer.js";
 
 export interface BuildAppOptions {
   /**
@@ -44,6 +49,11 @@ export interface BuildAppOptions {
   /** Phase 5: the profile Pip writes for, and the user's trust rules. In memory unless given. */
   profileStore?: ProfileStore;
   trustSettingsStore?: TrustSettingsStore;
+  /**
+   * Your week. Stub mode builds one on read from the sample data, stub facts
+   * and the stub writer, kept in memory; real accounts pass the database one.
+   */
+  nudges?: NudgeService;
   /** The scheduled refresh (Trading 212 mode). */
   refreshJob?: { run(): Promise<unknown> };
   /** From `JOB_SECRET`; job routes refuse everyone without it. */
@@ -81,18 +91,32 @@ export function buildApp(options: BuildAppOptions = {}) {
   registerMeRoute(app, { allowlist });
   registerWaitlistRoute(app, { store: options.waitlistStore ?? dbWaitlistStore });
   const rulesStore = options.rulesStore ?? memoryRulesStore();
-  registerReadRoutes(app, {
-    model:
-      options.readModel ??
-      stubReadModel(
-        options.marketData ?? createStubMarketData({ anchors: stubSeriesAnchors() }),
-        rulesStore,
-      ),
-  });
+  const profileStore = options.profileStore ?? memoryProfileStore();
+  const trustStore = options.trustSettingsStore ?? memoryTrustSettingsStore();
+  const readModel =
+    options.readModel ??
+    stubReadModel(
+      options.marketData ?? createStubMarketData({ anchors: stubSeriesAnchors() }),
+      rulesStore,
+    );
+  registerReadRoutes(app, { model: readModel });
   registerRulesRoutes(app, { store: rulesStore });
-  registerResearchSettingsRoutes(app, {
-    profiles: options.profileStore ?? memoryProfileStore(),
-    trust: options.trustSettingsStore ?? memoryTrustSettingsStore(),
+  registerResearchSettingsRoutes(app, { profiles: profileStore, trust: trustStore });
+  registerWeekRoutes(app, {
+    service:
+      options.nudges ??
+      createNudgeService(
+        {
+          readModel,
+          rulesStore,
+          trustStore,
+          profileStore,
+          facts: stubFactsReader(),
+          store: memoryNudgeStore(),
+          writer: stubWriter(),
+        },
+        { buildOnRead: true },
+      ),
   });
   registerJobRoutes(app, { refresh: options.refreshJob });
   registerConnectionRoutes(app, { service: options.connections ?? stubConnectionService });

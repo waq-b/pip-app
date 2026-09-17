@@ -3,7 +3,14 @@
  * formatting, no thresholds. Phase 1 serves all of this from stubs.
  */
 import type { Bucket } from "./buckets.js";
-import type { Profile, TrustSettings } from "./research.js";
+import type {
+  NudgeCadence,
+  NudgeKind,
+  NudgeReason,
+  NudgeResponse,
+  Profile,
+  TrustSettings,
+} from "./research.js";
 
 /** Money is always integer pence, so nothing rounds on the way through. */
 export type Pence = number;
@@ -368,3 +375,73 @@ export type TrustRulesError =
   | "big_move_out_of_range"
   | "publishers_invalid"
   | "publishers_count";
+
+// ─── Phase 5: Your week ───────────────────────────────────────────────────────
+
+/** A report a nudge rests on — headline and link only; the article is never copied. */
+export interface NudgeSource {
+  publisher: string;
+  headline: string;
+  url: string;
+  /** ISO timestamp. */
+  publishedAt: string;
+}
+
+/** One trust rule a nudge was checked against, in plain words. */
+export interface NudgeCheck {
+  rule: string;
+  passed: boolean;
+  detail: string;
+}
+
+export interface NudgeView {
+  id: string;
+  cadence: NudgeCadence;
+  kind: NudgeKind;
+  reason: NudgeReason;
+  bucket: Bucket | null;
+  instrumentId: string | null;
+  title: string;
+  body: string;
+  /** "Based on 3 sources over 2 days" — news only. */
+  basis: string | null;
+  sources: NudgeSource[];
+  checks: NudgeCheck[];
+  /** For a held-back nudge: the rule, in plain words, that held it. */
+  heldBackBecause?: string;
+  response: NudgeResponse | null;
+  /** ISO timestamp. */
+  createdAt: string;
+}
+
+export interface WeekView {
+  /** The Monday, `YYYY-MM-DD`. */
+  weekOf: string;
+  /** ISO timestamp. */
+  builtAt: string;
+  opening: string;
+  /** What's shown, with today's trust rules applied. A quiet week is one `none` nudge. */
+  nudges: NudgeView[];
+  /** What the trust rules held back — one tap away, so silence is visibly the rules working. */
+  heldBack: NudgeView[];
+  counts: { holdingsChecked: number; reportsRead: number; reportsCounted: number };
+  next: { what: string; onDate: string } | null;
+}
+
+/** `GET /week`. */
+export interface WeekResponse {
+  /** Null until the first week is built. */
+  week: WeekView | null;
+  /** Daily nudges shown today. */
+  today: NudgeView[];
+  /** Mondays of earlier weeks, newest first. */
+  pastWeeks: string[];
+}
+
+/** `POST /nudges/:id/response`. */
+export interface NudgeResponseResult {
+  id: string;
+  response: NudgeResponse;
+  /** ISO timestamp. */
+  respondedAt: string;
+}

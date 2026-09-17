@@ -41,6 +41,8 @@ export type TemplateFacts =
       name: string;
       shortName: string;
       reports: { id: string; publisher: string; publishedAt: Date }[];
+      /** One name per organisation, when the build has worked that out. */
+      publishers?: string[];
     }
   | {
       type: "quiet";
@@ -112,10 +114,14 @@ export function templateFor(
       );
     }
     case "news": {
-      const publishers = distinctPublishers(facts.reports);
+      const publishers = facts.publishers ?? distinctPublishers(facts.reports);
+      const named =
+        publishers.length > 3
+          ? `${publishers.slice(0, 3).join(", ")} and ${plural(publishers.length - 3, "more")}`
+          : listOf(publishers);
       return draft(
         `${facts.name} was in the news`,
-        `${plural(facts.reports.length, "report")} from named publishers: ${listOf(publishers)}. The links are below.`,
+        `${plural(facts.reports.length, "report")} from ${plural(publishers.length, "named publisher")}: ${named}. The links are below.`,
         facts.reports.map((report) => report.id),
       );
     }

@@ -59,6 +59,18 @@ With `PROVIDER_MODE=t212`, Pip shows your own Trading 212 practice account inste
 - **How the trust rules decide** (already built, not on screen yet): a report counts only if a named publisher wrote it — or the company itself, for news about that company — recently enough, and it doesn't mention anything on your exclusions list. News about a holding is shown only when enough _different_ publishers reported it (two BBC stories are one source), not within your quiet days either side of that company's results, and never about a Side Bet holding while Side Bet is over its cap. A week shows at most your weekly number of news and big-move notes, best-backed first; a broken cap, a drifted target, a results date in the next week and the ISA year end in the fortnight before 5 April are always mentioned. A daily note only happens for a broken cap (at most once a week), results in the next two days, or a holding moving past its pot's line that day — most important first, within your daily limits. When nothing gets through, the week still says what Pip checked and what's next on the calendar.
 - Both only change what Pip tells you. The screens for them arrive later in Phase 5.
 
+## Your week (Phase 5 — built and served by the API, not on screen yet)
+
+- **Every Monday from 8am** (07:00 UTC) Pip builds your week from what you hold, your rules, your trust rules and the news it's collected. If Pip was asleep on Monday morning, it builds it the next time it runs that week. A week is built once and kept.
+- **What it can say**: Side Bet is over its cap (with the two amounts that would bring it back, either at your broker); a pot has drifted from its target; a holding reports results soon; the ISA year ends soon; a holding moved past your big-move line this week; a holding was in the news from enough different named publishers. Everything is pounds first, and nothing says buy, sell, hold or what a price will do.
+- **News words**: if Waqar has turned personal research on for you, the news notes are written for your plan (by Groq, checked by Pip, and replaced with Pip's own sentence if they fail); otherwise they say plainly who reported on what — "Nvidia was in the news: 62 reports from 9 named publishers: Investing.com, BBC, Yahoo Finance and 6 more."
+- **A quiet week says so**: "Nothing needs you this week." — how many holdings Pip checked, how many reports it read, how many things didn't get past your trust rules, and what's next on the calendar.
+- **Held back isn't hidden**: every note the trust rules held back is kept with the reason ("Not enough different publishers — 1 publisher: Investing.com"), so you can see the rules working.
+- **Changing a trust rule takes effect at once**: make a rule stricter or add an exclusion and anything this week that no longer passes moves to held back. Loosening a rule brings nothing back until next week's build.
+- **Daily notes**: from 8am each day, only a broken cap (at most once a week, and not if the week already said it), results in the next two days, or a holding moving past its line that day — within your daily limits.
+- **What you did**: each note can be marked "Nothing", "Acted" or "Dismissed". Only you can mark yours. Earlier weeks stay available.
+- In stub mode, opening Your week builds one from the sample data straight away.
+
 ## Getting around
 
 - **Three places to go**, the same at every size: **Pots**, **Rules** and **Setup**. On a phone they sit along the bottom; on a tablet they become a narrow rail of icons down the left; on a computer that rail widens into a sidebar with labels, the Pip mark, and a permanent "Read-only access" badge.

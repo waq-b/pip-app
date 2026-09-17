@@ -43,5 +43,5 @@ export function listOf(items: string[]): string {
   return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
 }
 
-export const plural = (count: number, one: string, many = `${one}s`) =>
+export const plural = (count: number, one: string, many = one === "more" ? one : `${one}s`) =>
   `${count} ${count === 1 ? one : many}`;
