@@ -2,7 +2,11 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { checkNewsAnswer, checkOpeningAnswer, checkWords } from "./guard.js";
-import { AWARENESS_PROMPT_VERSION, awarenessUser } from "./prompts/awareness.v1.js";
+import {
+  AWARENESS_PROMPT_VERSION,
+  AWARENESS_SYSTEM,
+  awarenessUser,
+} from "./prompts/awareness.v2.js";
 import { OPENING_TEMPLATE, templateFor } from "./templates.js";
 import type { Chat, NewsNudgeInput } from "./types.js";
 import { llmWriter, stubWriter } from "./writer.js";
@@ -143,6 +147,12 @@ describe("the guard", () => {
 });
 
 describe("the prompt", () => {
+  it("is v2: claims attributed, nothing added beyond the reports", () => {
+    expect(AWARENESS_PROMPT_VERSION).toBe("awareness.v2");
+    expect(AWARENESS_SYSTEM).toContain("Say who made each claim");
+    expect(AWARENESS_SYSTEM).toContain("State\n  only what the reports say");
+  });
+
   it("sends percentages, names and the plan — never pounds, quantities or ids", () => {
     const user = awarenessUser(asml());
     expect(user).toContain("Goals: Grow long-term savings");

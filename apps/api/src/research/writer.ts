@@ -4,7 +4,7 @@ import {
   AWARENESS_SCHEMA,
   AWARENESS_SYSTEM,
   awarenessUser,
-} from "./prompts/awareness.v1.js";
+} from "./prompts/awareness.v2.js";
 import { WEEK_PROMPT_VERSION, WEEK_SCHEMA, WEEK_SYSTEM, weekUser } from "./prompts/week.v1.js";
 import { OPENING_TEMPLATE, templateFor } from "./templates.js";
 import type { Chat, NewsNudgeInput, NotMaterial, NudgeDraft } from "./types.js";
