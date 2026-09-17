@@ -110,7 +110,7 @@ export type NudgeKind = (typeof NUDGE_KINDS)[number];
 export const NUDGE_REASONS = {
   none: ["quiet"],
   shape: ["cap", "drift"],
-  calendar: ["earnings", "isa_year_end"],
+  calendar: ["earnings", "isa_year_end", "net_assets_review"],
   awareness: ["news", "move"],
 } as const satisfies Record<NudgeKind, readonly string[]>;
 export type NudgeReason = (typeof NUDGE_REASONS)[NudgeKind][number];

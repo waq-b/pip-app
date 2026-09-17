@@ -29,6 +29,7 @@ export type TemplateFacts =
     }
   | { type: "earnings"; name: string; shortName: string; onDate: string; daysAway: number }
   | { type: "isa_year_end"; onDate: string; daysAway: number }
+  | { type: "net_assets_review"; reviewedAt: string; monthsAgo: number }
   | {
       type: "move";
       name: string;
@@ -98,6 +99,11 @@ export function templateFor(
       return draft(
         `${facts.name} reports results on ${shortDate(facts.onDate)}`,
         `${inDays(facts.daysAway)}. It's a date on the calendar, not a prediction — share prices can move around results days.`,
+      );
+    case "net_assets_review":
+      return draft(
+        "Time to check your net assets",
+        `You last gave them ${facts.monthsAgo} months ago, and they set Side Bet's limit — the FCA's 10% guide. Update them in Setup if they've changed. Pip only counts Side Bet, not anything high-risk you hold elsewhere.`,
       );
     case "isa_year_end":
       return draft(

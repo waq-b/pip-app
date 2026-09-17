@@ -114,6 +114,7 @@ export function buildApp(options: BuildAppOptions = {}) {
   registerWaitlistRoute(app, { store: options.waitlistStore ?? dbWaitlistStore });
   const rulesStore = options.rulesStore ?? memoryRulesStore();
   const sideBetLimits = options.sideBetLimits ?? fixedSideBetLimits({ moneyInPence: 40_000 });
+  const netAssets = options.netAssets ?? memoryNetAssetsStore();
   const profileStore = options.profileStore ?? memoryProfileStore();
   const trustStore = options.trustSettingsStore ?? memoryTrustSettingsStore();
   const readModel =
@@ -133,6 +134,7 @@ export function buildApp(options: BuildAppOptions = {}) {
           readModel,
           rulesStore,
           sideBetLimits,
+          netAssets,
           trustStore,
           profileStore,
           facts: stubFactsReader(),
@@ -147,7 +149,7 @@ export function buildApp(options: BuildAppOptions = {}) {
     ...(options.now ? { now: options.now } : {}),
   });
   registerNetAssetsRoutes(app, {
-    store: options.netAssets ?? memoryNetAssetsStore(),
+    store: netAssets,
     ...(options.now ? { now: options.now } : {}),
   });
   registerNotificationRoutes(app, {

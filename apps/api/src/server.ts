@@ -107,6 +107,7 @@ function realAccounts(): Partial<BuildAppOptions> {
     readModel,
     rulesStore,
     sideBetLimits,
+    netAssets,
     trustStore: trustSettingsStore,
     profileStore,
     facts: dbFactsReader(db),

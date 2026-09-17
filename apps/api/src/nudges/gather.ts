@@ -19,6 +19,7 @@ import type { ReadModel, ReadUser } from "../read/model.js";
 import { evaluateRules, type RulesEvaluation } from "../rules/engine.js";
 import type { RulesStore } from "../rules/store.js";
 import type { SideBetLimitReader } from "../rules/side-bet.js";
+import type { NetAssetsStore } from "../rules/net-assets.js";
 import type { TrustSettingsStore } from "../rules/trust-settings.js";
 import type { NewsItem } from "../rules/trust.js";
 import type { CandidateInput, HoldingInput, MoveFigures, NudgeHistory } from "./candidates.js";
@@ -123,6 +124,8 @@ export interface GatherDeps {
   rulesStore: RulesStore;
   /** Side Bet's limit and money in, so the engine judges it the same way here. */
   sideBetLimits: SideBetLimitReader;
+  /** When net assets were last reviewed, for the yearly reminder (Phase 6). */
+  netAssets?: NetAssetsStore;
   trustStore: TrustSettingsStore;
   profileStore: ProfileStore;
   facts: FactsReader;
@@ -179,6 +182,14 @@ export async function gather(
     storedRules.settings,
     await deps.sideBetLimits.read(user, now),
   );
+
+  // Only when they're set: someone who hasn't given them is asked on Setup,
+  // not nagged in their week as well.
+  const netAssetsStatus = await deps.netAssets?.status(user);
+  const netAssets =
+    netAssetsStatus?.set && netAssetsStatus.reviewedAt
+      ? { reviewedAt: netAssetsStatus.reviewedAt, dueReview: netAssetsStatus.dueReview }
+      : null;
 
   const details: Gathered["details"] = new Map();
   for (const bucket of BUCKETS) {
@@ -249,6 +260,7 @@ export async function gather(
       rules,
       holdings,
       history,
+      netAssets,
     },
     rules: storedRules.settings,
     profile: storedProfile.profile,

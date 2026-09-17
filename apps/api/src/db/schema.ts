@@ -349,7 +349,7 @@ export const DB_NUDGE_KINDS = ["none", "shape", "calendar", "awareness"] as cons
 export const DB_NUDGE_REASONS = {
   none: ["quiet"],
   shape: ["cap", "drift"],
-  calendar: ["earnings", "isa_year_end"],
+  calendar: ["earnings", "isa_year_end", "net_assets_review"],
   awareness: ["news", "move"],
 } as const;
 export const DB_NUDGE_RESPONSES = ["nothing", "acted", "dismissed"] as const;

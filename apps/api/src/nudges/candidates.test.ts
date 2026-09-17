@@ -390,6 +390,35 @@ describe("big moves", () => {
   });
 });
 
+describe("the yearly net-assets check", () => {
+  const reviewedAt = new Date("2025-09-01T09:00:00Z");
+
+  it("asks once a year, in the week rather than the day", async () => {
+    const due = { reviewedAt, dueReview: true };
+    const weekly = buildCandidates(input({ netAssets: due }));
+    const [nudge] = weekly.candidates.filter((c) => c.reason === "net_assets_review");
+    expect(nudge).toMatchObject({ kind: "calendar", bucket: "Degen" });
+    expect(nudge!.facts).toMatchObject({ type: "net_assets_review", monthsAgo: 12 });
+
+    // Not a daily interruption: it's housekeeping.
+    expect(
+      reasons(buildCandidates(input({ cadence: "daily", netAssets: due })).candidates),
+    ).not.toContain("net_assets_review");
+  });
+
+  it("says nothing until a year has passed", async () => {
+    expect(
+      reasons(buildCandidates(input({ netAssets: { reviewedAt, dueReview: false } })).candidates),
+    ).not.toContain("net_assets_review");
+  });
+
+  it("says nothing to someone who has never given them — Setup asks for those", async () => {
+    expect(reasons(buildCandidates(input({ netAssets: null })).candidates)).not.toContain(
+      "net_assets_review",
+    );
+  });
+});
+
 describe("the daily budget", () => {
   const busyDay = () =>
     input(

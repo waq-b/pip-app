@@ -76,6 +76,12 @@ export interface CandidateInput {
   rules: RulesEvaluation;
   holdings: HoldingInput[];
   history: NudgeHistory;
+  /**
+   * When the user last reviewed their net assets, and whether a year has
+   * passed (Phase 6). Null when they've never given them — Setup's own row
+   * asks for those, so Pip doesn't nag in the week as well.
+   */
+  netAssets?: { reviewedAt: Date; dueReview: boolean } | null;
 }
 
 export interface Candidate {
@@ -111,6 +117,7 @@ export type CandidateFacts =
     }
   | { type: "earnings"; name: string; shortName: string; onDate: string; daysAway: number }
   | { type: "isa_year_end"; onDate: string; daysAway: number }
+  | { type: "net_assets_review"; reviewedAt: string; monthsAgo: number }
   | {
       type: "move";
       name: string;
@@ -208,6 +215,31 @@ export function buildCandidates(input: CandidateInput): CandidateBuild {
       );
     }
   }
+  // ── The yearly net-assets check (Phase 6). Weekly only: it's a housekeeping
+  // reminder, not something that needs anyone's day interrupted.
+  if (cadence === "weekly" && input.netAssets?.dueReview) {
+    const reviewedAt = input.netAssets.reviewedAt;
+    const monthsAgo = Math.floor(
+      (now.getTime() - reviewedAt.getTime()) / (30 * 24 * 60 * 60 * 1000),
+    );
+    candidates.push(
+      candidate({
+        kind: "calendar",
+        reason: "net_assets_review",
+        bucket: "Degen",
+        instrumentId: null,
+        facts: {
+          type: "net_assets_review",
+          reviewedAt: reviewedAt.toISOString().slice(0, 10),
+          monthsAgo,
+        },
+        checks: [exclusionsCheck(exclusions, "Side Bet")],
+        basis: null,
+        dedupeKey: dedupeKey("net_assets_review", "Degen", dayOf(now)),
+      }),
+    );
+  }
+
   if (cadence === "weekly") {
     for (const pot of rules.pots) {
       if (pot.status !== "drifted" || pot.driftPoints === null) continue;
