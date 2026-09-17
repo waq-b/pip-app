@@ -17,6 +17,8 @@ import { ladder } from "../lib/staleness";
 import { PipMark } from "../shell/pip-mark";
 import { useBreakpoint, type Breakpoint } from "../shell/use-breakpoint";
 import { WeekCard } from "./week-card";
+import { useAskNetAssets } from "../lib/net-assets";
+import { NetAssetsAsk } from "./net-assets";
 import { PotCard, PotRow } from "./pot-card";
 
 /**
@@ -31,10 +33,20 @@ export function PotsScreen() {
   const breakpoint = useBreakpoint();
   const [timeframe, setTimeframe] = useState<Timeframe>("day");
   const portfolio = usePortfolio(timeframe);
+  const askNetAssets = useAskNetAssets(
+    portfolio.data !== undefined && !isEmptyPortfolio(portfolio.data),
+  );
 
   return (
     <div className={breakpoint === "phone" ? "px-5 pt-1 pb-6" : ""}>
       <h1 className="sr-only">Your pots</h1>
+
+      {/* Asked at the end of the first look, never before Pip has shown anything. */}
+      {askNetAssets.show ? (
+        <div className="mb-3">
+          <NetAssetsAsk onDone={askNetAssets.dismiss} />
+        </div>
+      ) : null}
 
       {portfolio.isPending ? (
         <PotsLoading />

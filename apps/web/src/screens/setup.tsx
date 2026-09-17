@@ -18,6 +18,7 @@ import {
 } from "../lib/connections";
 import { setHideNumbers, useHideNumbers } from "../lib/hide-numbers";
 import { useAppearance } from "../lib/use-appearance";
+import { NetAssets } from "./net-assets";
 import { YourPlan } from "./your-plan";
 import { ICON_STROKE } from "../shell/nav";
 import { pointerWords } from "../shell/pointer-words";
@@ -55,6 +56,7 @@ export function SetupScreen() {
         <Connections />
         <div className="flex flex-col gap-[11px]">
           <Preferences device={words.device} verb={words.verb} />
+          <NetAssets />
           <YourPlan />
         </div>
       </div>
