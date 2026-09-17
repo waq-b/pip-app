@@ -18,7 +18,10 @@ import {
 import type { ReadModel } from "./read/model.js";
 import { stubReadModel } from "./read/stub.js";
 import { registerReadRoutes } from "./routes/read.js";
+import { memoryProfileStore, type ProfileStore } from "./nudges/profile.js";
+import { registerResearchSettingsRoutes } from "./routes/research-settings.js";
 import { registerRulesRoutes } from "./routes/rules.js";
+import { memoryTrustSettingsStore, type TrustSettingsStore } from "./rules/trust-settings.js";
 import { memoryRulesStore, type RulesStore } from "./rules/store.js";
 
 export interface BuildAppOptions {
@@ -38,6 +41,9 @@ export interface BuildAppOptions {
   connections?: ConnectionService;
   /** Where a user's rules are kept. Stub mode keeps them in memory; real accounts in Postgres. */
   rulesStore?: RulesStore;
+  /** Phase 5: the profile Pip writes for, and the user's trust rules. In memory unless given. */
+  profileStore?: ProfileStore;
+  trustSettingsStore?: TrustSettingsStore;
   /** The scheduled refresh (Trading 212 mode). */
   refreshJob?: { run(): Promise<unknown> };
   /** From `JOB_SECRET`; job routes refuse everyone without it. */
@@ -84,6 +90,10 @@ export function buildApp(options: BuildAppOptions = {}) {
       ),
   });
   registerRulesRoutes(app, { store: rulesStore });
+  registerResearchSettingsRoutes(app, {
+    profiles: options.profileStore ?? memoryProfileStore(),
+    trust: options.trustSettingsStore ?? memoryTrustSettingsStore(),
+  });
   registerJobRoutes(app, { refresh: options.refreshJob });
   registerConnectionRoutes(app, { service: options.connections ?? stubConnectionService });
 

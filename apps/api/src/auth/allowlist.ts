@@ -12,6 +12,8 @@ export interface AllowedUser {
   id: string;
   email: string;
   authUserId: string | null;
+  /** Personalised research (Phase 5), set only by the allowlist command. */
+  personalResearch: boolean;
 }
 
 export interface AllowlistStore {
@@ -31,7 +33,12 @@ export function normaliseEmail(email: string): string {
 export const dbAllowlistStore: AllowlistStore = {
   async find(email) {
     const rows = await getDb()
-      .select({ id: users.id, email: users.email, authUserId: users.authUserId })
+      .select({
+        id: users.id,
+        email: users.email,
+        authUserId: users.authUserId,
+        personalResearch: users.personalResearch,
+      })
       .from(users)
       .where(eq(users.email, normaliseEmail(email)))
       .limit(1);
@@ -53,7 +60,10 @@ export function memoryAllowlistStore(emails: string[] = []): AllowlistStore & {
   const rows = new Map<string, AllowedUser>(
     emails.map((email, index) => {
       const key = normaliseEmail(email);
-      return [key, { id: `user-${index + 1}`, email: key, authUserId: null }];
+      return [
+        key,
+        { id: `user-${index + 1}`, email: key, authUserId: null, personalResearch: false },
+      ];
     }),
   );
 

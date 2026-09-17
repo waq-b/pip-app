@@ -3,6 +3,7 @@
  * formatting, no thresholds. Phase 1 serves all of this from stubs.
  */
 import type { Bucket } from "./buckets.js";
+import type { Profile, TrustSettings } from "./research.js";
 
 /** Money is always integer pence, so nothing rounds on the way through. */
 export type Pence = number;
@@ -325,3 +326,45 @@ export interface ConnectResult {
   /** Present when the outcome is `missing_permission`: the permission to tick. */
   missingPermission?: string;
 }
+
+// ─── Phase 5: what Pip writes for, and what it lets through ───────────────────
+
+/** `GET /profile`, and the answer to `PUT /profile`. */
+export interface ProfileView {
+  profile: Profile;
+  /**
+   * Pip writes notes for this person's own plan. False for everyone Waqar
+   * hasn't turned it on for — they get general notes (hard line 12).
+   */
+  personalised: boolean;
+  /** ISO timestamp; absent until they first save. */
+  lastChangedAt?: string;
+}
+
+export type ProfileError =
+  | "invalid_body"
+  | "goals_too_long"
+  | "risk_words_too_long"
+  | "horizon_out_of_range"
+  | "monthly_in_invalid"
+  | "too_many_exclusions"
+  | "exclusion_invalid";
+
+/** `GET /trust-rules`, and the answer to `PUT /trust-rules`. */
+export interface TrustRulesView {
+  settings: TrustSettings;
+  /** ISO timestamp; absent until they first save. */
+  lastChangedAt?: string;
+}
+
+export type TrustRulesError =
+  | "invalid_body"
+  | "whole_numbers_needed"
+  | "recency_out_of_range"
+  | "sources_out_of_range"
+  | "quiet_days_out_of_range"
+  | "weekly_budget_out_of_range"
+  | "daily_budget_out_of_range"
+  | "big_move_out_of_range"
+  | "publishers_invalid"
+  | "publishers_count";

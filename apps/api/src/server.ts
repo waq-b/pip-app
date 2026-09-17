@@ -20,6 +20,8 @@ import { liveReadModel } from "./read/live.js";
 import { backfillHistory } from "./sync/backfill.js";
 import { backfillKrakenHistory } from "./sync/kraken-history.js";
 import { dbRulesStore } from "./rules/store.js";
+import { dbProfileStore } from "./nudges/profile.js";
+import { dbTrustSettingsStore } from "./rules/trust-settings.js";
 import { liveConnectionService } from "./sync/connections.js";
 
 const config = loadConfig();
@@ -64,6 +66,8 @@ function realAccounts(): Partial<BuildAppOptions> {
   const rulesStore = dbRulesStore(db);
   return {
     rulesStore,
+    profileStore: dbProfileStore(db),
+    trustSettingsStore: dbTrustSettingsStore(db),
     readModel: liveReadModel({ db, marketFor, rulesStore }),
     connections: liveConnectionService({
       db,

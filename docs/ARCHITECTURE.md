@@ -304,6 +304,19 @@ The one place that judges the shape. `evaluateRules(pots, settings)` is pure —
 - **`RulesStore`**: `dbRulesStore` (real accounts) reads as the user through RLS and saves on the privileged connection; `memoryRulesStore` (stub mode) keeps rules per user in memory. No row means `DEFAULT_RULES` with `updatedAt: null`.
 - **`user_rules`** (migration 0011): one row per user, own-row RLS, and the same limits as `CHECK` constraints — a second wall behind the API.
 
+### Profile and trust rules (`nudges/profile.ts`, `rules/trust-settings.ts`, `routes/research-settings.ts`, Phase 5)
+
+Two per-user settings the research build reads (task 7). Neither can move money or change the shape rules; a test saves both and checks `/rules` is untouched.
+
+| Route              | Does                                                                                                                                                                                                                                                                       |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /profile`     | `ProfileView`: the profile (empty until saved), `personalised` — the allowlist's `personal_research` flag, carried on `request.allowedUser` — and `lastChangedAt` once saved                                                                                               |
+| `PUT /profile`     | `parseProfile`: goals and risk words trimmed, ≤ 280; horizon a whole number of years 0–60 or null; monthly money in whole pence ≥ 0 or null; up to 20 exclusions, each ≤ 60, trimmed, blanks dropped, repeats (any case) kept once. Refusals are 400 with a `ProfileError` |
+| `GET /trust-rules` | `TrustRulesView`: the user's trust settings, or `DEFAULT_TRUST_SETTINGS` until saved                                                                                                                                                                                       |
+| `PUT /trust-rules` | `parseTrustSettings`: every number a whole number inside `TRUST_LIMITS`; publishers written any way (`https://www.Reuters.com/x`) become bare domains, must look like a domain, repeats dropped, 1–100 of them. Refusals are 400 with a `TrustRulesError`                  |
+
+Stores follow the rules store: `dbProfileStore` / `dbTrustSettingsStore` read as the user (RLS) and save on the privileged connection; `memoryProfileStore` / `memoryTrustSettingsStore` in stub mode. No row means the empty profile or the defaults. The database's `CHECK`s repeat the limits.
+
 ### Rules on every screen (`rules/view.ts`, Phase 4)
 
 Both read models call the engine the same way — each pot's investments + cash, connected unless `not_connected`, against the user's stored rules — and shape the answer through `rules/view.ts`: `rulesView` builds `/rules` (per-pot `status`, `judgedAgainstPercent`, `driftPoints`, `overBy`, a plain line; plus `settings`, `lastChangedAt`, `needsAttention`, `leftOut`, `fixIt`), and `ruleFlagFor` gives `/portfolio` buckets and `/buckets/:id` their `ruleStatus` and `overBy`. `/portfolio` carries `rulesNeedAttention` and the verdict ends "Side Bet needs a look." whenever the cap is broken. Stub mode judges the sample values the same way, with rules kept in memory. A test drives `/rules`, `/portfolio` and `/buckets/:id` through the real routes, over and under the cap, and requires identical results.

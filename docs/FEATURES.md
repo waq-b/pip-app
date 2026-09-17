@@ -52,6 +52,12 @@ With `PROVIDER_MODE=t212`, Pip shows your own Trading 212 practice account inste
 - **Rules** are your own (Phase 4), judged by one engine in the API that every screen reads: each connected pot's share of everything Pip can see, cash included, against its line. When a pot isn't connected, targets are judged against the pots that are — Foundation's 70% becomes 93.3% of Foundation plus Side Bet — and the rule says so ("…against 93.3% — your 70% scaled to the pots Pip can see."). A target 5 points or more away has drifted and says how far ("8 points above…"), calmly. Side Bet over its cap by any amount lights the red dot on Rules, turns its card red, and makes the verdict "Side Bet needs a look."; back under, they all clear. A pot that isn't connected says what to connect.
 - **Prices stay fresh on their own**: every 30 minutes on weekdays while markets are open, hourly around the clock for crypto when anyone holds some, and whenever you open Pip, without making you wait more than a couple of seconds. Their age is shown the same way as always.
 
+## Your plan and trust rules (Phase 5 — in the API, not on screen yet)
+
+- **Your plan**: goals and how you feel about risk in your own words (up to 280 characters each), how many years you're investing for, what you put in each month, and up to 20 things Pip should never nudge you about. Nothing is required. Pip only writes notes for your own plan if Waqar has turned that on for you; otherwise it says it keeps things general.
+- **Trust rules**: which publishers count, how recent news must be, how many different publishers must report something, how many days around a company's results to stay quiet, how many nudges a week and a day, and how big a one-day move counts per pot. They start at the signed-off defaults (named publishers, 7 days, 2 publishers, 3 days, 4 a week, 1 a day and 3 a week, 3 / 7 / 15%). Anything outside the limits is refused by the API, whatever sent it.
+- Both only change what Pip tells you. The screens for them arrive later in Phase 5.
+
 ## Getting around
 
 - **Three places to go**, the same at every size: **Pots**, **Rules** and **Setup**. On a phone they sit along the bottom; on a tablet they become a narrow rail of icons down the left; on a computer that rail widens into a sidebar with labels, the Pip mark, and a permanent "Read-only access" badge.
