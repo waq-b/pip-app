@@ -20,7 +20,11 @@ export function fakeAuthClient(initial: AuthSession | null = null) {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
-    sendMagicLink: vi.fn<(email: string) => Promise<void>>(async () => {}),
+    sendCode: vi.fn<(email: string) => Promise<void>>(async () => {}),
+    // Any code signs in as a session for that email unless a test says otherwise.
+    verifyCode: vi.fn<(email: string, code: string) => Promise<void>>(async (email) =>
+      setSession({ accessToken: `token-for-${email}`, email, name: null }),
+    ),
     signOut: vi.fn(async () => setSession(null)),
     setSession,
   } satisfies AuthClient & { setSession: typeof setSession };

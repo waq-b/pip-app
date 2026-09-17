@@ -6,7 +6,8 @@ export type AuthState =
 
 export interface AuthContextValue {
   state: AuthState;
-  sendMagicLink(email: string): Promise<void>;
+  sendCode(email: string): Promise<void>;
+  verifyCode(email: string, code: string): Promise<void>;
   signOut(): Promise<void>;
 }
 

@@ -17,18 +17,45 @@ export interface AuthClient {
   /** Called on sign-in, sign-out and token refresh. Returns an unsubscribe. */
   onChange(listener: (session: AuthSession | null) => void): () => void;
   /**
-   * Emails a one-time sign-in link that brings the browser back signed in.
+   * Emails a one-time sign-in code. The same email carries a link as a
+   * fallback for desktop browsers; an installed PWA can't use the link, because
+   * it opens the system browser, whose storage the PWA doesn't share.
    * Throws `TooManyEmailsError` when Supabase's send limit is hit.
    */
-  sendMagicLink(email: string): Promise<void>;
+  sendCode(email: string): Promise<void>;
+  /**
+   * Signs in with the code from the email, in this window's own storage.
+   * Throws `WrongCodeError` for a wrong or expired code, `TooManyTriesError`
+   * when Supabase is limiting attempts.
+   */
+  verifyCode(email: string, code: string): Promise<void>;
   signOut(): Promise<void>;
 }
+
+/** How many digits Supabase's email code has (Auth → Email OTP length). */
+export const SIGN_IN_CODE_LENGTH = 6;
 
 /** Supabase's built-in mailer only sends a few emails an hour. */
 export class TooManyEmailsError extends Error {
   constructor() {
     super("Too many sign-in emails");
     this.name = "TooManyEmailsError";
+  }
+}
+
+/** The code is wrong, expired, already used, or for an address Pip doesn't know. */
+export class WrongCodeError extends Error {
+  constructor() {
+    super("Wrong or expired sign-in code");
+    this.name = "WrongCodeError";
+  }
+}
+
+/** Supabase limits how often a code can be tried. */
+export class TooManyTriesError extends Error {
+  constructor() {
+    super("Too many sign-in code attempts");
+    this.name = "TooManyTriesError";
   }
 }
 
@@ -42,6 +69,8 @@ export function supabaseAuthClient(
     );
   }
 
+  // `detectSessionInUrl` is on by default: a desktop browser tab opened from
+  // the email's link still signs in, and other open tabs hear about it.
   const supabase = createClient(url, publishableKey);
 
   return {
@@ -57,7 +86,7 @@ export function supabaseAuthClient(
       return () => data.subscription.unsubscribe();
     },
 
-    async sendMagicLink(email) {
+    async sendCode(email) {
       const { error } = await supabase.auth.signInWithOtp({
         email,
         // Supabase accounts are made by the allowlist command, never here, so
@@ -71,6 +100,20 @@ export function supabaseAuthClient(
       if (error.code === "otp_disabled" || /signups not allowed/i.test(error.message)) return;
       if (error.status === 429 || error.code === "over_email_send_rate_limit") {
         throw new TooManyEmailsError();
+      }
+      throw error;
+    },
+
+    async verifyCode(email, code) {
+      const { error } = await supabase.auth.verifyOtp({ email, token: code, type: "email" });
+      if (!error) return;
+      if (error.status === 429 || error.code === "over_request_rate_limit") {
+        throw new TooManyTriesError();
+      }
+      // Wrong, expired or used — and an address with no account fails the same
+      // way, so this answer never reveals who's on the list either.
+      if (error.status === 400 || error.status === 403 || error.code === "otp_expired") {
+        throw new WrongCodeError();
       }
       throw error;
     },

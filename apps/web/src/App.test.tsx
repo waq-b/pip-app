@@ -24,17 +24,13 @@ describe("routing through the two walls", () => {
   it("sends someone signed out to sign in, without asking the API anything", async () => {
     const { fetchMock } = renderRoute("/");
 
-    expect(
-      await screen.findByRole("button", { name: "Email me a sign-in link" }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Email me a code" })).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("guards the inner screens too, not just the front door", async () => {
     renderRoute("/pots/Medium");
-    expect(
-      await screen.findByRole("button", { name: "Email me a sign-in link" }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Email me a code" })).toBeInTheDocument();
   });
 
   it("sends someone signed in but not on the list to the refusal screen", async () => {
@@ -52,9 +48,7 @@ describe("routing through the two walls", () => {
       api: { "/me": { status: 401, body: { error: "unauthenticated" } } },
     });
 
-    expect(
-      await screen.findByRole("button", { name: "Email me a sign-in link" }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Email me a code" })).toBeInTheDocument();
   });
 
   it("says so plainly when Pip can't be reached at all", async () => {
@@ -71,7 +65,7 @@ describe("routing through the two walls", () => {
     auth.setSession(null);
 
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Email me a sign-in link" })).toBeInTheDocument(),
+      expect(screen.getByRole("button", { name: "Email me a code" })).toBeInTheDocument(),
     );
   });
 });

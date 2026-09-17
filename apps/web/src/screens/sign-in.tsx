@@ -1,7 +1,12 @@
 import { MailCheck } from "lucide-react";
 import { useId, useState, type FormEvent } from "react";
 import { Navigate } from "react-router";
-import { TooManyEmailsError } from "../lib/auth-client";
+import {
+  SIGN_IN_CODE_LENGTH,
+  TooManyEmailsError,
+  TooManyTriesError,
+  WrongCodeError,
+} from "../lib/auth-client";
 import { useAuth } from "../lib/auth-context";
 import { ICON_STROKE } from "../shell/nav";
 import { PipMark } from "../shell/pip-mark";
@@ -10,12 +15,15 @@ import { useBreakpoint } from "../shell/use-breakpoint";
 type Step =
   | { kind: "ask" }
   | { kind: "sending" }
-  | { kind: "sent"; email: string }
+  | { kind: "code"; email: string }
   | { kind: "failed"; message: string };
 
 /**
- * No passwords, nothing to set up (DESIGN.md §7). Sign-in is an emailed magic
- * link for now (Waqar, 2026-09-16) — Google returns later. The only screen with
+ * No passwords, nothing to set up (DESIGN.md §7). Sign-in is an emailed
+ * 6-digit code (Waqar, 2026-09-17) — Google returns later. A code, not a link,
+ * because a link opens the system browser, and an app installed to the Home
+ * Screen keeps its own storage: the browser got signed in, the app didn't. The
+ * email still carries the link, which works in a desktop browser tab. The only screen with
  * neither a sidebar nor a hero number, so on desktop it keeps the phone's
  * proportions and gains a second column for the promise.
  *
@@ -23,7 +31,7 @@ type Step =
  * call, made once the link brings them back.
  */
 export function SignInScreen() {
-  const { state, sendMagicLink } = useAuth();
+  const { state, sendCode } = useAuth();
   const isDesktop = useBreakpoint() === "desktop";
   const [step, setStep] = useState<Step>({ kind: "ask" });
 
@@ -32,22 +40,16 @@ export function SignInScreen() {
   const send = async (email: string) => {
     setStep({ kind: "sending" });
     try {
-      await sendMagicLink(email);
-      setStep({ kind: "sent", email });
+      await sendCode(email);
+      setStep({ kind: "code", email });
     } catch (error) {
-      setStep({
-        kind: "failed",
-        message:
-          error instanceof TooManyEmailsError
-            ? "Pip has sent too many sign-in emails for now. Try again in an hour, and use the newest link you have."
-            : "Pip couldn't send the link. Give it a moment and try again.",
-      });
+      setStep({ kind: "failed", message: sendFailure(error) });
     }
   };
 
   const panel =
-    step.kind === "sent" ? (
-      <Sent email={step.email} onRestart={() => setStep({ kind: "ask" })} />
+    step.kind === "code" ? (
+      <CodeForm email={step.email} onRestart={() => setStep({ kind: "ask" })} />
     ) : (
       <EmailForm
         disabled={state.status === "loading"}
@@ -83,6 +85,12 @@ export function SignInScreen() {
       </div>
     </main>
   );
+}
+
+function sendFailure(error: unknown): string {
+  return error instanceof TooManyEmailsError
+    ? "Pip has sent too many sign-in emails for now. Try again in an hour, and use the newest code you have."
+    : "Pip couldn't send the code. Give it a moment and try again.";
 }
 
 function Promise({ size }: { size: "phone" | "desktop" }) {
@@ -155,7 +163,7 @@ function EmailForm({
         disabled={disabled || sending || !email.trim()}
         className="bg-solid text-solid-ink mt-3 w-full cursor-pointer rounded-full border-0 px-[18px] py-3.5 text-[14.5px] font-bold disabled:cursor-default disabled:opacity-45"
       >
-        {sending ? "Sending your link…" : "Email me a sign-in link"}
+        {sending ? "Sending your code…" : "Email me a code"}
       </button>
       {failure ? (
         <p role="alert" className="text-ink2 m-0 mt-3 text-[12.5px] leading-normal font-medium">
@@ -169,22 +177,133 @@ function EmailForm({
   );
 }
 
-function Sent({ email, onRestart }: { email: string; onRestart: () => void }) {
+type CodeStatus =
+  | { kind: "typing" }
+  | { kind: "checking" }
+  | { kind: "resending" }
+  | { kind: "resent" }
+  | { kind: "failed"; message: string };
+
+function CodeForm({ email, onRestart }: { email: string; onRestart: () => void }) {
+  const { sendCode, verifyCode } = useAuth();
+  const inputId = useId();
+  const [code, setCode] = useState("");
+  const [status, setStatus] = useState<CodeStatus>({ kind: "typing" });
+  const busy = status.kind === "checking" || status.kind === "resending";
+
+  // A successful check signs this window in; the screen then redirects itself.
+  const check = async (digits: string) => {
+    setStatus({ kind: "checking" });
+    try {
+      await verifyCode(email, digits);
+    } catch (error) {
+      setStatus({
+        kind: "failed",
+        message:
+          error instanceof WrongCodeError
+            ? "That code didn't work. Check it's from the newest email, or send a new code."
+            : error instanceof TooManyTriesError
+              ? "Too many tries for now. Wait a few minutes, then send a new code."
+              : "Pip couldn't check the code. Give it a moment and try again.",
+      });
+    }
+  };
+
+  // Digits only, so a pasted "123 456" or "Your code: 123456" still works. The
+  // last digit typed or pasted submits on its own.
+  const change = (value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, SIGN_IN_CODE_LENGTH);
+    setCode(digits);
+    if (status.kind === "failed" || status.kind === "resent") setStatus({ kind: "typing" });
+    if (digits.length === SIGN_IN_CODE_LENGTH && !busy) void check(digits);
+  };
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    if (code.length === SIGN_IN_CODE_LENGTH && !busy) void check(code);
+  };
+
+  const resend = async () => {
+    setStatus({ kind: "resending" });
+    setCode("");
+    try {
+      await sendCode(email);
+      setStatus({ kind: "resent" });
+    } catch (error) {
+      setStatus({ kind: "failed", message: sendFailure(error) });
+    }
+  };
+
   return (
-    <section aria-live="polite" className="flex w-full flex-col items-start gap-3">
+    <section className="flex w-full flex-col items-start gap-3">
       <MailCheck size={30} strokeWidth={ICON_STROKE} className="text-acc" aria-hidden />
-      <h2 className="font-heading m-0 text-xl leading-tight font-normal">Check your email</h2>
+      <h2 className="font-heading m-0 text-xl leading-tight font-normal">
+        Enter the code from your email
+      </h2>
       <p className="text-ink2 m-0 text-[13px] leading-normal font-medium">
-        Pip sent a sign-in link to <strong className="text-ink break-all">{email}</strong>. Open it
-        in this browser and you're in.
+        Pip sent a {SIGN_IN_CODE_LENGTH}-digit code to{" "}
+        <strong className="text-ink break-all">{email}</strong>.
       </p>
-      <button
-        type="button"
-        onClick={onRestart}
-        className="text-solid cursor-pointer border-0 bg-transparent p-0 text-[13.5px] font-bold"
+      <form onSubmit={submit} className="w-full">
+        <label
+          htmlFor={inputId}
+          className="text-ink2 mb-1.5 block text-[11px] font-bold tracking-[0.06em] uppercase"
+        >
+          Code
+        </label>
+        <input
+          id={inputId}
+          type="text"
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          enterKeyHint="go"
+          autoFocus
+          value={code}
+          onChange={(event) => change(event.target.value)}
+          placeholder={"0".repeat(SIGN_IN_CODE_LENGTH)}
+          disabled={busy}
+          className="bg-sunk border-line text-ink placeholder:text-ink3 w-full rounded-2xl border-[1.5px] px-3.5 py-3 text-center text-[22px] font-bold tracking-[0.3em] tabular-nums"
+        />
+        <button
+          type="submit"
+          disabled={busy || code.length !== SIGN_IN_CODE_LENGTH}
+          className="bg-solid text-solid-ink mt-3 w-full cursor-pointer rounded-full border-0 px-[18px] py-3.5 text-[14.5px] font-bold disabled:cursor-default disabled:opacity-45"
+        >
+          {status.kind === "checking" ? "Checking your code…" : "Sign in"}
+        </button>
+      </form>
+      {status.kind === "failed" ? (
+        <p role="alert" className="text-ink2 m-0 text-[12.5px] leading-normal font-medium">
+          {status.message}
+        </p>
+      ) : null}
+      <p
+        aria-live="polite"
+        className="text-ink2 m-0 text-[12.5px] leading-normal font-medium empty:hidden"
       >
-        Use a different email
-      </button>
+        {status.kind === "resent" ? "Pip sent a new code. Use the newest one." : ""}
+      </p>
+      <div className="flex flex-wrap gap-x-5 gap-y-2">
+        <button
+          type="button"
+          onClick={() => void resend()}
+          disabled={busy}
+          className="text-solid cursor-pointer border-0 bg-transparent p-0 text-[13.5px] font-bold disabled:cursor-default disabled:opacity-45"
+        >
+          {status.kind === "resending" ? "Sending…" : "Send a new code"}
+        </button>
+        <button
+          type="button"
+          onClick={onRestart}
+          disabled={busy}
+          className="text-solid cursor-pointer border-0 bg-transparent p-0 text-[13.5px] font-bold disabled:cursor-default disabled:opacity-45"
+        >
+          Use a different email
+        </button>
+      </div>
+      <p className="text-ink3 m-0 text-[11.5px] leading-normal font-medium">
+        On a computer, the link in the email works too.
+      </p>
     </section>
   );
 }
