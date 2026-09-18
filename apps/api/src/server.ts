@@ -52,6 +52,8 @@ const base: BuildAppOptions = {
   // Production: serve the built web app from the same origin (see web.ts).
   webAppDir: process.env.WEB_DIST_DIR || undefined,
   canonicalHost: process.env.CANONICAL_HOST || undefined,
+  // Public by design: a browser needs it to subscribe. The private half never leaves here.
+  vapidPublicKey: config.notify.mode === "live" ? config.notify.vapid.publicKey : undefined,
   logger: {
     level: process.env.LOG_LEVEL ?? "info",
     redact: { paths: LOG_REDACT_PATHS, censor: "[redacted]" },

@@ -22,6 +22,11 @@ export default defineConfig({
       // A new version waits until src/update.ts applies it on launch, behind the
       // splash, so the page never reloads mid-use.
       registerType: "prompt",
+      // Pip's own worker (src/sw.ts), so it can show pushes as well as precache.
+      strategies: "injectManifest",
+      srcDir: "src",
+      filename: "sw.ts",
+      injectManifest: { globPatterns: ["**/*.{js,css,html,svg,png,ico,webmanifest}"] },
       manifest: {
         name: "Pip",
         short_name: "Pip",

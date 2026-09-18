@@ -93,7 +93,7 @@ function parseMarks(body: unknown): { ok: true; items: Mark[] } | { ok: false } 
 
 export function registerNotificationRoutes(
   app: FastifyInstance,
-  options: { store: NotificationStore; now?: () => Date },
+  options: { store: NotificationStore; vapidPublicKey?: string; now?: () => Date },
 ): void {
   const now = options.now ?? (() => new Date());
   const store = options.store;
@@ -106,7 +106,12 @@ export function registerNotificationRoutes(
     const user = userOf(request);
     const [settings, devices] = await Promise.all([store.settings(user), store.devices(user)]);
     const { askedAt, ...switches } = settings;
-    return { settings: switches, devices: devices.map(deviceView), asked: askedAt !== null };
+    return {
+      settings: switches,
+      devices: devices.map(deviceView),
+      asked: askedAt !== null,
+      vapidPublicKey: options.vapidPublicKey ?? null,
+    };
   };
 
   app.get("/notification-settings", async (request) => view(request));

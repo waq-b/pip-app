@@ -61,7 +61,20 @@ describe("the switches", () => {
       settings: { push: true, pushLimit: true, pushUrgent: true, pushDigest: true, email: true },
       devices: [],
       asked: false,
+      // Stub mode can't push, so there's nothing to subscribe with.
+      vapidPublicKey: null,
     });
+  });
+
+  it("hand browsers the VAPID public key when the server can push", async () => {
+    const auth = testAuth(["test@example.com"]);
+    const app = buildApp({ ...auth.options, vapidPublicKey: "BPublicKey" });
+    const response = await app.inject({
+      method: "GET",
+      url: "/notification-settings",
+      headers: auth.headersFor("test@example.com"),
+    });
+    expect(response.json<NotificationSettingsView>().vapidPublicKey).toBe("BPublicKey");
   });
 
   it("change one at a time, leaving the rest alone", async () => {

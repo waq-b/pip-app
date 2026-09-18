@@ -19,6 +19,8 @@ import { useBreakpoint, type Breakpoint } from "../shell/use-breakpoint";
 import { WeekCard } from "./week-card";
 import { useAskNetAssets } from "../lib/net-assets";
 import { NetAssetsAsk } from "./net-assets";
+import { NotificationsAsk } from "./notifications-ask";
+import { useNotificationSettings } from "../lib/push";
 import { PotCard, PotRow } from "./pot-card";
 
 /**
@@ -33,13 +35,30 @@ export function PotsScreen() {
   const breakpoint = useBreakpoint();
   const [timeframe, setTimeframe] = useState<Timeframe>("day");
   const portfolio = usePortfolio(timeframe);
+  const somethingToShow = portfolio.data !== undefined && !isEmptyPortfolio(portfolio.data);
+  // Step 1 of first login: the ask, once, and only once there's something behind it.
+  const notifications = useNotificationSettings(somethingToShow);
+  // Latched: saving the answer marks it asked, but the sheet stays up for its
+  // last word ("Fine. Pip will stay quiet.") until Done.
+  const [sheet, setSheet] = useState<"unseen" | "open" | "closed">("unseen");
+  const unanswered = somethingToShow && notifications.data?.asked === false;
+  if (sheet === "unseen" && unanswered) setSheet("open");
+  const showSheet = sheet === "open";
+  // Step 2 waits for step 1.
   const askNetAssets = useAskNetAssets(
-    portfolio.data !== undefined && !isEmptyPortfolio(portfolio.data),
+    somethingToShow && notifications.data !== undefined && !showSheet,
   );
 
   return (
     <div className={breakpoint === "phone" ? "px-5 pt-1 pb-6" : ""}>
       <h1 className="sr-only">Your pots</h1>
+
+      {showSheet ? (
+        <NotificationsAsk
+          vapidPublicKey={notifications.data!.vapidPublicKey}
+          onDone={() => setSheet("closed")}
+        />
+      ) : null}
 
       {/* Asked at the end of the first look, never before Pip has shown anything. */}
       {askNetAssets.show ? (

@@ -23,6 +23,7 @@ import { YourPlan } from "./your-plan";
 import { ICON_STROKE } from "../shell/nav";
 import { pointerWords } from "../shell/pointer-words";
 import { useBreakpoint } from "../shell/use-breakpoint";
+import { ThisDeviceRow } from "./this-device";
 
 /**
  * Where Pip reads your numbers from, and how this device shows them
@@ -56,6 +57,7 @@ export function SetupScreen() {
         <Connections />
         <div className="flex flex-col gap-[11px]">
           <Preferences device={words.device} verb={words.verb} />
+          <Notifications />
           <NetAssets />
           <YourPlan />
         </div>
@@ -613,6 +615,18 @@ function PrimaryButton({ onClick, children }: { onClick: () => void; children: s
     >
       {children}
     </button>
+  );
+}
+
+/** Push on this device (Phase 6 task 7). The switches and per-kind toggles join it in task 8. */
+function Notifications() {
+  return (
+    <section aria-labelledby="notifications-heading" className="bg-card rounded-[26px] px-[18px]">
+      <h2 id="notifications-heading" className="sr-only">
+        Notifications
+      </h2>
+      <ThisDeviceRow />
+    </section>
   );
 }
 

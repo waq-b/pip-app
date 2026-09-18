@@ -64,11 +64,20 @@ function json(body: unknown, status: number): Response {
   });
 }
 
+export const NOTIFICATIONS_ANSWERED = {
+  settings: { push: true, pushLimit: true, pushUrgent: true, pushDigest: true, email: true },
+  devices: [],
+  asked: true,
+  vapidPublicKey: null,
+};
+
 export const ME_ALLOWED: Record<string, Handler> = {
   "/me": { body: { email: "test@example.com", name: "Waqar", allowed: true } },
   // Every signed-in screen may ask whether net assets are set (Phase 6); a test
   // that cares about the question overrides this.
   "/net-assets": { body: { set: true, starterLimit: false, dueReview: false } },
+  // Likewise the first-login notifications sheet: answered, unless a test asks.
+  "/notification-settings": { body: NOTIFICATIONS_ANSWERED },
 };
 
 export const ME_REFUSED: Record<string, Handler> = {

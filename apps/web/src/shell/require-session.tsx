@@ -4,7 +4,9 @@ import { UnauthenticatedError } from "../lib/api";
 import { useAuth } from "../lib/auth-context";
 import { useMe } from "../lib/me";
 import { someRuleNeedsALook, useRules } from "../lib/rules";
+import { useThisDevice } from "../lib/push";
 import { AppShell } from "./app-shell";
+import { WarmingUp } from "./warming-up";
 
 /**
  * The frontend's view of the two walls. It is cosmetic — the API refuses every
@@ -20,6 +22,8 @@ export function RequireSession() {
   const allowed = me.data?.allowed === true;
   // Only asked once someone is in; a failure here just means no dot.
   const rules = useRules(allowed);
+  // Every open: is this device still subscribed? Mends it quietly where it can.
+  useThisDevice(allowed);
   const rejected = me.error instanceof UnauthenticatedError;
 
   // The browser holds a session the API won't accept — revoked, or expired
@@ -44,8 +48,14 @@ export function RequireSession() {
   );
 }
 
+/**
+ * Pip is allowed to sleep (phase-6.md decision 7), so the first answer after
+ * a while can take up to a minute. Blank at first, then — after
+ * `WARMING_AFTER_MS` — it says so in plain words, and the screen swaps itself
+ * in when the answer arrives.
+ */
 function Waiting() {
-  return <div className="bg-ground min-h-svh" aria-busy="true" />;
+  return <WarmingUp />;
 }
 
 function CantReachPip() {

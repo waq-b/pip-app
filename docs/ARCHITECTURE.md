@@ -96,7 +96,19 @@ The Claude Design handover ("Pip") lives in the repo, not just in the design too
 
 The PWA manifest (`apps/web/vite.config.ts`) and `index.html` carry the Pip name, the cream/dark theme colours and these icons.
 
-**Updates, behind a launch splash** (ported from Terpa, 2026-09-17). `index.html` carries a static splash — the mark, "Pip", "Checking for updates…" — that shows before any JS, in the saved Appearance (a tiny inline script sets `data-theme` before first paint). `vite-plugin-pwa` runs with `registerType: "prompt"`, so a new service worker waits instead of taking over mid-use. `src/update.ts` registers it and asks for an update: if a new version is waiting, or arrives within `CHECK_MS` (3s), it's applied (`SKIP_WAITING`) and the page reloads into it with the splash still up. Otherwise the splash fades after at least `SPLASH_MIN_MS` (0.6s). The check is skipped on a first visit, offline and in dev; an update found after the splash waits for the next launch. Phase 6 task 7's `injectManifest` worker must keep handling the `SKIP_WAITING` message.
+**Updates, behind a launch splash** (ported from Terpa, 2026-09-17). `index.html` carries a static splash — the mark, "Pip", "Checking for updates…" — that shows before any JS, in the saved Appearance (a tiny inline script sets `data-theme` before first paint). `vite-plugin-pwa` runs with `registerType: "prompt"`, so a new service worker waits instead of taking over mid-use. `src/update.ts` registers it and asks for an update: if a new version is waiting, or arrives within `CHECK_MS` (3s), it's applied (`SKIP_WAITING`) and the page reloads into it with the splash still up. Otherwise the splash fades after at least `SPLASH_MIN_MS` (0.6s). The check is skipped on a first visit, offline and in dev; an update found after the splash waits for the next launch. The worker handles the `SKIP_WAITING` message itself (below).
+
+**Pip's own service worker** (`src/sw.ts`, Phase 6 task 7). `strategies: "injectManifest"`, built into one self-contained `sw.js` (the same file name, so installed apps update into it). It precaches the build, answers every page load with `index.html` (never `/api/`), and handles:
+
+- `push` — shows the server's `{ title, body, url }` (`sw-message.ts` parses it defensively: plain words and `/` on anything malformed, and `safePath` only ever opens a path inside Pip);
+- `notificationclick` — focuses an open Pip and navigates it, or opens one;
+- `pushsubscriptionchange` — subscribes again with the old key; the worker has no sign-in, so the app tells the server on its next open.
+
+It has its own `tsconfig.sw.json` (WebWorker lib) and is excluded from the app's.
+
+**Push on this device** (`lib/push.ts`). The VAPID public key arrives in `GET /notification-settings` (`vapidPublicKey`, null in stub mode, so no device can subscribe there). `turnOnThisDevice` is called straight from a tap — the first-login sheet's primary button or Setup's "Turn on for this device" — and calls `Notification.requestPermission()` before awaiting anything (Safari needs the gesture), then `pushManager.subscribe` and `POST /push/subscriptions` with a plain label ("iPhone", "Android tablet", "Mac"). An iPhone or iPad not running from the Home Screen gets `needs_install` and no button. `checkThisDevice` runs on every signed-in open (`RequireSession`) and never prompts: with permission granted, it re-tells the server about a subscription it lost, or subscribes again if the browser dropped it; otherwise the device reads `off`, `blocked` or `stopped`.
+
+**Waking up** (`shell/warming-up.tsx`). While `RequireSession` waits for `/me` — the first call after Render has slept — it shows nothing for `WARMING_AFTER_MS` (3s), then "Pip's warming up" with the mark and one line; the screen replaces it when `/me` answers.
 
 ## Bucket model
 

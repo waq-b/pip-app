@@ -500,6 +500,11 @@ export interface NotificationSettingsView {
   devices: DeviceView[];
   /** True once the first-login sheet has been answered; it's asked once. */
   asked: boolean;
+  /**
+   * What a browser subscribes with. Null when the server can't push (stub
+   * mode, or before the VAPID pair is set) — the device row says so.
+   */
+  vapidPublicKey: string | null;
 }
 
 export interface NotificationItemView {

@@ -64,6 +64,8 @@ export interface BuildAppOptions {
   nudges?: NudgeService;
   /** Notification settings, devices and the bell (Phase 6). */
   notifications?: NotificationStore;
+  /** VAPID public key for browsers to subscribe with; none in stub mode, so no device can. */
+  vapidPublicKey?: string;
   /** Sends pushes and emails, by the rules in `notify/notify.ts` (Phase 6). */
   notifier?: Notifier;
   /** The sealed net assets behind Side Bet's limit (Phase 6). */
@@ -156,6 +158,7 @@ export function buildApp(options: BuildAppOptions = {}) {
   });
   registerNotificationRoutes(app, {
     store: options.notifications ?? memoryNotificationStore(),
+    ...(options.vapidPublicKey ? { vapidPublicKey: options.vapidPublicKey } : {}),
     ...(options.now ? { now: options.now } : {}),
   });
   registerJobRoutes(app, { refresh: options.refreshJob });
