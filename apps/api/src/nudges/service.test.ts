@@ -464,10 +464,11 @@ describe("recommendations (Phase 6)", () => {
     });
     expect(brief!.body).toContain("Taking £280 out would bring it back to the limit");
     expect(brief!.body.endsWith("Your call.")).toBe(true);
+    // The lock screen gets no pounds: the limit is net assets ÷ 10.
     expect(push.sent).toEqual([
       expect.objectContaining({
-        title: "Side Bet is worth £780, past its £500 limit",
-        body: "Pip's take: take some profit — £280. Your call.",
+        title: "Side Bet has grown past its limit",
+        body: "Pip's take: take some profit. Your call.",
         url: "/week",
       }),
     ]);

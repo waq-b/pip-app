@@ -15,6 +15,7 @@ import {
   briefBody,
   briefTitle,
   recommendationTemplate,
+  type BriefDraft,
   type RecommendationBriefInput,
 } from "./recommendation.js";
 import { WEEK_PROMPT_VERSION, WEEK_SCHEMA, WEEK_SYSTEM, weekUser } from "./prompts/week.v1.js";
@@ -38,7 +39,7 @@ export interface NudgeWriter {
    * A recommendation brief (Phase 6, personal research only). The title and
    * the course are code's; only the reasons may come from an LLM.
    */
-  recommendation(input: RecommendationBriefInput): Promise<NudgeDraft>;
+  recommendation(input: RecommendationBriefInput): Promise<BriefDraft>;
 }
 
 const newsTemplate = (input: NewsNudgeInput): NudgeDraft =>
@@ -136,6 +137,7 @@ export function llmWriter(options: {
         const checked = checkRecommendationAnswer(answer.content, input.course);
         if (checked.ok) {
           return {
+            parts: checked.parts,
             title: briefTitle(input),
             body: briefBody(checked.parts),
             citedIds: [],

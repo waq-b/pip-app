@@ -5,6 +5,7 @@ import {
   type NudgeResponse,
   type NudgeView,
   type Recommendation,
+  type RecommendationTrigger,
   type TrustSettings,
   type WeekResponse,
   type WeekView,
@@ -31,7 +32,8 @@ import {
 import { gather, type GatherDeps, type Gathered } from "./gather.js";
 import { recommendationRows } from "./recommendations.js";
 import type { TriggerStateStore } from "./triggers.js";
-import { takeLine } from "../research/recommendation.js";
+import { takeLine, type BriefParts } from "../research/recommendation.js";
+import { renderWeekEmail, SEALED_R1 } from "./email.js";
 import type { NewNudge, NudgeStore, StoredNudge, StoredWeek } from "./store.js";
 
 /**
@@ -49,6 +51,8 @@ import type { NewNudge, NudgeStore, StoredNudge, StoredWeek } from "./store.js";
 
 export interface NudgeUser extends ReadUser {
   personalResearch: boolean;
+  /** Where Monday's email goes. Without it, the week is built and nobody is emailed. */
+  email?: string;
 }
 
 export interface NudgeServiceDeps extends GatherDeps {
@@ -249,15 +253,18 @@ export async function pushUrgent(
       (r.kind === "recommendation" || !r.instrumentId || !recommended.has(r.instrumentId)),
   );
   for (const row of urgent) {
+    // A lock screen is no place for Side Bet's limit: it's net assets ÷ 10.
+    const sealed = row.trigger === "side_bet_over_limit";
+    const amount = sealed ? null : ((row.facts.amountPence as number | null) ?? null);
     const body = row.recommendation
-      ? `${takeLine(row.recommendation as Recommendation, (row.facts.amountPence as number | null) ?? null)} Your call.`
+      ? `${takeLine(row.recommendation as Recommendation, amount)} Your call.`
       : row.body;
     const outcome = await deps.notifier.push(
       {
         userId: user.userId,
         kind: "urgent",
         dedupeKey: `urgent:${row.dedupeKey}:${builtOn}`,
-        message: { title: row.title, body, url: "/week" },
+        message: { title: sealed ? SEALED_R1.push : row.title, body, url: "/week" },
       },
       now,
     );
@@ -556,6 +563,69 @@ export function createNudgeService(
     return { gathered, rows, counts, next, today, heldAfterWords };
   }
 
+  /**
+   * Monday's email and its "Your week is ready" push (phase-6.md decision 6).
+   * `notify()` checks each switch; the push is one per week by its key.
+   */
+  async function announceWeek(user: NudgeUser, weekOf: string, gathered: Gathered, now: Date) {
+    if (!deps.notifier) return;
+    const week = await service.week(user, weekOf, now);
+    if (!week) return;
+    const recommendation = user.personalResearch ? await latestRecommendation(user, now) : null;
+    const email = renderWeekEmail({
+      week,
+      portfolio: await deps.readModel.portfolio(user, "month"),
+      rules: gathered.input.rules,
+      recommendation,
+      to: user.email ?? "",
+      now,
+    });
+    await deps.notifier.push(
+      {
+        userId: user.userId,
+        kind: "digest",
+        dedupeKey: `digest:${weekOf}`,
+        message: { ...email.push, url: "/week" },
+      },
+      now,
+    );
+    if (user.email) {
+      await deps.notifier.email(user.userId, {
+        to: user.email,
+        subject: email.subject,
+        html: email.html,
+        text: email.text,
+      });
+    }
+  }
+
+  /** The newest recommendation shown in the last seven days — the email carries one at most. */
+  async function latestRecommendation(user: NudgeUser, now: Date) {
+    for (let back = 0; back < 7; back += 1) {
+      const day = londonDay(new Date(now.getTime() - back * DAY_MS));
+      const found = (await deps.store.daily(user, day))
+        .filter((n) => n.kind === "recommendation" && n.shown && n.recommendation)
+        .at(-1);
+      if (!found) continue;
+      const facts = found.facts as {
+        name?: string;
+        amountPence?: number | null;
+        brief?: BriefParts;
+      };
+      if (!facts.brief) continue;
+      return {
+        trigger: found.trigger as RecommendationTrigger,
+        title: found.title,
+        course: found.recommendation as Recommendation,
+        amountPence: facts.amountPence ?? null,
+        name: facts.name ?? "",
+        brief: facts.brief,
+        createdAt: found.createdAt,
+      };
+    }
+    return null;
+  }
+
   const service: NudgeService = {
     async buildWeekIfDue(user, now = clock()) {
       const today = londonDay(now);
@@ -564,7 +634,7 @@ export function createNudgeService(
       if (now.getTime() < due) return "not_due";
       if (await deps.store.weekExists(user, weekOf)) return "exists";
 
-      const { rows, counts, next, heldAfterWords } = await build(user, now, "weekly");
+      const { gathered, rows, counts, next, heldAfterWords } = await build(user, now, "weekly");
       const shown = rows.filter((row) => row.shown);
       if (shown.length === 0) rows.push(quietRow(counts, next, today, heldAfterWords));
       // Titles name holdings, so they only go to a writer for someone with personal research on.
@@ -576,7 +646,10 @@ export function createNudgeService(
         { weekOf, opening: opening.sentence, counts: { ...counts, next }, builtAt: now },
         rows,
       );
-      return saved ? "built" : "exists";
+      if (!saved) return "exists";
+      // Only the run that built the week tells anyone, so it's once a week.
+      await announceWeek(user, weekOf, gathered, now);
+      return "built";
     },
 
     async buildDaily(user, now = clock()) {

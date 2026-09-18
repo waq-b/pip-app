@@ -314,6 +314,14 @@ When Pip recommends a course of action (CLAUDE.md hard line 12), for personal-re
 - **On the daily path** (`nudges/recommendations.ts`). `buildDaily` runs the triggers only for someone with personal research on and a `TriggerStateStore` wired (`dbTriggerStateStore` on real accounts, memory in stub mode). `triggerInputFrom` takes the build's own numbers: Side Bet's value and limit (null on the starter limit), each holding's value, cost (value less its gain since bought; null when unknown), today's move and the pot's big-move line, and the shape's drift with its pounds. Each hit becomes one `recommendation` nudge — `reason` = the trigger, `recommendation`, `trigger`, `urgent` for R1/R2/R4, `dedupeKey` `rec:<event id>` — logged with the figures it was built from. Something on the exclusions list is logged held back and never sent to a writer. Recommendations don't use up the daily note budget.
 - **Pushed** through `pushUrgent` like an urgent note, within the same two-a-day budget, with the body "Pip's take: take some profit — £280. Your call."; a holding with a recommendation that day doesn't also push its urgent-move note. `/week` shows it under Today with a **Pip's take** block from `NudgeView.recommendation` (course and pounds, from code).
 
+## Monday's email and push (`nudges/email.ts`, Phase 6)
+
+- **When:** the run that builds the week (`buildWeekIfDue` → `"built"`) announces it, so it's once a week; a run that finds the week already built sends nothing. The refresh job passes each person's allowlisted `email`.
+- **Push:** "Your week is ready", body "N things worth a look." or "Nothing needs you this week.", `digest` kind, keyed `digest:<weekOf>`, opens `/week`.
+- **Email:** `renderWeekEmail` is pure: the built `WeekView`, `portfolio(user, "month")`, the build's rules evaluation and, for personal research only, the newest shown recommendation of the last seven days (with its brief's parts, kept in the nudge's facts) → the `@finance-app/emails` digest template (subject "Your week: N things worth a look" / "nothing needs you", HTML and text). Each pot's week is the percentage from its own history applied to today's value, like `moveSince`. Held-back notes stay out.
+- **Sealed:** no Side Bet limit in pounds, and nothing that works it out — the limit is net assets ÷ 10 and the email passes through Resend. So R1's card and R1's push say "past its limit" and "the part above the limit", with the pounds left in Pip (`SEALED_R1`).
+- Sent through `notify()`, so the email switch and the digest-push switch each stop their channel. Snapshot-tested.
+
 ## The recommendation brief (`research/recommendation.ts`, Phase 6)
 
 The fact (title, code's) → Pip's take (course and pounds, from the row) → why → what a disciplined investor typically does → the trade-off → "Your call." (always appended by code).

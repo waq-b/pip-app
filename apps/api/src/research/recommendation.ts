@@ -145,10 +145,15 @@ export function templateParts(input: RecommendationBriefInput): BriefParts {
   }
 }
 
-export function recommendationTemplate(input: RecommendationBriefInput): NudgeDraft {
+/** A brief keeps its parts, so the Monday email can lay them out one per row. */
+export type BriefDraft = NudgeDraft & { parts: BriefParts };
+
+export function recommendationTemplate(input: RecommendationBriefInput): BriefDraft {
+  const parts = templateParts(input);
   return {
+    parts,
     title: briefTitle(input),
-    body: briefBody(templateParts(input)),
+    body: briefBody(parts),
     citedIds: [],
     model: "template",
     promptVersion: null,

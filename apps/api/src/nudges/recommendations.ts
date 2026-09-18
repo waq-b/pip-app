@@ -125,6 +125,7 @@ export async function recommendationRows(
         shortName: holding?.detail.ticker ?? "",
         amountPence: hit.amountPence,
         eventId: hit.eventId,
+        brief: words.parts,
         ...hit.facts,
       },
       checks: [excluded],

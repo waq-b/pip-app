@@ -229,6 +229,8 @@ describe("the scheduled refresh", () => {
         userId: account!.userId,
         authUserId: "56565656-5656-4565-8565-565656565656",
         personalResearch: true,
+        // Monday's email goes to the allowlisted address.
+        email: expect.stringContaining("@"),
       },
       NOW,
     );

@@ -243,6 +243,7 @@ export function createRefreshJob(deps: RefreshJobDeps) {
           userId: users.id,
           authUserId: users.authUserId,
           personalResearch: users.personalResearch,
+          email: users.email,
         })
         .from(users)
         .innerJoin(providerCredentials, eq(providerCredentials.userId, users.id))

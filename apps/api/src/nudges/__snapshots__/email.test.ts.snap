@@ -1,0 +1,217 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Monday's email and push > looks the same every time (snapshot) > html 1`] = `
+"<!DOCTYPE html>
+<html lang="en-GB" xmlns="http://www.w3.org/1999/xhtml">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><meta name="x-apple-disable-message-reformatting" /><meta name="color-scheme" content="light dark" /><meta name="supported-color-schemes" content="light dark" /><title>Your week: 3 things worth a look</title>
+<style> :root{color-scheme:light dark;supported-color-schemes:light dark} body{margin:0;padding:0;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%} table{border-collapse:collapse} a{text-underline-offset:2px} @media only screen and (max-width:620px){ .pe-outer{width:100%!important} .pe-gutter{padding-left:12px!important;padding-right:12px!important} .pe-pad{padding-left:18px!important;padding-right:18px!important} .pe-stack{display:block!important;width:100%!important} .pe-hero{font-size:36px!important} } @media (prefers-color-scheme:dark){ .pe-bg{background:#1c1815!important} .pe-card{background:#2a241e!important;border-color:#473b2e!important} .pe-sunk{background:#221d19!important;border-color:#473b2e!important} .pe-code{background:#171310!important;border-color:#f3ead9!important} .pe-rule{background:#473b2e!important} .pe-rule-b{border-color:#473b2e!important} .pe-track{background:#473b2e!important} .pe-ink{color:#f3ead9!important} .pe-ink2{color:rgba(243,234,217,.84)!important} .pe-ink3{color:rgba(243,234,217,.66)!important} .pe-link{color:#f6a06b!important} .pe-up{color:#aebf92!important} .pe-dn{color:#ffc7bf!important} .pe-inkborder{border-color:#f3ead9!important} .pe-label{border-color:rgba(243,234,217,.4)!important;color:rgba(243,234,217,.84)!important} .pe-amber{background:#3a2c14!important;border-color:#eab04a!important} .pe-amber-t{color:#f3c46a!important} .pe-foundation{background:#aebf92!important;border-color:#aebf92!important} .pe-foundation-b{border-color:#aebf92!important} .pe-handpicked{background:#f6a06b!important;border-color:#f6a06b!important} .pe-handpicked-b{border-color:#f6a06b!important} .pe-sideBet{background:#f08a7e!important;border-color:#f08a7e!important} .pe-sideBet-b{border-color:#f08a7e!important} .pe-chip-foundation{background:#2d3323!important;color:#ccdbb2!important} .pe-chip-handpicked{background:#3a2a1d!important;color:#ffc6a5!important} .pe-chip-sideBet{background:#3d211c!important;color:#ffc7bf!important} .pe-chip-amber{background:#3a2c14!important;color:#f3c46a!important} .pe-chip-ink{background:#f3ead9!important;color:#241a12!important} } [data-ogsc] .pe-bg{background:#1c1815!important} [data-ogsc] .pe-card{background:#2a241e!important;border-color:#473b2e!important} [data-ogsc] .pe-sunk{background:#221d19!important;border-color:#473b2e!important} [data-ogsc] .pe-code{background:#171310!important;border-color:#f3ead9!important} [data-ogsc] .pe-rule{background:#473b2e!important} [data-ogsc] .pe-rule-b{border-color:#473b2e!important} [data-ogsc] .pe-track{background:#473b2e!important} [data-ogsc] .pe-ink{color:#f3ead9!important} [data-ogsc] .pe-ink2{color:rgba(243,234,217,.84)!important} [data-ogsc] .pe-ink3{color:rgba(243,234,217,.66)!important} [data-ogsc] .pe-link{color:#f6a06b!important} [data-ogsc] .pe-up{color:#aebf92!important} [data-ogsc] .pe-dn{color:#ffc7bf!important} [data-ogsc] .pe-inkborder{border-color:#f3ead9!important} [data-ogsc] .pe-label{border-color:rgba(243,234,217,.4)!important;color:rgba(243,234,217,.84)!important} [data-ogsc] .pe-amber{background:#3a2c14!important;border-color:#eab04a!important} [data-ogsc] .pe-amber-t{color:#f3c46a!important} [data-ogsc] .pe-foundation{background:#aebf92!important;border-color:#aebf92!important} [data-ogsc] .pe-foundation-b{border-color:#aebf92!important} [data-ogsc] .pe-handpicked{background:#f6a06b!important;border-color:#f6a06b!important} [data-ogsc] .pe-handpicked-b{border-color:#f6a06b!important} [data-ogsc] .pe-sideBet{background:#f08a7e!important;border-color:#f08a7e!important} [data-ogsc] .pe-sideBet-b{border-color:#f08a7e!important} [data-ogsc] .pe-chip-foundation{background:#2d3323!important;color:#ccdbb2!important} [data-ogsc] .pe-chip-handpicked{background:#3a2a1d!important;color:#ffc6a5!important} [data-ogsc] .pe-chip-sideBet{background:#3d211c!important;color:#ffc7bf!important} [data-ogsc] .pe-chip-amber{background:#3a2c14!important;color:#f3c46a!important} [data-ogsc] .pe-chip-ink{background:#f3ead9!important;color:#241a12!important} </style></head>
+<body class="pe-bg" style="margin:0;padding:0;background:#ebddc5"><div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;mso-hide:all" >Down £316 this week. Here&#39;s your week, from stub mode.&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;</div>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="pe-bg" style="border-collapse:collapse;background:#ebddc5">
+<tr><td align="center" style="padding:26px 0">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" align="center" class="pe-outer" style="border-collapse:collapse;margin:0 auto;width:600px">
+<tr><td class="pe-gutter" style="padding:0 36px">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse">
+<tr><td valign="middle" style="padding-right:9px;width:24px"><img src="https://pip.example.com/email/pip-mark-96.png" width="24" height="24" alt="" style="display:block;border:0;outline:none;width:24px;height:24px" /></td><td valign="middle" class="pe-ink" style="font-family:Georgia,'Times New Roman',serif;font-size:19px;color:#201e1d" >Pip</td><td valign="middle" align="right" class="pe-ink3" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-size:12.5px;color:#6d6660;font-weight:700">Mon 7 – Sun 13 Sep</td></tr></table>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="pe-card" style="border-collapse:collapse;background:#f5ead8;border:1px solid #dfceb0;margin-top:14px">
+<tr><td class="pe-pad pe-ink" style="padding:26px 28px 0;font-family:Georgia,'Times New Roman',serif;font-size:26px;line-height:1.3;color:#201e1d">3 things worth a look.</td></tr>
+<tr><td class="pe-pad" style="padding:20px 28px 0"><div class="pe-ink3" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:#6d6660;font-weight:700" >Everything, this morning</div><div class="pe-ink pe-hero" style="font-family:Georgia,'Times New Roman',serif;font-size:42px;line-height:1.08;color:#201e1d;padding-top:6px" >£11,430</div><div class="pe-dn" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-size:15.5px;color:#8f2e22;font-weight:700;padding-top:5px" >&#8595; £316 this week · −2.7%</div></td></tr>
+<tr><td class="pe-pad" style="padding:22px 28px 0">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse">
+<tr><td class="pe-rule" style="height:1px;background:#e6d8bd;font-size:0;line-height:0">&nbsp;</td></tr></table></td></tr>
+<tr><td class="pe-pad pe-ink3" style="padding:18px 28px 4px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-size:11px;line-height:1.6;color:#6d6660;font-weight:700;letter-spacing:.08em;text-transform:uppercase">The three pots</td></tr>
+<tr><td class="pe-pad" style="padding:10px 28px 0">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="pe-sunk pe-foundation-b" style="border-collapse:collapse;border-left:6px solid #7a8a5e;background:#ebddc5">
+<tr><td style="padding:13px 14px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse">
+<tr><td class="pe-ink" style="font-size:15px;font-weight:700;color:#201e1d">Foundation</td><td align="right" class="pe-ink" style="font-family:Georgia,'Times New Roman',serif;font-size:17px;color:#201e1d" >£8,240</td></tr></table><div style="padding-top:8px">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse">
+<tr><td width="72%" class="pe-foundation" style="background:#7a8a5e;height:9px;font-size:0;line-height:0" >&nbsp;</td><td width="28%" class="pe-track" style="background:#d6c4a4;height:9px;font-size:0;line-height:0">&nbsp;</td></tr></table></div><div class="pe-ink2" style="font-size:13px;line-height:1.5;color:#413c37;padding-top:7px" >&#8595; £119 this week · −1.4% &nbsp;&middot;&nbsp; <span class="pe-ink3" style="color:#6d6660" >On the 75% you set</span ></div></td></tr></table></td></tr>
+<tr><td class="pe-pad" style="padding:8px 28px 0">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="pe-sunk pe-handpicked-b" style="border-collapse:collapse;border-left:6px solid #c67139;background:#ebddc5">
+<tr><td style="padding:13px 14px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse">
+<tr><td class="pe-ink" style="font-size:15px;font-weight:700;color:#201e1d">Handpicked</td><td align="right" class="pe-ink" style="font-family:Georgia,'Times New Roman',serif;font-size:17px;color:#201e1d" >£2,410</td></tr></table><div style="padding-top:8px">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse">
+<tr><td width="21%" class="pe-handpicked" style="background:#c67139;height:9px;font-size:0;line-height:0" >&nbsp;</td><td width="79%" class="pe-track" style="background:#d6c4a4;height:9px;font-size:0;line-height:0">&nbsp;</td></tr></table></div><div class="pe-ink2" style="font-size:13px;line-height:1.5;color:#413c37;padding-top:7px" >&#8595; £172 this week · −6.7% &nbsp;&middot;&nbsp; <span class="pe-ink3" style="color:#6d6660" >On the 25% you set</span ></div></td></tr></table></td></tr>
+<tr><td class="pe-pad" style="padding:8px 28px 0">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="pe-sunk pe-sideBet-b" style="border-collapse:collapse;border:1px solid #c0392c;border-left:6px solid #c0392c;background:#ebddc5">
+<tr><td style="padding:0">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse">
+<tr><td width="12.5%" class="pe-sideBet" style="background:#c0392c;height:6px;font-size:0;line-height:0" >&nbsp;</td><td width="12.5%" class="pe-bg" style="background:#ebddc5;height:6px;font-size:0;line-height:0" >&nbsp;</td><td width="12.5%" class="pe-sideBet" style="background:#c0392c;height:6px;font-size:0;line-height:0" >&nbsp;</td><td width="12.5%" class="pe-bg" style="background:#ebddc5;height:6px;font-size:0;line-height:0" >&nbsp;</td><td width="12.5%" class="pe-sideBet" style="background:#c0392c;height:6px;font-size:0;line-height:0" >&nbsp;</td><td width="12.5%" class="pe-bg" style="background:#ebddc5;height:6px;font-size:0;line-height:0" >&nbsp;</td><td width="12.5%" class="pe-sideBet" style="background:#c0392c;height:6px;font-size:0;line-height:0" >&nbsp;</td><td width="12.5%" class="pe-bg" style="background:#ebddc5;height:6px;font-size:0;line-height:0" >&nbsp;</td></tr></table></td></tr>
+<tr><td style="padding:13px 14px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse">
+<tr><td class="pe-ink" style="font-size:15px;font-weight:700;color:#201e1d">Side Bet <span class="pe-dn" style="font-size:11px;letter-spacing:.06em;color:#8f2e22;font-weight:800;text-transform:uppercase">&nbsp;Has a limit</span></td><td align="right" class="pe-ink" style="font-family:Georgia,'Times New Roman',serif;font-size:17px;color:#201e1d" >£780</td></tr></table><div style="padding-top:8px">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse">
+<tr><td width="7%" class="pe-sideBet" style="background:#c0392c;height:9px;font-size:0;line-height:0" >&nbsp;</td><td width="93%" class="pe-track" style="background:#d6c4a4;height:9px;font-size:0;line-height:0">&nbsp;</td></tr></table></div><div class="pe-ink2" style="font-size:13px;line-height:1.5;color:#413c37;padding-top:7px" >&#8595; £25 this week · −3.1% &nbsp;&middot;&nbsp; <span class="pe-ink3" style="color:#6d6660" >Money in is past 80% of its limit.</span ></div></td></tr></table></td></tr>
+<tr><td class="pe-pad pe-ink3" style="padding:12px 28px 26px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-size:13.5px;line-height:1.6;color:#6d6660">Foundation and Handpicked are judged against the shape you set. Side Bet sits outside it, with its own limit — in Setup, behind the dots.</td></tr></table>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="pe-card pe-inkborder" style="border-collapse:collapse;background:#f5ead8;border:2px solid #201e1d;margin-top:14px">
+<tr><td class="pe-pad" style="padding:22px 28px 0px">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse">
+<tr><td class="pe-chip-ink" style="background:#201e1d;border:1px solid #201e1d;padding:5px 10px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#f5ead8" >Recommendation</td><td style="width:10px;font-size:0">&nbsp;</td><td class="pe-ink3" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-size:11.5px;color:#6d6660;font-weight:700" >From Fri 18 Sep</td></tr></table></td></tr>
+<tr><td class="pe-pad pe-ink" style="padding:14px 28px 0px;font-family:Georgia,'Times New Roman',serif;font-size:21px;line-height:1.3;color:#201e1d">Pip&#39;s take on Side Bet</td></tr>
+<tr><td class="pe-pad" style="padding:16px 28px 0px">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif">
+<tr><td width="150" valign="top" class="pe-ink3 pe-stack" style="padding:0 12px 12px 0;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#6d6660;font-weight:700;line-height:1.5" >The fact</td><td valign="top" class="pe-ink pe-stack" style="padding-bottom:12px;font-size:15px;line-height:1.6;color:#201e1d" >Side Bet&#39;s value has grown past its limit — 10% of the net assets you gave Pip.</td></tr>
+<tr><td width="150" valign="top" class="pe-ink3 pe-stack" style="padding:0 12px 12px 0;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#6d6660;font-weight:700;line-height:1.5" >Pip&#39;s take</td><td valign="top" class="pe-ink pe-stack" style="padding-bottom:12px;font-size:15px;line-height:1.6;color:#201e1d" >Take some profit — the part above the limit.</td></tr>
+<tr><td width="150" valign="top" class="pe-ink3 pe-stack" style="padding:0 12px 12px 0;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#6d6660;font-weight:700;line-height:1.5" >Why</td><td valign="top" class="pe-ink2 pe-stack" style="padding-bottom:12px;font-size:15px;line-height:1.6;color:#413c37" >A punt that outgrows its limit stops being small. The pounds are in Pip, where your net assets stay behind the dots.</td></tr>
+<tr><td width="150" valign="top" class="pe-ink3 pe-stack" style="padding:0 12px 12px 0;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#6d6660;font-weight:700;line-height:1.5" >What a disciplined investor usually does</td><td valign="top" class="pe-ink2 pe-stack" style="padding-bottom:12px;font-size:15px;line-height:1.6;color:#413c37" >A disciplined investor usually takes some profit when a punt outgrows its limit, so a small bet stays small.</td></tr>
+<tr><td width="150" valign="top" class="pe-ink3 pe-stack" style="padding:0 12px 12px 0;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#6d6660;font-weight:700;line-height:1.5" >The trade-off</td><td valign="top" class="pe-ink2 pe-stack" style="padding-bottom:12px;font-size:15px;line-height:1.6;color:#413c37" >If it keeps climbing, what you take out won&#39;t climb with it. Outside an ISA, a sale can count towards capital gains tax.</td></tr></table></td></tr>
+<tr><td class="pe-pad" style="padding:2px 28px 0px">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse">
+<tr><td class="pe-rule" style="height:1px;background:#e6d8bd;font-size:0;line-height:0">&nbsp;</td></tr></table></td></tr>
+<tr><td class="pe-pad pe-ink" style="padding:16px 28px 0px;font-family:Georgia,'Times New Roman',serif;font-size:19px;line-height:1.3;color:#201e1d">Your call.</td></tr>
+<tr><td class="pe-pad pe-ink3" style="padding:6px 28px 0px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-size:13.5px;line-height:1.62;color:#6d6660">Pip can&#39;t act on this, and there&#39;s no button here on purpose. Moving money happens at your broker.</td></tr>
+<tr><td class="pe-pad pe-ink2" style="padding:18px 28px 24px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-size:14.5px;line-height:1.6;color:#413c37"><a href="https://pip.example.com/week" class="pe-link" style="color:#8c491a;font-weight:700;text-decoration:underline;text-underline-offset:2px" >See in Pip &#8594;</a ></td></tr></table>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="pe-card" style="border-collapse:collapse;background:#f5ead8;border:1px solid #dfceb0;margin-top:14px">
+<tr><td class="pe-pad" style="padding:16px 18px 0">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse">
+<tr><td class="pe-chip-amber" style="background:#fbe6bd;border:1px solid #dcbc6c;padding:5px 10px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#7a5200" >Awareness</td></tr></table></td></tr>
+<tr><td class="pe-pad pe-ink" style="padding:10px 18px 0;font-family:Georgia,'Times New Roman',serif;font-size:18px;line-height:1.3;color:#201e1d">Apple is up £50 this week</td></tr>
+<tr><td class="pe-pad pe-ink2" style="padding:6px 18px 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-size:14px;line-height:1.62;color:#413c37">That&#39;s 9.8%, past the 7% line you set for Handpicked. Big moves happen; this is here so it isn&#39;t a surprise.</td></tr>
+<tr><td class="pe-pad pe-ink2" style="padding:10px 18px 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-size:14.5px;line-height:1.6;color:#413c37"><a href="https://pip.example.com/week" class="pe-link" style="color:#8c491a;font-weight:700;text-decoration:underline;text-underline-offset:2px" >See in Pip &#8594;</a ></td></tr></table>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="pe-card" style="border-collapse:collapse;background:#f5ead8;border:1px solid #dfceb0;margin-top:14px">
+<tr><td class="pe-pad" style="padding:16px 18px 0">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse">
+<tr><td class="pe-chip-amber" style="background:#fbe6bd;border:1px solid #dcbc6c;padding:5px 10px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#7a5200" >Awareness</td></tr></table></td></tr>
+<tr><td class="pe-pad pe-ink" style="padding:10px 18px 0;font-family:Georgia,'Times New Roman',serif;font-size:18px;line-height:1.3;color:#201e1d">ASML in the news</td></tr>
+<tr><td class="pe-pad pe-ink2" style="padding:6px 18px 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-size:14px;line-height:1.62;color:#413c37">Sample words from stub mode: Financial Times and Reuters reported on ASML this week.</td></tr>
+<tr><td class="pe-pad pe-ink2" style="padding:10px 18px 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-size:14.5px;line-height:1.6;color:#413c37"><a href="https://pip.example.com/week" class="pe-link" style="color:#8c491a;font-weight:700;text-decoration:underline;text-underline-offset:2px" >See in Pip &#8594;</a ></td></tr></table>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="pe-card" style="border-collapse:collapse;background:#f5ead8;border:1px solid #dfceb0;margin-top:14px">
+<tr><td class="pe-pad pe-ink" style="padding:22px 28px 0;font-family:Georgia,'Times New Roman',serif;font-size:19px;line-height:1.3;color:#201e1d">What Pip checked</td></tr>
+<tr><td class="pe-pad" style="padding:14px 28px 0">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif" >
+<tr><td width="50%" valign="top" style="padding-bottom:14px"><div class="pe-ink" style="font-family:Georgia,'Times New Roman',serif;font-size:24px;color:#201e1d" >6</div><div class="pe-ink3" style="font-size:13px;color:#6d6660;padding-top:2px">reports read</div></td><td width="50%" valign="top" style="padding-bottom:14px"><div class="pe-ink" style="font-family:Georgia,'Times New Roman',serif;font-size:24px;color:#201e1d" >11</div><div class="pe-ink3" style="font-size:13px;color:#6d6660;padding-top:2px">holdings checked</div></td></tr>
+<tr><td width="50%" valign="top" style="padding-bottom:14px"><div class="pe-ink" style="font-family:Georgia,'Times New Roman',serif;font-size:24px;color:#201e1d" >4</div><div class="pe-ink3" style="font-size:13px;color:#6d6660;padding-top:2px">got past your trust rules</div></td><td width="50%" valign="top" style="padding-bottom:14px"><div class="pe-amber-t" style="font-family:Georgia,'Times New Roman',serif;font-size:24px;color:#8a5a00" >2</div><div class="pe-ink3" style="font-size:13px;color:#6d6660;padding-top:2px">held back</div></td></tr></table></td></tr>
+<tr><td class="pe-pad pe-ink3" style="padding:0 28px 24px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-size:13.5px;line-height:1.6;color:#6d6660">2 things didn&#39;t get past your trust rules. They&#39;re one tap away in Pip.</td></tr></table>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="pe-card" style="border-collapse:collapse;background:#f5ead8;border:1px solid #dfceb0;margin-top:14px">
+<tr><td class="pe-pad pe-ink" style="padding:22px 28px 0;font-family:Georgia,'Times New Roman',serif;font-size:19px;line-height:1.3;color:#201e1d">Next on the calendar</td></tr>
+<tr><td class="pe-pad" style="padding:12px 28px 0">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif">
+<tr><td class="pe-ink pe-rule-b" style="padding:9px 0;font-size:14.5px;color:#201e1d;font-weight:600" >Nvidia results</td><td align="right" class="pe-ink3 pe-rule-b" style="padding:9px 0;font-size:14px;color:#6d6660;font-weight:600" >Wed 23 Sep</td></tr></table></td></tr>
+<tr><td class="pe-pad pe-ink3" style="padding:16px 28px 24px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-size:13.5px;line-height:1.6;color:#6d6660">Dates from the companies themselves. Pip doesn&#39;t guess what they&#39;ll say.</td></tr></table>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;margin-top:18px">
+<tr><td style="padding:0 8px">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse">
+<tr><td class="pe-label" style="border:1px solid #b0a69a;padding:6px 11px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#413c37" >Information, not advice</td></tr></table></td></tr>
+<tr><td class="pe-ink3" style="padding:12px 8px 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-size:12.5px;line-height:1.65;color:#6d6660" >Pip is read-only and can&#39;t buy, sell or move anything. Nothing here is personal advice or a recommendation to deal, and past performance says nothing about what happens next. Prices as at Thursday 17 Sep, 13:00.</td></tr>
+<tr><td class="pe-ink3" style="padding:12px 8px 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-size:12.5px;line-height:1.65;color:#6d6660" >Sent every Monday to waqar@example.test. <a href="https://pip.example.com/setup" class="pe-link" style="color:#8c491a;font-weight:700;text-decoration:underline;text-underline-offset:2px" >Manage in Setup</a > — turn this off.</td></tr>
+<tr><td style="padding:14px 8px 0">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse">
+<tr><td valign="middle" style="padding-right:8px"><img src="https://pip.example.com/email/pip-mark-96.png" width="18" height="18" alt="" style="display:block;border:0;outline:none;width:18px;height:18px" /></td><td valign="middle" class="pe-ink2" style="font-family:Georgia,'Times New Roman',serif;font-size:15px;color:#413c37" >Pip &nbsp;<span class="pe-ink3" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-size:12px;color:#6d6660;font-weight:600" >London</span ></td></tr></table></td></tr></table></td></tr></table></td></tr></table></body></html>
+"
+`;
+
+exports[`Monday's email and push > looks the same every time (snapshot) > subject 1`] = `"Your week: 3 things worth a look"`;
+
+exports[`Monday's email and push > looks the same every time (snapshot) > text 1`] = `
+"PIP — YOUR WEEK
+Mon 7 – Sun 13 Sep
+
+3 THINGS WORTH A LOOK.
+
+EVERYTHING, THIS MORNING
+£11,430
+Down £316 this week  ·  −2.7%
+
+THE THREE POTS
+Foundation   £8,240   Down £119 this week  ·  −1.4%
+  On the 75% you set
+  [|||||||||||||||||       ]
+Handpicked   £2,410   Down £172 this week  ·  −6.7%
+  On the 25% you set
+  [|||||                   ]
+Side Bet   £780   Down £25 this week  ·  −3.1%   [CAPPED]
+  Money in is past 80% of its limit.
+  [||                      ]
+
+Foundation and Handpicked are judged against
+the shape you set. Side Bet sits outside it,
+with its own limit — in Setup, behind the
+dots.
+
+- - - - - - - - - - - - - - - - - - - - - -
+[RECOMMENDATION]
+PIP'S TAKE ON SIDE BET
+
+THE FACT
+Side Bet's value has grown past its limit —
+10% of the net assets you gave Pip.
+
+PIP'S TAKE
+Take some profit — the part above the limit.
+
+WHY
+A punt that outgrows its limit stops being
+small. The pounds are in Pip, where your net
+assets stay behind the dots.
+
+WHAT A DISCIPLINED INVESTOR USUALLY DOES
+A disciplined investor usually takes some
+profit when a punt outgrows its limit, so a
+small bet stays small.
+
+THE TRADE-OFF
+If it keeps climbing, what you take out won't
+climb with it. Outside an ISA, a sale can
+count towards capital gains tax.
+
+YOUR CALL.
+Pip can't act on this, and there's no button
+here on purpose. Moving money happens at your
+broker.
+
+See in Pip: https://pip.example.com/week
+
+- - - - - - - - - - - - - - - - - - - - - -
+[AWARENESS]
+APPLE IS UP £50 THIS WEEK
+
+That's 9.8%, past the 7% line you set for
+Handpicked. Big moves happen; this is here so
+it isn't a surprise.
+
+Checks passed: Not on your exclusions list;
+Past your big-move line; Side Bet has room
+under its cap; Inside your weekly limit.
+See in Pip: https://pip.example.com/week
+
+- - - - - - - - - - - - - - - - - - - - - -
+[AWARENESS]
+ASML IN THE NEWS
+
+Sample words from stub mode: Financial Times
+and Reuters reported on ASML this week.
+
+Sources: Financial Times; Reuters.
+Checks passed: Side Bet has room under its
+cap; Not on your exclusions list; Quiet around
+results; Enough different publishers; Inside
+your weekly limit.
+See in Pip: https://pip.example.com/week
+
+- - - - - - - - - - - - - - - - - - - - - -
+WHAT PIP CHECKED
+6 reports read
+11 holdings checked
+4 got past your trust rules
+2 held back
+2 things didn't get past your trust rules.
+They're one tap away in Pip.
+
+NEXT ON THE CALENDAR
+Wed 23 Sep  Nvidia results
+
+- - - - - - - - - - - - - - - - - - - - - -
+INFORMATION, NOT ADVICE
+Pip is read-only and can't buy, sell or move
+anything. Nothing here is personal advice or a
+recommendation to deal. Past performance says
+nothing about what happens next. Prices as at
+Thursday 17 Sep, 13:00.
+
+Sent every Monday to waqar@example.test.
+Turn it off: https://pip.example.com/setup
+
+Pip, London.
+"
+`;
