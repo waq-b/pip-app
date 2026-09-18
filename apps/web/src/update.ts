@@ -4,6 +4,14 @@ import { registerSW } from "virtual:pwa-register";
 export const CHECK_MS = 3000;
 /** If applying an update hasn't reloaded the page by now, show the app anyway. */
 const RELOAD_GRACE_MS = 5000;
+/**
+ * How long the splash waits, all told, when a new version is already
+ * downloading at CHECK_MS. A phone can take longer than 3s to fetch a new
+ * build; giving up then left it half-installed for a later launch, and a
+ * deploy in between restarted it — so an installed iPhone app could stay on
+ * the old build for launch after launch (found 2026-09-18).
+ */
+export const INSTALLING_MAX_MS = 15000;
 
 /**
  * Opening the app: look for a new version before showing it (ported from
@@ -30,7 +38,12 @@ export function checkForUpdate(
       launching = false;
       resolve();
     };
-    const timer = setTimeout(show, CHECK_MS);
+    let registration: ServiceWorkerRegistration | undefined;
+    // At CHECK_MS, an update that's already downloading gets its chance to finish.
+    let timer = setTimeout(() => {
+      if (registration?.installing) timer = setTimeout(show, INSTALLING_MAX_MS - CHECK_MS);
+      else show();
+    }, CHECK_MS);
     const updateSW = registerSW({
       immediate: true,
       // A new version is installed and waiting. Take it only while the splash is up.
@@ -43,11 +56,12 @@ export function checkForUpdate(
       },
       // First install: nothing older to replace.
       onOfflineReady: show,
-      onRegisteredSW(_url, registration) {
-        if (!registration?.active) return show(); // first visit: nothing to update from
-        if (registration.waiting) return; // onNeedRefresh takes it from here
-        registration.update().then(() => {
-          if (!registration.installing && !registration.waiting) show();
+      onRegisteredSW(_url, found) {
+        registration = found;
+        if (!found?.active) return show(); // first visit: nothing to update from
+        if (found.waiting) return; // onNeedRefresh takes it from here
+        found.update().then(() => {
+          if (!found.installing && !found.waiting) show();
         }, show);
       },
       onRegisterError: show,

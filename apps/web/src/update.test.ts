@@ -8,7 +8,8 @@ type Options = {
 };
 const registerSW = vi.fn();
 vi.mock("virtual:pwa-register", () => ({ registerSW: (o: Options) => registerSW(o) }));
-const { CHECK_MS, SPLASH_MIN_MS, checkForUpdate, launch } = await import("./update");
+const { CHECK_MS, INSTALLING_MAX_MS, SPLASH_MIN_MS, checkForUpdate, launch } =
+  await import("./update");
 
 let options: Options;
 const updateSW = vi.fn(async () => undefined);
@@ -63,6 +64,30 @@ describe("checking for an update on launch", () => {
     expect(done()).toBe(false);
     options.onNeedRefresh!();
     expect(updateSW).toHaveBeenCalledWith(true);
+  });
+
+  it("keeps waiting past CHECK_MS while a new version is still downloading", async () => {
+    const reg = registration({ update: () => new Promise(() => undefined) });
+    const done = settled(checkForUpdate(true));
+    options.onRegisteredSW!("/sw.js", reg);
+    // The phone found the new build and is still fetching it when CHECK_MS passes.
+    reg.installing = {};
+    await vi.advanceTimersByTimeAsync(CHECK_MS + 5000);
+    expect(done()).toBe(false);
+
+    options.onNeedRefresh!();
+    expect(updateSW).toHaveBeenCalledWith(true);
+  });
+
+  it("gives up on a download that never finishes, at INSTALLING_MAX_MS", async () => {
+    const reg = registration({ update: () => new Promise(() => undefined) });
+    const done = settled(checkForUpdate(true));
+    options.onRegisteredSW!("/sw.js", reg);
+    reg.installing = {};
+    await vi.advanceTimersByTimeAsync(INSTALLING_MAX_MS - 1);
+    expect(done()).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(done()).toBe(true);
   });
 
   it("gives up after CHECK_MS, and an update found later waits for the next launch", async () => {
