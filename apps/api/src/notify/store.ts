@@ -5,7 +5,7 @@ import {
   type NotificationSettings,
   type PushKind,
 } from "@finance-app/shared";
-import { and, desc, eq, gte, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, sql } from "drizzle-orm";
 import {
   connectionGaps,
   limitAlerts,
@@ -259,7 +259,7 @@ export function dbNotificationStore(db: Db): NotificationStore {
       await db
         .update(pushSubscriptions)
         .set({ lastDeliveredAt: now })
-        .where(sql`${pushSubscriptions.id} = any(${deviceIds})`);
+        .where(inArray(pushSubscriptions.id, deviceIds));
     },
 
     async markFailed(deviceIds, now) {
@@ -267,7 +267,7 @@ export function dbNotificationStore(db: Db): NotificationStore {
       await db
         .update(pushSubscriptions)
         .set({ lastFailedAt: now })
-        .where(sql`${pushSubscriptions.id} = any(${deviceIds})`);
+        .where(inArray(pushSubscriptions.id, deviceIds));
     },
 
     async claimPush(userId, kind, dedupeKey, day) {
