@@ -1,5 +1,5 @@
 import { BUCKET_META, BUCKETS, displayNameFor } from "@finance-app/shared";
-import { Fragment } from "react";
+import { Fragment, type ReactNode } from "react";
 import { Link, Outlet, useLocation } from "react-router";
 import { ICON_STROKE, NAV, type NavDestination } from "./nav";
 import { PipMark } from "./pip-mark";
@@ -13,6 +13,8 @@ export interface AppShellProps {
   rulesNeedAttention?: boolean;
   /** From the session, once sign-in is built. */
   userName?: string;
+  /** The bell (Phase 6), handed in so the chrome itself holds no data. */
+  bell?: ReactNode;
 }
 
 type IsActive = (destination: NavDestination) => boolean;
@@ -32,7 +34,7 @@ type IsActive = (destination: NavDestination) => boolean;
  * matching: pot detail and instrument detail live under Pots, so Pots stays lit
  * while you're inside one.
  */
-export function AppShell({ rulesNeedAttention = false, userName }: AppShellProps) {
+export function AppShell({ rulesNeedAttention = false, userName, bell }: AppShellProps) {
   const breakpoint = useBreakpoint();
   const { pathname } = useLocation();
   const isActive: IsActive = (destination) => destination.matches(pathname);
@@ -40,6 +42,12 @@ export function AppShell({ rulesNeedAttention = false, userName }: AppShellProps
   if (breakpoint === "phone") {
     return (
       <div className="bg-ground text-ink flex min-h-svh flex-col">
+        {bell ? (
+          <header className="flex items-center justify-between px-5 pt-3">
+            <PipMark size={26} />
+            {bell}
+          </header>
+        ) : null}
         <div className="flex-1 pb-2">
           <Outlet />
         </div>
@@ -60,11 +68,12 @@ export function AppShell({ rulesNeedAttention = false, userName }: AppShellProps
           userName={userName}
         />
       ) : (
-        <Rail isActive={isActive} rulesNeedAttention={rulesNeedAttention} />
+        <Rail isActive={isActive} rulesNeedAttention={rulesNeedAttention} bell={bell} />
       )}
       <div className="flex min-w-0 flex-1 justify-center">
         {/* Either side is plain ground — no widgets, no filler. */}
         <div className={`w-full ${isDesktop ? "max-w-[1080px]" : "max-w-[640px]"} px-6 py-8`}>
+          {isDesktop && bell ? <div className="-mt-3 mb-1 flex justify-end">{bell}</div> : null}
           <Outlet />
         </div>
       </div>
@@ -114,9 +123,11 @@ function TabBar({
 function Rail({
   isActive,
   rulesNeedAttention,
+  bell,
 }: {
   isActive: IsActive;
   rulesNeedAttention: boolean;
+  bell?: ReactNode;
 }) {
   return (
     <nav
@@ -148,6 +159,8 @@ function Rail({
           </Link>
         );
       })}
+      {/* The bell at the rail's foot (undesigned, DESIGN §9). */}
+      {bell ? <div className="mt-auto">{bell}</div> : null}
     </nav>
   );
 }

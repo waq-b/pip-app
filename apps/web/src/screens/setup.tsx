@@ -24,6 +24,11 @@ import { ICON_STROKE } from "../shell/nav";
 import { pointerWords } from "../shell/pointer-words";
 import { useBreakpoint } from "../shell/use-breakpoint";
 import { ThisDeviceRow } from "./this-device";
+import { SwitchRow } from "../components/switch";
+import { useJobStatus, useSwitch } from "../lib/notifications";
+import { useNotificationSettings } from "../lib/push";
+import { useMe } from "../lib/me";
+import { useProfile } from "../lib/research-settings";
 
 /**
  * Where Pip reads your numbers from, and how this device shows them
@@ -618,14 +623,77 @@ function PrimaryButton({ onClick, children }: { onClick: () => void; children: s
   );
 }
 
-/** Push on this device (Phase 6 task 7). The switches and per-kind toggles join it in task 8. */
+/**
+ * Notifications (DESIGN §10.4): the bell's two masters, mirrored — "neither
+ * is the real one" — plus the per-kind switches, this device, the email
+ * address, and when Pip last checked. Built from Setup's own card and rows.
+ */
 function Notifications() {
+  const settings = useNotificationSettings();
+  const flip = useSwitch();
+  const me = useMe(true);
+  const profile = useProfile();
+  const status = useJobStatus();
+  const personalised = profile.data?.personalised === true;
+
+  if (!settings.data) return null;
+  const s = settings.data.settings;
+
   return (
-    <section aria-labelledby="notifications-heading" className="bg-card rounded-[26px] px-[18px]">
-      <h2 id="notifications-heading" className="sr-only">
+    <section
+      aria-labelledby="notifications-heading"
+      className="bg-card flex flex-col rounded-[26px] px-[18px] py-3"
+    >
+      <h2 id="notifications-heading" className="m-0 pt-1 pb-2 text-[14.5px] font-semibold">
         Notifications
       </h2>
-      <ThisDeviceRow />
+      <SwitchRow
+        label="Push alerts"
+        detail="Only when a line you set is crossed. Turning it off never clears the bell."
+        checked={s.push}
+        onChange={(push) => flip.mutate({ push })}
+      />
+      <div className="border-line ml-3 flex flex-col gap-1 border-l-2 py-1 pl-3">
+        <SwitchRow
+          label="Side Bet's limit"
+          checked={s.pushLimit}
+          disabled={!s.push}
+          onChange={(pushLimit) => flip.mutate({ pushLimit })}
+        />
+        <SwitchRow
+          label="Urgent notes and Pip's take"
+          detail={
+            personalised ? undefined : "Urgent notes are for accounts with personal research on."
+          }
+          checked={s.pushUrgent}
+          disabled={!s.push || !personalised}
+          onChange={(pushUrgent) => flip.mutate({ pushUrgent })}
+        />
+        <SwitchRow
+          label="Your week is ready"
+          checked={s.pushDigest}
+          disabled={!s.push}
+          onChange={(pushDigest) => flip.mutate({ pushDigest })}
+        />
+      </div>
+      <div className="border-line border-t">
+        <ThisDeviceRow />
+      </div>
+      <div className="border-line border-t py-2">
+        <SwitchRow
+          label="Weekly email"
+          detail={me.data?.email ? `Monday morning, to ${me.data.email}` : "Monday morning, to you"}
+          checked={s.email}
+          onChange={(email) => flip.mutate({ email })}
+        />
+      </div>
+      <p className="border-line text-ink2 m-0 border-t py-3 text-xs font-medium">
+        {status.data?.lastCheckedAt
+          ? `Pip last checked prices and news ${ago(status.data.lastCheckedAt)}${status.data.stale ? " — longer ago than usual." : "."}`
+          : status.data
+            ? "Pip hasn't checked prices and news yet."
+            : "\u00a0"}
+      </p>
     </section>
   );
 }

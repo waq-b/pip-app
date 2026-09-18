@@ -78,6 +78,9 @@ export const ME_ALLOWED: Record<string, Handler> = {
   "/net-assets": { body: { set: true, starterLimit: false, dueReview: false } },
   // Likewise the first-login notifications sheet: answered, unless a test asks.
   "/notification-settings": { body: NOTIFICATIONS_ANSWERED },
+  // The bell on every screen: nothing new, unless a test says otherwise.
+  "/notifications": { body: { items: [], unread: 0 } },
+  "/status": { body: { lastCheckedAt: new Date().toISOString(), stale: false } },
 };
 
 export const ME_REFUSED: Record<string, Handler> = {

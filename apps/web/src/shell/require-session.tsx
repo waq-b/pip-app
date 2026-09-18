@@ -6,6 +6,7 @@ import { useMe } from "../lib/me";
 import { someRuleNeedsALook, useRules } from "../lib/rules";
 import { useThisDevice } from "../lib/push";
 import { AppShell } from "./app-shell";
+import { Bell } from "./bell";
 import { WarmingUp } from "./warming-up";
 
 /**
@@ -44,6 +45,7 @@ export function RequireSession() {
     <AppShell
       userName={me.data.name ?? state.session.name ?? undefined}
       rulesNeedAttention={someRuleNeedsALook(rules.data)}
+      bell={<Bell />}
     />
   );
 }
