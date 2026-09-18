@@ -298,6 +298,20 @@ interface Provider {
 - **Refresh-on-read** in the routes (task 12) covers anything the schedule misses.
 - **Keep-alive**: free Supabase projects pause after about a week of low activity, and scheduled jobs inside the database aren't documented as activity. A GitHub Actions workflow queries Supabase's REST API every three days with the publishable key (public by design; stored as repository secrets `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`). RLS refuses the read, but the request still reaches the database.
 
+## Recommendation triggers (`nudges/triggers.ts`, `nudges/trigger-store.ts`, Phase 6)
+
+When Pip recommends a course of action (CLAUDE.md hard line 12), for personal-research users only. **Code decides the trigger, the recommended course and every amount**; the writer only explains it (hard line 2). The file is pure — no clock, no database.
+
+| #   | Trigger                                                      | Fires                                                                           | Recommends                                     | Amount                         | Re-arms                        | Pushed |
+| --- | ------------------------------------------------------------ | ------------------------------------------------------------------------------- | ---------------------------------------------- | ------------------------------ | ------------------------------ | ------ |
+| R1  | Side Bet's **value** past 10% of net assets                  | 10.5% or more, seen on two refreshes 20+ minutes apart (net assets must be set) | take some profit                               | value − limit                  | 9.5% or less, on two refreshes | yes    |
+| R2  | A holding worth 3× what went in                              | at once                                                                         | take some profit                               | the holding's cost (the stake) | under 2.5×                     | yes    |
+| R3  | Handpicked 5+ points over its target, or Foundation 5+ under | on two refreshes                                                                | rebalance                                      | pounds back to target          | within 2 points                | no     |
+| R4  | Today's move ≥ 2× the pot's big-move line                    | at once, one per holding per day                                                | hold — unless R1 or R2 also holds, then theirs | —                              | next day                       | yes    |
+
+- **The calmer rule** is `step()`: a state machine over `clear` · `pending` · `fired` · `pending_clear`. With confirmation (R1, R3) a condition must hold on two refreshes at least `CONFIRM_MIN_GAP_MS` apart before it counts, and be clearly gone on two before it can fire again. Without it (R2, R4) one sighting fires and the re-arm line does the calming.
+- **One crossing, one recommendation.** `evaluateRecommendations` reads every trigger, moves its state on and saves it in `recommendation_state`, returning a hit only on the refresh that confirms a crossing. Each confirmed crossing gets a new event id — what its push is keyed by. Tested through a 10.4 / 10.6 / 10.4 / 10.6 / 10.6 flicker: one recommendation.
+
 ## The urgent tier (`nudges/candidates.ts`, `nudges/service.ts`, Phase 6)
 
 A stricter layer on the daily build, not a second copy of the trust rules (phase-6.md decision 3). A daily candidate is `urgent` when it already passes every Phase 5 check **and**:
