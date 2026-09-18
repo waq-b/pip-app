@@ -91,8 +91,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     ] as const) {
       if (!env[name]) throw new ConfigError(`NOTIFY_MODE=live needs ${name}`);
     }
-    if (!env.VAPID_SUBJECT!.startsWith("mailto:")) {
-      throw new ConfigError("VAPID_SUBJECT must be a mailto: address");
+    // Who runs this server, for a push service to contact: the standard
+    // allows a mailto: address or an https: page (RFC 8292).
+    if (!/^(mailto:|https:\/\/)/.test(env.VAPID_SUBJECT!)) {
+      throw new ConfigError("VAPID_SUBJECT must be a mailto: address or an https:// URL");
     }
   }
   const notify: ServerConfig["notify"] =

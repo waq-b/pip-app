@@ -52,4 +52,33 @@ describe("server config", () => {
   it("refuses an LLM mode it doesn't know — no Ollama (Waqar, 2026-09-17)", () => {
     expect(() => loadConfig({ LLM_MODE: "ollama" })).toThrow(/stub" or "groq/);
   });
+
+  describe("live notifications", () => {
+    const live = {
+      NOTIFY_MODE: "live",
+      VAPID_PUBLIC_KEY: "public",
+      VAPID_PRIVATE_KEY: "private",
+      RESEND_KEY: "re_key",
+      EMAIL_FROM: "Pip <pip@mail.example.com>",
+    };
+
+    it.each(["mailto:test@example.com", "https://pip.example.com"])(
+      "take a VAPID subject of %s",
+      (subject) => {
+        expect(loadConfig({ ...live, VAPID_SUBJECT: subject }).notify.mode).toBe("live");
+      },
+    );
+
+    it("refuse any other subject", () => {
+      expect(() => loadConfig({ ...live, VAPID_SUBJECT: "pip.example.com" })).toThrow(
+        /mailto: address or an https:\/\/ URL/,
+      );
+    });
+
+    it("refuse to start with a setting missing", () => {
+      expect(() =>
+        loadConfig({ ...live, VAPID_SUBJECT: "https://pip.example.com", RESEND_KEY: "" }),
+      ).toThrow(/needs RESEND_KEY/);
+    });
+  });
 });

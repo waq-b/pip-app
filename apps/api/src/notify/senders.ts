@@ -41,7 +41,7 @@ export interface EmailSender {
 export interface VapidKeys {
   publicKey: string;
   privateKey: string;
-  /** `mailto:` address a push service can complain to. */
+  /** A `mailto:` address or `https:` page a push service can contact. */
   subject: string;
 }
 
