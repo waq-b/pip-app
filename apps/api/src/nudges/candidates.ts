@@ -1,5 +1,8 @@
 import {
   displayNameFor,
+  URGENT_MOVE_MULTIPLIER,
+  URGENT_NEWS_MIN_SOURCES,
+  URGENT_NEWS_WINDOW_HOURS,
   type Bucket,
   type NudgeCadence,
   type NudgeKind,
@@ -82,10 +85,20 @@ export interface CandidateInput {
    * asks for those, so Pip doesn't nag in the week as well.
    */
   netAssets?: { reviewedAt: Date; dueReview: boolean } | null;
+  /**
+   * The user has personal research on. Urgent news is only ever built for
+   * them — everyone else gets general notes (hard line 12).
+   */
+  personalised?: boolean;
 }
 
 export interface Candidate {
   kind: NudgeKind;
+  /**
+   * Past the urgent line (Phase 6 decision 3): pushed straight away, and not
+   * counted against the daily budget. Only ever set on the daily path.
+   */
+  urgent: boolean;
   reason: NudgeReason;
   bucket: Bucket | null;
   instrumentId: string | null;
@@ -171,9 +184,11 @@ export function nextIsaYearEnd(now: Date): string {
 export const dedupeKey = (reason: NudgeReason, subject: string, when: string) =>
   `${reason}:${subject}:${when}`;
 
-function candidate(fields: Omit<Candidate, "shown" | "heldBackBy">): Candidate {
+function candidate(
+  fields: Omit<Candidate, "shown" | "heldBackBy" | "urgent"> & { urgent?: boolean },
+): Candidate {
   const failed = fields.checks.find((check) => !check.passed);
-  return { ...fields, shown: !failed, heldBackBy: failed?.rule ?? null };
+  return { urgent: false, ...fields, shown: !failed, heldBackBy: failed?.rule ?? null };
 }
 
 export function buildCandidates(input: CandidateInput): CandidateBuild {
@@ -333,9 +348,13 @@ export function buildCandidates(input: CandidateInput): CandidateBuild {
 
     if (move && Math.abs(move.percent) >= threshold) {
       const key = dedupeKey("move", holding.instrumentId, dayOf(now));
+      // Twice the pot's own line, on the day: worth hearing now, not on Monday.
+      const urgent =
+        cadence === "daily" && Math.abs(move.percent) >= threshold * URGENT_MOVE_MULTIPLIER;
       if (!(cadence === "daily" && history.shownKeys.includes(key))) {
         candidates.push(
           candidate({
+            urgent,
             kind: "awareness",
             reason: "move",
             bucket: holding.bucket,
@@ -356,8 +375,36 @@ export function buildCandidates(input: CandidateInput): CandidateBuild {
       }
     }
 
-    // News is a weekly nudge only (decision 4).
-    if (cadence !== "weekly") continue;
+    // News is a weekly nudge (Phase 5 decision 4) — except urgent news, the one
+    // daily exception (Phase 6 decision 3), and only for personal research.
+    if (cadence === "daily") {
+      if (!input.personalised) continue;
+      const urgentNews = urgentNewsFor(holding, input);
+      if (urgentNews) {
+        counts.reportsRead += holding.news.length;
+        counts.reportsCounted += urgentNews.reports.length;
+        candidates.push(
+          candidate({
+            urgent: true,
+            kind: "awareness",
+            reason: "news",
+            bucket: holding.bucket,
+            instrumentId: holding.instrumentId,
+            facts: {
+              type: "news",
+              name: holding.name,
+              shortName: holding.shortName,
+              reports: urgentNews.reports,
+              publishers: urgentNews.publishers,
+            },
+            checks: [...holdingChecks(), urgentNews.quiet, urgentNews.sources],
+            basis: basisFor(urgentNews.reports),
+            dedupeKey: dedupeKey("news", `urgent:${holding.instrumentId}`, dayOf(now)),
+          }),
+        );
+      }
+      continue;
+    }
     counts.reportsRead += holding.news.length;
     const { kept } = stageA(holding.news, {
       now,
@@ -403,6 +450,7 @@ export function buildCandidates(input: CandidateInput): CandidateBuild {
     candidates.push({
       kind: "none",
       reason: "quiet",
+      urgent: false,
       bucket: null,
       instrumentId: null,
       facts: { type: "quiet", counts: structuredClone(counts), next },
@@ -425,6 +473,44 @@ function awarenessRank(c: Candidate): [number, number, number] {
   }
   if (c.facts.type === "move") return [0, 0, Math.abs(c.facts.move.percent)];
   return [0, 0, 0];
+}
+
+/**
+ * Urgent news (Phase 6 decision 3): enough independent named publishers on
+ * one holding within a day. The quiet period around results still holds —
+ * except on the results day itself, when the news *is* the results.
+ */
+function urgentNewsFor(holding: HoldingInput, input: CandidateInput) {
+  const { now, settings, exclusions } = input;
+  const { kept } = stageA(holding.news, {
+    now,
+    cadence: "daily",
+    settings,
+    exclusions,
+    ownNewsroomDomains: holding.ownNewsroomDomains,
+  });
+  const since = now.getTime() - URGENT_NEWS_WINDOW_HOURS * 3_600_000;
+  const reports = kept.filter((item) => item.publishedAt.getTime() >= since);
+  const publishers = independentPublishers(reports).map((report) => report.publisher);
+  if (publishers.length < URGENT_NEWS_MIN_SOURCES) return null;
+
+  const today = now.toISOString().slice(0, 10);
+  const resultsToday = holding.resultsDates.includes(today);
+  const quiet: TrustCheck = resultsToday
+    ? {
+        rule: "results_quiet",
+        setting: settings.resultsQuietDays,
+        passed: true,
+        detail: "It's the results day itself",
+      }
+    : resultsQuietCheck(holding.resultsDates, now, settings);
+  const sources: TrustCheck = {
+    rule: "independent_sources",
+    setting: URGENT_NEWS_MIN_SOURCES,
+    passed: true,
+    detail: `${publishers.length} publishers in the last ${URGENT_NEWS_WINDOW_HOURS} hours: ${publishers.join(", ")}`,
+  };
+  return { reports, publishers, quiet, sources };
 }
 
 const DAILY_PRIORITY: Record<string, number> = { cap: 0, earnings: 1, isa_year_end: 2, move: 3 };
@@ -475,8 +561,9 @@ function applyBudgets(candidates: Candidate[], input: CandidateInput) {
       settings.dailyBudgetPerWeek - history.dailyShownThisWeek,
     ),
   );
+  // Urgent notes have their own two-a-day push cap and never use up the budget.
   const daily = candidates
-    .filter((c) => c.shown)
+    .filter((c) => c.shown && !c.urgent)
     .sort((a, b) => (DAILY_PRIORITY[a.reason] ?? 9) - (DAILY_PRIORITY[b.reason] ?? 9));
   daily.forEach((c, index) => {
     const within = index < left;

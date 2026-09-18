@@ -40,7 +40,10 @@ function stubApp() {
   const profileStore = memoryProfileStore();
   const log = memoryNudgeStore();
   const readModel = stubReadModel(
-    createStubMarketData({ anchors: stubSeriesAnchors() }),
+    createStubMarketData({
+      anchors: stubSeriesAnchors(),
+      now: () => new Date("2026-09-17T12:00:00Z"),
+    }),
     rulesStore,
     sideBetLimits,
   );

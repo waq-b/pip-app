@@ -34,6 +34,7 @@ function row(overrides: Partial<NewNudge> = {}): NewNudge {
     cadence: "weekly",
     kind: "shape",
     reason: "cap",
+    urgent: false,
     bucket: "Degen",
     instrumentId: null,
     title: "Side Bet has reached its starter limit",

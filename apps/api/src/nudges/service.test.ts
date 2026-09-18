@@ -9,11 +9,20 @@ import { memoryTrustSettingsStore } from "../rules/trust-settings.js";
 import { stubWriter, type NudgeWriter } from "../research/writer.js";
 import { moveSince, stubFactsReader } from "./gather.js";
 import { memoryProfileStore } from "./profile.js";
-import { createNudgeService, mondayOf, type NudgeUser } from "./service.js";
-import { memoryNudgeStore } from "./store.js";
+import { createNudgeService, mondayOf, pushUrgent, type NudgeUser } from "./service.js";
+import { memoryNudgeStore, type NewNudge } from "./store.js";
+import { createNotifier } from "../notify/notify.js";
+import { stubEmailSender, stubPushSender } from "../notify/senders.js";
+import { memoryNotificationStore } from "../notify/store.js";
 
 /** Monday 14 September 2026, 08:00 UTC — the week's build is due. */
 const MONDAY = new Date("2026-09-14T08:00:00Z");
+/**
+ * The sample market's own clock. It used to be the real one, so these
+ * expectations quietly drifted with the date; they were written against the
+ * sample as it stood on this day, so that's where it's pinned.
+ */
+const SAMPLE_MARKET_AT = new Date("2026-09-17T12:00:00Z");
 const waqar: NudgeUser = { userId: "user-1", authUserId: "auth-1", personalResearch: true };
 const friend: NudgeUser = { userId: "user-2", authUserId: "auth-2", personalResearch: false };
 
@@ -23,7 +32,10 @@ function setup(writer: NudgeWriter = stubWriter(), moneyInPence = 40_000) {
   const profileStore = memoryProfileStore();
   const store = memoryNudgeStore();
   const service = createNudgeService({
-    readModel: stubReadModel(createStubMarketData({ anchors: stubSeriesAnchors() }), rulesStore),
+    readModel: stubReadModel(
+      createStubMarketData({ anchors: stubSeriesAnchors(), now: () => SAMPLE_MARKET_AT }),
+      rulesStore,
+    ),
     rulesStore,
     sideBetLimits: fixedSideBetLimits({ moneyInPence }),
     trustStore,
@@ -234,6 +246,100 @@ describe("daily nudges", () => {
     await service.buildWeekIfDue(waqar, MONDAY);
     await service.buildDaily(waqar, new Date("2026-09-14T09:00:00Z"));
     expect(store.all().filter((n) => n.cadence === "daily" && n.reason === "cap")).toEqual([]);
+  });
+});
+
+describe("urgent notes (Phase 6)", () => {
+  const urgentRow = (n: number): NewNudge => ({
+    cadence: "daily",
+    kind: "awareness",
+    reason: "move",
+    urgent: true,
+    bucket: "Medium",
+    instrumentId: `I${n}`,
+    title: `Holding ${n} fell 16% today`,
+    body: "That's past twice your big-move line for Handpicked.",
+    basis: null,
+    facts: {},
+    checks: [],
+    shown: true,
+    model: "template",
+    promptVersion: null,
+    personalised: false,
+    dedupeKey: `move:I${n}:2026-09-17`,
+    builtOn: "2026-09-17",
+    priceAt: null,
+    priceCurrency: null,
+    priceSource: null,
+    potShareAt: null,
+  });
+
+  function withNotifier() {
+    const notifications = memoryNotificationStore();
+    const push = stubPushSender();
+    const notifier = createNotifier({ store: notifications, push, email: stubEmailSender() });
+    const store = memoryNudgeStore();
+    return { notifications, push, notifier, store };
+  }
+
+  const THURSDAY = new Date("2026-09-17T10:00:00Z");
+
+  it("pushes an urgent note straight away, and opens Your week when tapped", async () => {
+    const { notifications, push, notifier, store } = withNotifier();
+    await notifications.addDevice(
+      waqar,
+      { endpoint: "https://web.push.apple.com/w", p256dh: "k", auth: "a", label: "iPhone" },
+      THURSDAY,
+    );
+    await pushUrgent({ store, notifier } as never, waqar, [urgentRow(1)], "2026-09-17", THURSDAY);
+
+    expect(push.sent).toEqual([
+      expect.objectContaining({ title: "Holding 1 fell 16% today", url: "/week" }),
+    ]);
+  });
+
+  it("never pushes one to someone without personal research", async () => {
+    const { notifications, push, notifier, store } = withNotifier();
+    await notifications.addDevice(
+      friend,
+      { endpoint: "https://web.push.apple.com/f", p256dh: "k", auth: "a", label: "iPhone" },
+      THURSDAY,
+    );
+    await pushUrgent({ store, notifier } as never, friend, [urgentRow(1)], "2026-09-17", THURSDAY);
+    expect(push.sent).toEqual([]);
+  });
+
+  it("stops at two a day, and the third says why in its checks", async () => {
+    const { notifications, push, notifier, store } = withNotifier();
+    await notifications.addDevice(
+      waqar,
+      { endpoint: "https://web.push.apple.com/w", p256dh: "k", auth: "a", label: "iPhone" },
+      THURSDAY,
+    );
+    const rows = [urgentRow(1), urgentRow(2), urgentRow(3)];
+    await store.saveDaily(waqar, rows);
+    await pushUrgent({ store, notifier } as never, waqar, rows, "2026-09-17", THURSDAY);
+
+    expect(push.sent).toHaveLength(2);
+    const third = store.all().find((n) => n.instrumentId === "I3")!;
+    expect(third.checks.at(-1)).toMatchObject({
+      rule: "daily_budget",
+      passed: false,
+      detail: "Not pushed: 2 urgent notes had already gone out today",
+    });
+  });
+
+  it("sends each once, however many times the daily build sees it", async () => {
+    const { notifications, push, notifier, store } = withNotifier();
+    await notifications.addDevice(
+      waqar,
+      { endpoint: "https://web.push.apple.com/w", p256dh: "k", auth: "a", label: "iPhone" },
+      THURSDAY,
+    );
+    for (const at of [THURSDAY, new Date("2026-09-17T10:30:00Z")]) {
+      await pushUrgent({ store, notifier } as never, waqar, [urgentRow(1)], "2026-09-17", at);
+    }
+    expect(push.sent).toHaveLength(1);
   });
 });
 

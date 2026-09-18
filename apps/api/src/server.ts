@@ -98,6 +98,7 @@ function realAccounts(): Partial<BuildAppOptions> {
 
   const notifications = dbNotificationStore(db);
   const netAssets = dbNetAssetsStore(db, box, config.masterKeyVersion);
+  const notifier = createNotifier({ store: notifications, ...senders() });
   const sideBetLimits = dbSideBetLimits(db, netAssets);
   const rulesStore = dbRulesStore(db);
   const profileStore = dbProfileStore(db);
@@ -112,6 +113,7 @@ function realAccounts(): Partial<BuildAppOptions> {
     profileStore,
     facts: dbFactsReader(db),
     store: dbNudgeStore(db),
+    notifier,
     writer:
       config.llm.mode === "groq"
         ? llmWriter({ chat: groqChat({ apiKey: config.llm.apiKey }), model: config.llm.model })
@@ -143,12 +145,12 @@ function realAccounts(): Partial<BuildAppOptions> {
     notifications,
     netAssets,
     sideBetLimits,
-    notifier: createNotifier({ store: notifications, ...senders() }),
+    notifier,
     jobStatus: dbJobStatus(db),
     refreshJob: createRefreshJob({
       runs: dbJobRecorder(db),
       sideBetLimits,
-      notifier: createNotifier({ store: notifications, ...senders() }),
+      notifier,
       db,
       box,
       clientFor,

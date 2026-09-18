@@ -1,3 +1,5 @@
+import { URGENT_PUSH_DAILY_MAX } from "@finance-app/shared";
+import type { Notifier } from "../notify/notify.js";
 import {
   displayNameFor,
   type NudgeResponse,
@@ -48,6 +50,8 @@ export interface NudgeUser extends ReadUser {
 export interface NudgeServiceDeps extends GatherDeps {
   store: NudgeStore;
   writer: NudgeWriter;
+  /** Pushes urgent notes (Phase 6). Without it they're logged and wait for the week. */
+  notifier?: Notifier;
 }
 
 const DAY_MS = 86_400_000;
@@ -206,9 +210,46 @@ async function rowsFor(
       priceCurrency: holding ? "GBP_PENCE" : null,
       priceSource: holding ? holding.detail.freshness.source : null,
       potShareAt: candidate.kind === "shape" && pot ? String(pot.actualPercent) : null,
+      urgent: candidate.urgent,
     });
   }
   return rows;
+}
+
+/**
+ * Urgent notes go out straight away (Phase 6 decision 3) — for people with
+ * personal research on only; everyone else's wait for the week. `notify()`
+ * decides the rest: their switches, one push per note however many runs see
+ * it, and two urgent pushes a day. A note that doesn't go out because of that
+ * cap says so in its checks, so the log never hides why.
+ */
+export async function pushUrgent(
+  deps: NudgeServiceDeps,
+  user: NudgeUser,
+  rows: NewNudge[],
+  builtOn: string,
+  now: Date,
+): Promise<void> {
+  if (!deps.notifier || !user.personalResearch) return;
+  for (const row of rows.filter((r) => r.urgent && r.shown)) {
+    const outcome = await deps.notifier.push(
+      {
+        userId: user.userId,
+        kind: "urgent",
+        dedupeKey: `urgent:${row.dedupeKey}:${builtOn}`,
+        message: { title: row.title, body: row.body, url: "/week" },
+      },
+      now,
+    );
+    if (!outcome.sent && outcome.why === "over_budget") {
+      await deps.store.addCheck(user, row.dedupeKey, builtOn, {
+        rule: "daily_budget",
+        setting: `${URGENT_PUSH_DAILY_MAX} urgent pushes a day`,
+        passed: false,
+        detail: `Not pushed: ${URGENT_PUSH_DAILY_MAX} urgent notes had already gone out today`,
+      });
+    }
+  }
 }
 
 /** A quiet result, when nothing ended up shown — including after the writer held news back. */
@@ -228,6 +269,7 @@ function quietRow(
     cadence: "weekly",
     kind: "none",
     reason: "quiet",
+    urgent: false,
     bucket: null,
     instrumentId: null,
     title: draft.title,
@@ -508,8 +550,10 @@ export function createNudgeService(
     },
 
     async buildDaily(user, now = clock()) {
-      const { rows } = await build(user, now, "daily");
-      return deps.store.saveDaily(user, rows);
+      const { rows, today } = await build(user, now, "daily");
+      const saved = await deps.store.saveDaily(user, rows);
+      await pushUrgent(deps, user, rows, today, now);
+      return saved;
     },
 
     async week(user, weekOf, now = clock()) {

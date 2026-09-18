@@ -103,6 +103,10 @@ export const R3_DRIFT_POINTS = 5;
 export const R3_REARM_POINTS = 2;
 /** R4: the urgent move line is this many times the pot's own big-move line. */
 export const URGENT_MOVE_MULTIPLIER = 2;
+/** Urgent news: this many independent named publishers on one holding… */
+export const URGENT_NEWS_MIN_SOURCES = 3;
+/** …within this many hours. */
+export const URGENT_NEWS_WINDOW_HOURS = 24;
 
 /** Two refreshes confirm a condition only if they're this far apart. */
 export const CONFIRM_MIN_GAP_MS = 20 * 60 * 1000;

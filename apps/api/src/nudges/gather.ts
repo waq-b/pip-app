@@ -158,7 +158,7 @@ export function moveSince(
 
 export async function gather(
   deps: GatherDeps,
-  user: ReadUser,
+  user: ReadUser & { personalResearch?: boolean },
   now: Date,
   cadence: NudgeCadence,
   history: NudgeHistory,
@@ -261,6 +261,7 @@ export async function gather(
       holdings,
       history,
       netAssets,
+      personalised: user.personalResearch === true,
     },
     rules: storedRules.settings,
     profile: storedProfile.profile,

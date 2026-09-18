@@ -1,5 +1,5 @@
 import type { NudgeCadence, NudgeResponse } from "@finance-app/shared";
-import { and, desc, eq, gte } from "drizzle-orm";
+import { and, desc, eq, gte, sql } from "drizzle-orm";
 import { digests, nudges } from "../db/schema.js";
 import { asUser, type Db } from "../db/user-scope.js";
 import type { ReadUser } from "../read/model.js";
@@ -45,6 +45,8 @@ export interface StoredNudge {
   priceCurrency: string | null;
   priceSource: string | null;
   potShareAt: string | null;
+  /** Past the urgent line: pushed straight away rather than waiting (Phase 6). */
+  urgent: boolean;
 }
 
 export interface WeekRecord {
@@ -70,6 +72,11 @@ export interface NudgeStore {
   /** Mondays, newest first. */
   weeks(user: ReadUser): Promise<string[]>;
   daily(user: ReadUser, day: string): Promise<StoredNudge[]>;
+  /**
+   * Adds a check to a daily nudge already logged, so the log says why it
+   * wasn't pushed. Server-side only.
+   */
+  addCheck(user: ReadUser, dedupeKey: string, builtOn: string, check: TrustCheck): Promise<void>;
   /** Null when there's no such nudge of theirs. */
   respond(
     user: ReadUser,
@@ -191,6 +198,20 @@ export function dbNudgeStore(db: Db): NudgeStore {
       return rows.map(fromRow);
     },
 
+    async addCheck(user, key, builtOn, check) {
+      await db
+        .update(nudges)
+        .set({ checks: sql`${nudges.checks} || ${JSON.stringify([check])}::jsonb` })
+        .where(
+          and(
+            eq(nudges.userId, user.userId),
+            eq(nudges.cadence, "daily"),
+            eq(nudges.dedupeKey, key),
+            eq(nudges.builtOn, builtOn),
+          ),
+        );
+    },
+
     async respond(user, id, response, at) {
       if (!UUID.test(id)) return null;
       const [row] = await db
@@ -273,6 +294,13 @@ export function memoryNudgeStore(): NudgeStore & { all: () => StoredNudge[] } {
     async daily(user, day) {
       return daily.filter((n) => n.userId === user.userId && n.builtOn === day);
     },
+    async addCheck(user, key, builtOn, check) {
+      const found = allOf(user).find(
+        (n) => n.cadence === "daily" && n.dedupeKey === key && n.builtOn === builtOn,
+      );
+      if (found) found.checks = [...found.checks, check];
+    },
+
     async respond(user, nudgeId, response, at) {
       const found = allOf(user).find((n) => n.id === nudgeId);
       if (!found) return null;

@@ -390,6 +390,104 @@ describe("big moves", () => {
   });
 });
 
+describe("the urgent tier (Phase 6)", () => {
+  const moving = (percent: number) =>
+    holding({
+      shortName: "NVDA",
+      bucket: "Medium",
+      moves: { day: { percent, pence: 50_000 }, week: null, month: null },
+    });
+
+  const breaking = (hoursAgo = [2, 5, 9]) =>
+    holding({
+      shortName: "ASML",
+      news: [
+        report("reuters.com", hoursAgo[0]!, "Reuters"),
+        report("ft.com", hoursAgo[1]!, "Financial Times"),
+        report("bbc.co.uk", hoursAgo[2]!, "BBC"),
+      ],
+    });
+
+  const daily = (overrides: Partial<CandidateInput> = {}) =>
+    buildCandidates(input({ cadence: "daily", ...overrides })).candidates;
+
+  it("marks a move urgent at twice the pot's own line — Handpicked's 7% line makes 14%", () => {
+    const [urgent] = daily({ holdings: [moving(14)] });
+    expect(urgent).toMatchObject({ reason: "move", urgent: true, shown: true });
+
+    const [ordinary] = daily({ holdings: [moving(13.9)] });
+    expect(ordinary).toMatchObject({ reason: "move", urgent: false });
+  });
+
+  it("never marks the week urgent: urgency is about today", () => {
+    const week = buildCandidates(
+      input({
+        holdings: [
+          holding({
+            shortName: "NVDA",
+            moves: { day: null, week: { percent: 30, pence: 90_000 }, month: null },
+          }),
+        ],
+      }),
+    ).candidates;
+    expect(week.every((c) => !c.urgent)).toBe(true);
+  });
+
+  it("builds urgent news from three named publishers in a day, for personal research only", () => {
+    const [news] = daily({ holdings: [breaking()], personalised: true }).filter(
+      (c) => c.reason === "news",
+    );
+    expect(news).toMatchObject({ kind: "awareness", urgent: true, shown: true });
+    expect(news!.checks.find((c) => c.rule === "independent_sources")!.detail).toContain(
+      "3 publishers in the last 24 hours",
+    );
+
+    // Everyone else gets general notes only: no news on the daily path at all.
+    expect(reasons(daily({ holdings: [breaking()], personalised: false }))).not.toContain("news");
+  });
+
+  it("needs all three inside the day", () => {
+    expect(reasons(daily({ holdings: [breaking([2, 5, 30])], personalised: true }))).not.toContain(
+      "news",
+    );
+  });
+
+  it("stays quiet around results, except on the results day itself", () => {
+    const near = holding({ ...breaking(), resultsDates: ["2026-09-18"] });
+    const [held] = daily({ holdings: [near], personalised: true }).filter(
+      (c) => c.reason === "news",
+    );
+    expect(held).toMatchObject({ shown: false, heldBackBy: "results_quiet" });
+
+    const today = holding({ ...breaking(), resultsDates: ["2026-09-17"] });
+    const [shownToday] = daily({ holdings: [today], personalised: true }).filter(
+      (c) => c.reason === "news",
+    );
+    expect(shownToday).toMatchObject({ shown: true, urgent: true });
+  });
+
+  it("doesn't use up the daily budget", () => {
+    const full = { dailyShownToday: 1, dailyShownThisWeek: 1, lastCapNudgeAt: null, shownKeys: [] };
+    const candidates = daily({
+      holdings: [
+        moving(20),
+        holding({
+          shortName: "GRG",
+          bucket: "Medium",
+          moves: { day: { percent: 8, pence: 1_000 }, week: null, month: null },
+        }),
+      ],
+      settings: settings({ dailyBudgetPerDay: 1 }),
+      history: full,
+    });
+    expect(candidates.find((c) => c.urgent)).toMatchObject({ shown: true });
+    expect(candidates.find((c) => !c.urgent && c.reason === "move")).toMatchObject({
+      shown: false,
+      heldBackBy: "daily_budget",
+    });
+  });
+});
+
 describe("the yearly net-assets check", () => {
   const reviewedAt = new Date("2025-09-01T09:00:00Z");
 

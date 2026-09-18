@@ -298,6 +298,15 @@ interface Provider {
 - **Refresh-on-read** in the routes (task 12) covers anything the schedule misses.
 - **Keep-alive**: free Supabase projects pause after about a week of low activity, and scheduled jobs inside the database aren't documented as activity. A GitHub Actions workflow queries Supabase's REST API every three days with the publishable key (public by design; stored as repository secrets `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`). RLS refuses the read, but the request still reaches the database.
 
+## The urgent tier (`nudges/candidates.ts`, `nudges/service.ts`, Phase 6)
+
+A stricter layer on the daily build, not a second copy of the trust rules (phase-6.md decision 3). A daily candidate is `urgent` when it already passes every Phase 5 check **and**:
+
+- **an urgent move:** today's move is at least `URGENT_MOVE_MULTIPLIER` (2×) the pot's own big-move line — 6% / 14% / 30% by default — or
+- **urgent news** (personal research only; everyone else gets no news on the daily path at all): at least `URGENT_NEWS_MIN_SOURCES` (3) independent named publishers on one holding within `URGENT_NEWS_WINDOW_HOURS` (24), after stage A. The quiet period around results still holds, except on the results day itself. It then goes through the writer like any personalised news note — materiality and the independent-sources recheck included.
+
+Urgent notes don't count against the daily budget. They're logged with `nudges.urgent`, and pushed straight away by `pushUrgent` — for personal research users only — through `notify()`, so the switches, one push per note however many runs see it, and `URGENT_PUSH_DAILY_MAX` (2 a day) apply. A note held by that cap gets a check saying so. Tapping opens `/week`. Limit alerts are their own push kind and don't count against the two.
+
 ## Side Bet's limit alerts (`rules/limit-alerts.ts`, Phase 6)
 
 Two alerts, judged in the refresh job after the poll that reads the Kraken ledger — never on a price (phase-6.md decision 2).
