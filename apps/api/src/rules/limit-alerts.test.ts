@@ -102,9 +102,13 @@ describe("the limit itself", () => {
     expect(push.sent[1]!.body).toContain("Pip can't stop anything");
   });
 
-  it("names the real limit once net assets are set", async () => {
+  it("keeps a real limit's pounds off the lock screen — it's net assets ÷ 10", async () => {
     await check(sideBet(640_000, { limitPence: 640_000, starterLimit: false }));
-    expect(push.sent.at(-1)).toMatchObject({ title: "Side Bet has reached its limit" });
+    expect(push.sent.map((p) => p.title)).toEqual([
+      "Side Bet is near its limit",
+      "Side Bet has reached its limit",
+    ]);
+    for (const sent of push.sent) expect(`${sent.title} ${sent.body}`).not.toMatch(/£/);
   });
 
   it("goes straight to both when money in jumps past the limit in one go", async () => {

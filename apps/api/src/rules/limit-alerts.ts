@@ -28,6 +28,19 @@ export type LimitAlertOutcome =
 function words(threshold: number, moneyIn: Pence, limit: Pence, starter: boolean) {
   const pounds = (pence: Pence) => `£${Math.round(pence / 100).toLocaleString("en-GB")}`;
   const line = starter ? "starter limit" : "limit";
+  // A real limit is net assets ÷ 10, and a push shows on a lock screen: no
+  // pounds that give it away. The flat £350 starter limit gives nothing away.
+  if (!starter) {
+    return threshold === 100
+      ? {
+          title: "Side Bet has reached its limit",
+          body: "Money in over the last year, less what you've taken out, has reached it. Pip can't stop anything — the figures are in Pip.",
+        }
+      : {
+          title: "Side Bet is near its limit",
+          body: "Money in over the last year, less what you've taken out, is past 80% of it. The figures are in Pip.",
+        };
+  }
   return threshold === 100
     ? {
         title: `Side Bet has reached its ${line}`,
