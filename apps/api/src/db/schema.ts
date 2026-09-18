@@ -345,12 +345,13 @@ export const marketSchedules = pgTable("market_schedules", {
 
 export const DB_BUCKETS = ["Base", "Medium", "Degen"] as const;
 export const DB_NUDGE_CADENCES = ["weekly", "daily"] as const;
-export const DB_NUDGE_KINDS = ["none", "shape", "calendar", "awareness"] as const;
+export const DB_NUDGE_KINDS = ["none", "shape", "calendar", "awareness", "recommendation"] as const;
 export const DB_NUDGE_REASONS = {
   none: ["quiet"],
   shape: ["cap", "drift"],
   calendar: ["earnings", "isa_year_end", "net_assets_review"],
   awareness: ["news", "move"],
+  recommendation: ["side_bet_over_limit", "holding_multiple", "pot_off_target", "urgent_move"],
 } as const;
 export const DB_NUDGE_RESPONSES = ["nothing", "acted", "dismissed"] as const;
 export const DB_PROFILE_LIMITS = {
@@ -676,6 +677,10 @@ export const nudges = pgTable(
     check("nudges_response", oneOf(table.response, DB_NUDGE_RESPONSES)),
     check("nudges_recommendation", oneOf(table.recommendation, DB_RECOMMENDATIONS)),
     check("nudges_trigger", oneOf(table.trigger, DB_RECOMMENDATION_TRIGGERS)),
+    check(
+      "nudges_recommendation_kind",
+      sql`(${table.kind} = 'recommendation') = (${table.recommendation} is not null)`,
+    ),
     check(
       "nudges_recommendation_has_a_trigger",
       sql`(${table.recommendation} is null) = (${table.trigger} is null)`,

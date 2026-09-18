@@ -3,7 +3,11 @@
  * formatting, no thresholds. Phase 1 serves all of this from stubs.
  */
 import type { Bucket } from "./buckets.js";
-import type { NotificationItemKind, NotificationSettings } from "./notifications.js";
+import type {
+  NotificationItemKind,
+  NotificationSettings,
+  Recommendation,
+} from "./notifications.js";
 import type {
   NudgeCadence,
   NudgeKind,
@@ -435,6 +439,11 @@ export interface NudgeView {
   checks: NudgeCheck[];
   /** For a held-back nudge: the rule, in plain words, that held it. */
   heldBackBecause?: string;
+  /**
+   * Pip's take, on a recommendation (Phase 6, personal research only): the
+   * course code chose and the pounds it worked out. The body explains it.
+   */
+  recommendation?: { course: Recommendation; amount: Pence | null };
   response: NudgeResponse | null;
   /** ISO timestamp. */
   createdAt: string;

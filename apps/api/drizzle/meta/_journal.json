@@ -148,6 +148,13 @@
       "when": 1789683816625,
       "tag": "0020_limit_alert_cleared",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1789743421053,
+      "tag": "0021_recommendation_kind",
+      "breakpoints": true
     }
   ]
 }

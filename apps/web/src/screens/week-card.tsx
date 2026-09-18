@@ -10,6 +10,7 @@ const GLYPH: Record<NudgeView["kind"], string> = {
   shape: "!",
   calendar: "◷",
   awareness: "↗",
+  recommendation: "→",
 };
 
 /**

@@ -14,6 +14,7 @@ const KIND_WORDS: Record<NudgeView["kind"], string> = {
   shape: "Your shape",
   calendar: "On the calendar",
   awareness: "Worth knowing",
+  recommendation: "Pip's take",
 };
 
 /**

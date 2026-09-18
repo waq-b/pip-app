@@ -358,6 +358,8 @@ describe("nudges with Pip's take", () => {
   it("record what was recommended and why", async () => {
     await db.insert(nudges).values(
       nudgeRow(ids.alice!, {
+        kind: "recommendation",
+        reason: "holding_multiple",
         urgent: true,
         recommendation: "take_some_profit",
         trigger: "holding_multiple",
@@ -375,6 +377,11 @@ describe("nudges with Pip's take", () => {
     ["buy or sell as a course of action", { recommendation: "sell", trigger: "urgent_move" }],
     ["a recommendation with no trigger", { recommendation: "hold" }],
     ["a trigger with no recommendation", { trigger: "urgent_move" }],
+    [
+      "a recommendation on a note that isn't one",
+      { recommendation: "hold", trigger: "urgent_move" },
+    ],
+    ["a recommendation note with no course", { kind: "recommendation", reason: "urgent_move" }],
   ])("refuse %s", async (_name, overrides) => {
     expect(await refusal(db.insert(nudges).values(nudgeRow(ids.alice!, overrides)))).toMatch(
       /nudges_recommendation|nudges_trigger/,
