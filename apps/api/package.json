@@ -15,7 +15,8 @@
     "allowlist": "tsx --env-file-if-exists=.env src/auth/cli.ts",
     "master-key": "tsx src/crypto/master-key-cli.ts",
     "reseal-keys": "tsx --env-file-if-exists=.env src/crypto/reseal-cli.ts",
-    "sign-in-link": "tsx --env-file-if-exists=.env src/dev/sign-in-link.ts"
+    "sign-in-link": "tsx --env-file-if-exists=.env src/dev/sign-in-link.ts",
+    "test-push": "tsx --env-file-if-exists=.env src/dev/test-push.ts"
   },
   "dependencies": {
     "@fastify/static": "^10.1.3",
