@@ -7,6 +7,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Phase 6 — Notifications + ops
 
+- Fixed: the deployed Pip never logged why a note fell back to Pip's template, so a Groq outage was invisible; each fallback is now a warning in Render's log with its reason — the guard's ("forecast", "buy or sell"…) or "unavailable (403)" with Groq's status — and never the note's words (#3230799437)
 - Fixed: recording a delivered or failed push crashed on Postgres (`= any(...)` sent one id where an array was expected), after the push had already gone out — found by the first real test push; now `inArray`, with the database store tested on PGlite for one device, several, a failure and a gone device. Added `pnpm --filter api test-push [email]`: a hand-run test push through the real notifier, keys from the environment (#3230588643)
 - Fixed: an installed iPhone app could stay on the old build launch after launch — the splash gave up at 3s while the new version was still downloading, and each deploy restarted the download. The splash now waits for a download in progress, up to 15s (#3230588643)
 - Fixed: `VAPID_SUBJECT` accepts an `https:` page as well as a `mailto:` address, as the web-push standard allows — Pip refused to start with `https://pip.example.com` (#3230588643)

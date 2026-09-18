@@ -120,7 +120,12 @@ function realAccounts(): Partial<BuildAppOptions> {
     triggers: dbTriggerStateStore(db),
     writer:
       config.llm.mode === "groq"
-        ? llmWriter({ chat: groqChat({ apiKey: config.llm.apiKey }), model: config.llm.model })
+        ? llmWriter({
+            chat: groqChat({ apiKey: config.llm.apiKey }),
+            model: config.llm.model,
+            // Why a note got Pip's template instead: a reason, never the words.
+            onFallback: (why) => app.log.warn({ why }, "nudge writer fell back to the template"),
+          })
         : stubWriter(),
   });
   return {

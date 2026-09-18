@@ -153,6 +153,23 @@ describe("the writer", () => {
     expect(fellBack).toEqual(["unavailable"]);
   });
 
+  it("says why Groq was unavailable, but only a short code — never an error's words", async () => {
+    const reasons: string[] = [];
+    const failing =
+      (reason: string): Chat =>
+      async () => {
+        throw Object.assign(new Error("anything at all"), { reason });
+      };
+    for (const reason of ["403", "timeout", "a sentence with spaces"]) {
+      await llmWriter({
+        chat: failing(reason),
+        model: "m",
+        onFallback: (why) => reasons.push(why),
+      }).recommendation(nvidia);
+    }
+    expect(reasons).toEqual(["unavailable (403)", "unavailable (timeout)", "unavailable"]);
+  });
+
   it("never sends the model a pound", async () => {
     let sent = "";
     const chat: Chat = async (request) => {

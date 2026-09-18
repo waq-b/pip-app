@@ -42,6 +42,17 @@ export interface NudgeWriter {
   recommendation(input: RecommendationBriefInput): Promise<BriefDraft>;
 }
 
+/**
+ * "unavailable", with the provider's reason when it gave one (an HTTP status,
+ * "timeout") — never the error's message, which could carry anything.
+ */
+function unavailable(error: unknown): string {
+  const reason = (error as { reason?: unknown } | null)?.reason;
+  return typeof reason === "string" && /^[\w-]{1,20}$/.test(reason)
+    ? `unavailable (${reason})`
+    : "unavailable";
+}
+
 const newsTemplate = (input: NewsNudgeInput): NudgeDraft =>
   templateFor({
     type: "news",
@@ -76,8 +87,8 @@ export function llmWriter(options: {
         });
         content = answer.content;
         answeredBy = answer.model || model;
-      } catch {
-        fellBack("unavailable");
+      } catch (error) {
+        fellBack(unavailable(error));
         return newsTemplate(input);
       }
       const checked = checkNewsAnswer(content, input.reports.length);
@@ -120,8 +131,8 @@ export function llmWriter(options: {
           };
         }
         fellBack(checked.why);
-      } catch {
-        fellBack("unavailable");
+      } catch (error) {
+        fellBack(unavailable(error));
       }
       return { sentence: OPENING_TEMPLATE, model: "template", promptVersion: null };
     },
@@ -146,8 +157,8 @@ export function llmWriter(options: {
           };
         }
         fellBack(checked.why);
-      } catch {
-        fellBack("unavailable");
+      } catch (error) {
+        fellBack(unavailable(error));
       }
       return recommendationTemplate(input);
     },
