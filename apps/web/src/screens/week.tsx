@@ -5,6 +5,7 @@ import { Link, useParams } from "react-router";
 import { NotAdviceLabel } from "../components/not-advice-label";
 import { Skeleton } from "../components/skeleton";
 import { ApiError } from "../lib/api";
+import { formatPounds } from "../lib/format";
 import { RESPONSES, shortDay, usePastWeek, useRespond, useWeek } from "../lib/week";
 import { ICON_STROKE } from "../shell/nav";
 import { useBreakpoint } from "../shell/use-breakpoint";
@@ -161,6 +162,7 @@ export function NudgeCard({ nudge, heldBack = false }: { nudge: NudgeView; heldB
         </span>
       </div>
       <h3 className="font-heading m-0 text-[19px] leading-snug font-normal">{nudge.title}</h3>
+      {nudge.recommendation ? <PipsTake take={nudge.recommendation} /> : null}
       <p className="text-ink2 m-0 mt-1.5 text-[13.5px] leading-normal font-medium">{nudge.body}</p>
 
       {nudge.basis ? (
@@ -210,11 +212,32 @@ export function NudgeCard({ nudge, heldBack = false }: { nudge: NudgeView; heldB
 
       {!quiet ? (
         <div className="mt-3 flex flex-col gap-2.5">
-          <NotAdviceLabel />
+          {/* A recommendation is Pip's view, for someone who asked for it — and ends "Your call." */}
+          {nudge.kind !== "recommendation" ? <NotAdviceLabel /> : null}
           {!heldBack ? <WhatYouDid nudge={nudge} /> : null}
         </div>
       ) : null}
     </article>
+  );
+}
+
+const COURSE_WORDS: Record<NonNullable<NudgeView["recommendation"]>["course"], string> = {
+  hold: "Hold",
+  take_some_profit: "Take some profit",
+  // DESIGN §1: "rebalance" is jargon on screen.
+  rebalance: "Even it back out",
+};
+
+/** The course code chose and its pounds (DESIGN §10.7), built from the note card's own parts. */
+function PipsTake({ take }: { take: NonNullable<NudgeView["recommendation"]> }) {
+  return (
+    <p
+      aria-label="Pip's take"
+      className="bg-tint text-aink m-0 mt-2 rounded-[14px] px-3 py-2 text-[13.5px] font-bold"
+    >
+      → {COURSE_WORDS[take.course]}
+      {take.amount ? ` · ${formatPounds(take.amount, { whole: true })}` : ""}
+    </p>
   );
 }
 

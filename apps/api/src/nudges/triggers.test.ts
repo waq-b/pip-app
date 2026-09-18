@@ -177,6 +177,20 @@ describe("R3 — a pot off its target", () => {
     });
   });
 
+  it("makes one brief for one drift, though both pots are off by the same points", async () => {
+    const store = memoryTriggerStateStore();
+    const both = {
+      pots: [
+        { bucket: "Base" as const, driftPoints: -6, offTargetPence: -60_000 },
+        { bucket: "Medium" as const, driftPoints: 6, offTargetPence: 60_000 },
+      ],
+    };
+    await run(store, both, 0);
+    const hits = await run(store, both, 30);
+    expect(hits).toHaveLength(1);
+    expect(hits[0]).toMatchObject({ name: "Handpicked", amountPence: 60_000 });
+  });
+
   it("fires for Foundation five points under, not over", async () => {
     const store = memoryTriggerStateStore();
     const under = { pots: [{ bucket: "Base" as const, driftPoints: -5, offTargetPence: -50_000 }] };

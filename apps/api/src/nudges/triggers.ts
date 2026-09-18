@@ -45,11 +45,27 @@ export interface TriggerInput {
     /** Null when what was paid isn't known yet. */
     costPence: Pence | null;
     dayMovePercent: number | null;
+    /** The day's move in pounds, for the brief's title. */
+    dayMovePence?: Pence | null;
     /** The pot's own big-move line, in percent. */
     moveLine: number;
   }[];
   /** Foundation and Handpicked, judged against their targets. */
   pots: { bucket: "Base" | "Medium"; driftPoints: number | null; offTargetPence: Pence }[];
+}
+
+/** What a trigger read, in the shape the brief takes it (`research/recommendation.ts`). */
+export interface RecommendationFacts {
+  valuePence?: Pence;
+  limitPence?: Pence;
+  costPence?: Pence;
+  sharePoints?: number;
+  multiple?: number;
+  movePercent?: number;
+  movePence?: Pence;
+  moveLine?: number;
+  driftPoints?: number;
+  sideBetPastLimit?: boolean;
 }
 
 export interface StoredTriggerState {
@@ -72,7 +88,7 @@ export interface RecommendationHit {
   /** Pushed straight away (R1, R2, R4); R3 waits in the bell and the week. */
   urgent: boolean;
   /** The figures the brief is built from, frozen into the log. */
-  facts: Record<string, unknown>;
+  facts: RecommendationFacts;
 }
 
 /** Whether a condition is on or off this refresh, and whether it's clearly off. */
@@ -125,8 +141,6 @@ export function step(
   }
 }
 
-const pounds = (pence: Pence) => Math.round(pence / 100);
-
 /** Every trigger's reading this refresh, before state is consulted. */
 export function readTriggers(input: TriggerInput) {
   const readings: {
@@ -158,8 +172,8 @@ export function readTriggers(input: TriggerInput) {
         name: "Side Bet",
         urgent: true,
         facts: {
-          valuePounds: pounds(valuePence),
-          limitPounds: pounds(limitPence),
+          valuePence,
+          limitPence,
           sharePoints: Math.round(sharePoints * 10) / 10,
         },
       },
@@ -185,8 +199,8 @@ export function readTriggers(input: TriggerInput) {
           name: holding.name,
           urgent: true,
           facts: {
-            valuePounds: pounds(holding.valuePence),
-            costPounds: pounds(holding.costPence),
+            valuePence: holding.valuePence,
+            costPence: holding.costPence,
             multiple: Math.round(multiple * 10) / 10,
           },
         },
@@ -216,6 +230,7 @@ export function readTriggers(input: TriggerInput) {
           urgent: true,
           facts: {
             movePercent: Math.round(move * 10) / 10,
+            ...(holding.dayMovePence != null ? { movePence: holding.dayMovePence } : {}),
             moveLine: holding.moveLine,
             ...(alsoMultiple ? { multiple: Math.round(multiple * 10) / 10 } : {}),
             ...(alsoSideBet ? { sideBetPastLimit: true } : {}),
@@ -226,13 +241,17 @@ export function readTriggers(input: TriggerInput) {
   }
 
   // R3 — Handpicked over its target, or Foundation under, by five points on
-  // two refreshes. Rebalance: point new money at the other pot.
-  for (const pot of input.pots) {
-    if (pot.driftPoints === null) continue;
+  // two refreshes. With two pots in the shape those are the same drift seen
+  // from either side, so it's one reading: Handpicked's when it's there.
+  // Rebalance: point new money at the other pot.
+  const pot =
+    input.pots.find((p) => p.bucket === "Medium" && p.driftPoints !== null) ??
+    input.pots.find((p) => p.bucket === "Base" && p.driftPoints !== null);
+  if (pot && pot.driftPoints !== null) {
     const off = pot.bucket === "Medium" ? pot.driftPoints : -pot.driftPoints;
     readings.push({
       trigger: "pot_off_target",
-      subject: pot.bucket,
+      subject: "shape",
       reading: { on: off >= R3_DRIFT_POINTS, clear: Math.abs(pot.driftPoints) <= R3_REARM_POINTS },
       confirm: true,
       hit: {

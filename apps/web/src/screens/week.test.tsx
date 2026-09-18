@@ -230,6 +230,63 @@ describe("Your week", () => {
     expect(within(today).getByText("Nvidia reports results on Wed 23 Sep")).toBeInTheDocument();
   });
 
+  it("shows a recommendation with Pip's take, code's pounds, and no 'not advice' label", async () => {
+    renderRoute("/week", {
+      session: WAQAR,
+      api: api({
+        week: week(),
+        today: [
+          nudge({
+            id: "r1",
+            cadence: "daily",
+            kind: "recommendation",
+            reason: "side_bet_over_limit",
+            bucket: "Degen",
+            instrumentId: null,
+            title: "Side Bet is worth £780, past its £500 limit",
+            body: "Its value has grown past 10% of your net assets. Your call.",
+            basis: null,
+            sources: [],
+            checks: [],
+            recommendation: { course: "take_some_profit", amount: 28_000 },
+          }),
+        ],
+        pastWeeks: [],
+      }),
+    });
+    const today = await screen.findByRole("region", { name: "Today" });
+    const card = within(today).getByRole("article");
+    expect(within(card).getByLabelText("Pip's take")).toHaveTextContent("Take some profit · £280");
+    expect(card).toHaveTextContent("Your call.");
+    expect(within(card).queryByText(/not advice/i)).not.toBeInTheDocument();
+  });
+
+  it("says 'Even it back out', never 'rebalance'", async () => {
+    renderRoute("/week", {
+      session: WAQAR,
+      api: api({
+        week: week(),
+        today: [
+          nudge({
+            id: "r3",
+            cadence: "daily",
+            kind: "recommendation",
+            reason: "pot_off_target",
+            title: "Handpicked is 8 points over its target",
+            body: "Pointing new money at Foundation evens it back out. Your call.",
+            basis: null,
+            sources: [],
+            recommendation: { course: "rebalance", amount: 60_000 },
+          }),
+        ],
+        pastWeeks: [],
+      }),
+    });
+    const take = await screen.findByLabelText("Pip's take");
+    expect(take).toHaveTextContent("Even it back out · £600");
+    expect(document.body).not.toHaveTextContent(/rebalance/i);
+  });
+
   it("says when the first week arrives", async () => {
     renderRoute("/week", { session: WAQAR, api: api({ week: null, today: [], pastWeeks: [] }) });
     expect(await screen.findByText(/Your first week arrives on Monday/)).toBeInTheDocument();

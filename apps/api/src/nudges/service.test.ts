@@ -11,6 +11,7 @@ import { moveSince, stubFactsReader } from "./gather.js";
 import { memoryProfileStore } from "./profile.js";
 import { createNudgeService, mondayOf, pushUrgent, type NudgeUser } from "./service.js";
 import { memoryNudgeStore, type NewNudge } from "./store.js";
+import { memoryTriggerStateStore } from "./triggers.js";
 import { createNotifier } from "../notify/notify.js";
 import { stubEmailSender, stubPushSender } from "../notify/senders.js";
 import { memoryNotificationStore } from "../notify/store.js";
@@ -387,5 +388,142 @@ describe("helpers", () => {
       pence: 1_100,
     });
     expect(moveSince(series, new Date("2026-08-01T00:00:00Z"), 1_210, 12_100)).toBeNull();
+  });
+});
+
+describe("recommendations (Phase 6)", () => {
+  const NINE = new Date("2026-09-17T09:00:00Z");
+  const HALF_NINE = new Date("2026-09-17T09:30:00Z");
+  const TEN = new Date("2026-09-17T10:00:00Z");
+
+  /** Side Bet's sample value is £780; a £500 limit puts it well past 10% of net assets. */
+  async function world(options: { handpickedTarget?: number; limitPence?: number } = {}) {
+    const rulesStore = memoryRulesStore();
+    const store = memoryNudgeStore();
+    const triggers = memoryTriggerStateStore();
+    const notifications = memoryNotificationStore();
+    const push = stubPushSender();
+    const notifier = createNotifier({ store: notifications, push, email: stubEmailSender() });
+    for (const user of [waqar, friend]) {
+      await notifications.addDevice(
+        user,
+        {
+          endpoint: `https://web.push.apple.com/${user.userId}`,
+          p256dh: "k",
+          auth: "a",
+          label: "iPhone",
+        },
+        NINE,
+      );
+      if (options.handpickedTarget) {
+        await rulesStore.set(user, { handpickedTarget: options.handpickedTarget }, NINE);
+      }
+    }
+    const writer = stubWriter();
+    const profiles = memoryProfileStore();
+    const service = createNudgeService({
+      readModel: stubReadModel(
+        createStubMarketData({ anchors: stubSeriesAnchors(), now: () => SAMPLE_MARKET_AT }),
+        rulesStore,
+      ),
+      rulesStore,
+      sideBetLimits: fixedSideBetLimits({
+        moneyInPence: 40_000,
+        limitPence: options.limitPence ?? 640_000,
+        starterLimit: false,
+      }),
+      trustStore: memoryTrustSettingsStore(),
+      profileStore: profiles,
+      facts: stubFactsReader(),
+      store,
+      writer,
+      notifier,
+      triggers,
+    });
+    return { service, store, push, triggers, writer, profiles };
+  }
+
+  const recommendations = (store: ReturnType<typeof memoryNudgeStore>) =>
+    store.all().filter((n) => n.kind === "recommendation");
+
+  it("R1: one brief and one push once Side Bet is past its limit on two refreshes", async () => {
+    const { service, store, push } = await world({ limitPence: 50_000 });
+    await service.buildDaily(waqar, NINE);
+    expect(recommendations(store)).toEqual([]);
+
+    await service.buildDaily(waqar, HALF_NINE);
+    const [brief] = recommendations(store);
+    expect(brief).toMatchObject({
+      reason: "side_bet_over_limit",
+      recommendation: "take_some_profit",
+      trigger: "side_bet_over_limit",
+      urgent: true,
+      personalised: true,
+      title: "Side Bet is worth £780, past its £500 limit",
+      model: "template",
+    });
+    expect(brief!.body).toContain("Taking £280 out would bring it back to the limit");
+    expect(brief!.body.endsWith("Your call.")).toBe(true);
+    expect(push.sent).toEqual([
+      expect.objectContaining({
+        title: "Side Bet is worth £780, past its £500 limit",
+        body: "Pip's take: take some profit — £280. Your call.",
+        url: "/week",
+      }),
+    ]);
+
+    // Still past it an hour later: the same breach, so nothing new.
+    await service.buildDaily(waqar, TEN);
+    expect(recommendations(store)).toHaveLength(1);
+    expect(push.sent).toHaveLength(1);
+  });
+
+  it("shows Pip's take on Your week, with code's course and pounds", async () => {
+    const { service } = await world({ limitPence: 50_000 });
+    await service.buildDaily(waqar, NINE);
+    await service.buildDaily(waqar, HALF_NINE);
+    const { today } = await service.thisWeek(waqar, HALF_NINE);
+    expect(today.find((n) => n.kind === "recommendation")).toMatchObject({
+      reason: "side_bet_over_limit",
+      recommendation: { course: "take_some_profit", amount: 28_000 },
+    });
+  });
+
+  it("R3: Handpicked well over its target waits in the week, with no push", async () => {
+    // The sample's Handpicked is about 23% of the shape: 8 points over a 15% target.
+    const { service, store, push } = await world({ handpickedTarget: 15 });
+    await service.buildDaily(waqar, NINE);
+    await service.buildDaily(waqar, HALF_NINE);
+    const [brief] = recommendations(store);
+    expect(brief).toMatchObject({
+      reason: "pot_off_target",
+      recommendation: "rebalance",
+      urgent: false,
+      title: "Handpicked is 8 points over its target",
+    });
+    expect(brief!.body).toContain("Pointing new money at Foundation");
+    expect(push.sent).toEqual([]);
+  });
+
+  it("gives nothing personalised, and keeps no trigger state, for anyone without personal research", async () => {
+    const { service, store, push, triggers, writer } = await world({
+      limitPence: 50_000,
+      handpickedTarget: 15,
+    });
+    const recommend = vi.spyOn(writer, "recommendation");
+    for (const at of [NINE, HALF_NINE, TEN]) await service.buildDaily(friend, at);
+    expect(recommendations(store)).toEqual([]);
+    expect(push.sent).toEqual([]);
+    expect(triggers.rows.size).toBe(0);
+    expect(recommend).not.toHaveBeenCalled();
+  });
+
+  it("logs, but never shows or pushes, a recommendation about something they've excluded", async () => {
+    const { service, store, profiles } = await world({ handpickedTarget: 15 });
+    await profiles.set(waqar, { ...EMPTY_PROFILE, exclusions: ["Handpicked"] }, NINE);
+    await service.buildDaily(waqar, NINE);
+    await service.buildDaily(waqar, HALF_NINE);
+    expect(recommendations(store)).toMatchObject([{ shown: false, model: "template" }]);
+    expect((await service.thisWeek(waqar, HALF_NINE)).today).toEqual([]);
   });
 });

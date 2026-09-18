@@ -1,10 +1,22 @@
-import { checkNewsAnswer, checkOpeningAnswer } from "./guard.js";
+import { checkNewsAnswer, checkOpeningAnswer, checkRecommendationAnswer } from "./guard.js";
 import {
   AWARENESS_PROMPT_VERSION,
   AWARENESS_SCHEMA,
   AWARENESS_SYSTEM,
   awarenessUser,
 } from "./prompts/awareness.v2.js";
+import {
+  RECOMMENDATION_PROMPT_VERSION,
+  RECOMMENDATION_SCHEMA,
+  RECOMMENDATION_SYSTEM,
+  recommendationUser,
+} from "./prompts/recommendation.v1.js";
+import {
+  briefBody,
+  briefTitle,
+  recommendationTemplate,
+  type RecommendationBriefInput,
+} from "./recommendation.js";
 import { WEEK_PROMPT_VERSION, WEEK_SCHEMA, WEEK_SYSTEM, weekUser } from "./prompts/week.v1.js";
 import { OPENING_TEMPLATE, templateFor } from "./templates.js";
 import type { Chat, NewsNudgeInput, NotMaterial, NudgeDraft } from "./types.js";
@@ -22,6 +34,11 @@ export interface NudgeWriter {
   opening(
     titles: string[],
   ): Promise<{ sentence: string; model: string; promptVersion: string | null }>;
+  /**
+   * A recommendation brief (Phase 6, personal research only). The title and
+   * the course are code's; only the reasons may come from an LLM.
+   */
+  recommendation(input: RecommendationBriefInput): Promise<NudgeDraft>;
 }
 
 const newsTemplate = (input: NewsNudgeInput): NudgeDraft =>
@@ -107,6 +124,31 @@ export function llmWriter(options: {
       }
       return { sentence: OPENING_TEMPLATE, model: "template", promptVersion: null };
     },
+
+    async recommendation(input) {
+      try {
+        const answer = await chat({
+          model,
+          system: RECOMMENDATION_SYSTEM,
+          user: recommendationUser(input),
+          schema: RECOMMENDATION_SCHEMA,
+        });
+        const checked = checkRecommendationAnswer(answer.content, input.course);
+        if (checked.ok) {
+          return {
+            title: briefTitle(input),
+            body: briefBody(checked.parts),
+            citedIds: [],
+            model: `groq:${answer.model || model}`,
+            promptVersion: RECOMMENDATION_PROMPT_VERSION,
+          };
+        }
+        fellBack(checked.why);
+      } catch {
+        fellBack("unavailable");
+      }
+      return recommendationTemplate(input);
+    },
   };
 }
 
@@ -137,6 +179,10 @@ export function stubWriter(): NudgeWriter {
             model: "stub",
             promptVersion: WEEK_PROMPT_VERSION,
           };
+    },
+    // Pip's own brief: the same words the LLM's answer falls back to.
+    async recommendation(input) {
+      return recommendationTemplate(input);
     },
   };
 }

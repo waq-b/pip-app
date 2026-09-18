@@ -35,6 +35,7 @@ import { fixedSideBetLimits, type SideBetLimitReader } from "./rules/side-bet.js
 import { memoryNotificationStore, type NotificationStore } from "./notify/store.js";
 import type { Notifier } from "./notify/notify.js";
 import { stubWriter } from "./research/writer.js";
+import { memoryTriggerStateStore } from "./nudges/triggers.js";
 
 export interface BuildAppOptions {
   /**
@@ -140,6 +141,7 @@ export function buildApp(options: BuildAppOptions = {}) {
           facts: stubFactsReader(),
           store: memoryNudgeStore(),
           writer: stubWriter(),
+          triggers: memoryTriggerStateStore(),
         },
         { buildOnRead: true },
       ),

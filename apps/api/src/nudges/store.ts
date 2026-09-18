@@ -47,6 +47,9 @@ export interface StoredNudge {
   potShareAt: string | null;
   /** Past the urgent line: pushed straight away rather than waiting (Phase 6). */
   urgent: boolean;
+  /** Pip's take on a `recommendation` nudge, and the trigger behind it (Phase 6). */
+  recommendation?: string | null;
+  trigger?: string | null;
 }
 
 export interface WeekRecord {
@@ -99,7 +102,11 @@ function fromRow(row: typeof nudges.$inferSelect): StoredNudge {
 }
 
 function historyFrom(rows: StoredNudge[], today: string, monday: string): NudgeHistory {
-  const shownDaily = rows.filter((n) => n.shown && n.cadence === "daily");
+  // A recommendation is one per crossing, not one of the day's notes: it
+  // doesn't use up the daily budget.
+  const shownDaily = rows.filter(
+    (n) => n.shown && n.cadence === "daily" && n.kind !== "recommendation",
+  );
   const caps = rows.filter((n) => n.shown && n.reason === "cap").map((n) => n.createdAt.getTime());
   return {
     dailyShownToday: shownDaily.filter((n) => n.builtOn === today).length,

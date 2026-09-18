@@ -4,6 +4,7 @@ import {
   displayNameFor,
   type NudgeResponse,
   type NudgeView,
+  type Recommendation,
   type TrustSettings,
   type WeekResponse,
   type WeekView,
@@ -28,6 +29,9 @@ import {
   type CalendarItem,
 } from "./candidates.js";
 import { gather, type GatherDeps, type Gathered } from "./gather.js";
+import { recommendationRows } from "./recommendations.js";
+import type { TriggerStateStore } from "./triggers.js";
+import { takeLine } from "../research/recommendation.js";
 import type { NewNudge, NudgeStore, StoredNudge, StoredWeek } from "./store.js";
 
 /**
@@ -52,6 +56,8 @@ export interface NudgeServiceDeps extends GatherDeps {
   writer: NudgeWriter;
   /** Pushes urgent notes (Phase 6). Without it they're logged and wait for the week. */
   notifier?: Notifier;
+  /** Where each recommendation trigger stands. Without it, no recommendations are made. */
+  triggers?: TriggerStateStore;
 }
 
 const DAY_MS = 86_400_000;
@@ -78,6 +84,7 @@ interface StoredFacts {
   move?: { percent: number; pence: number };
   counts?: BuildCounts;
   next?: CalendarItem | null;
+  amountPence?: number | null;
 }
 
 const reportsOf = (facts: StoredFacts): NewsItem[] =>
@@ -231,13 +238,26 @@ export async function pushUrgent(
   now: Date,
 ): Promise<void> {
   if (!deps.notifier || !user.personalResearch) return;
-  for (const row of rows.filter((r) => r.urgent && r.shown)) {
+  // A holding with a recommendation today pushes that, not its move note too.
+  const recommended = new Set(
+    rows.filter((r) => r.kind === "recommendation" && r.instrumentId).map((r) => r.instrumentId),
+  );
+  const urgent = rows.filter(
+    (r) =>
+      r.urgent &&
+      r.shown &&
+      (r.kind === "recommendation" || !r.instrumentId || !recommended.has(r.instrumentId)),
+  );
+  for (const row of urgent) {
+    const body = row.recommendation
+      ? `${takeLine(row.recommendation as Recommendation, (row.facts.amountPence as number | null) ?? null)} Your call.`
+      : row.body;
     const outcome = await deps.notifier.push(
       {
         userId: user.userId,
         kind: "urgent",
         dedupeKey: `urgent:${row.dedupeKey}:${builtOn}`,
-        message: { title: row.title, body: row.body, url: "/week" },
+        message: { title: row.title, body, url: "/week" },
       },
       now,
     );
@@ -344,6 +364,8 @@ export function recheck(
       return [exclusionsCheck(exclusions, facts.name ?? "", facts.shortName ?? "")];
     case "isa_year_end":
       return [exclusionsCheck(exclusions, "ISA")];
+    case "recommendation":
+      return [exclusionsCheck(exclusions, facts.name ?? "", facts.shortName ?? "")];
     default:
       return [];
   }
@@ -406,6 +428,14 @@ function toView(nudge: StoredNudge, checks: TrustCheck[]): NudgeView {
     })),
     ...(failed
       ? { heldBackBecause: `${HELD_WORDS[failed.rule] ?? failed.rule} — ${failed.detail}` }
+      : {}),
+    ...(nudge.kind === "recommendation" && nudge.recommendation
+      ? {
+          recommendation: {
+            course: nudge.recommendation as Recommendation,
+            amount: (facts.amountPence as number | null | undefined) ?? null,
+          },
+        }
       : {}),
     response: nudge.response,
     createdAt: nudge.createdAt.toISOString(),
@@ -550,7 +580,18 @@ export function createNudgeService(
     },
 
     async buildDaily(user, now = clock()) {
-      const { rows, today } = await build(user, now, "daily");
+      const { gathered, rows, today } = await build(user, now, "daily");
+      if (user.personalResearch && deps.triggers) {
+        rows.push(
+          ...(await recommendationRows(
+            { triggers: deps.triggers, writer: deps.writer },
+            user,
+            gathered,
+            today,
+            now,
+          )),
+        );
+      }
       const saved = await deps.store.saveDaily(user, rows);
       await pushUrgent(deps, user, rows, today, now);
       return saved;

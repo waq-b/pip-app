@@ -9,6 +9,7 @@ import { dbFactsReader } from "./nudges/gather.js";
 import { groqChat } from "./nudges/groq-chat.js";
 import { createNudgeService } from "./nudges/service.js";
 import { dbNudgeStore } from "./nudges/store.js";
+import { dbTriggerStateStore } from "./nudges/trigger-store.js";
 import { llmWriter, stubWriter } from "./research/writer.js";
 import { createRefreshJob } from "./jobs/refresh-job.js";
 import { LOG_REDACT_PATHS } from "./logging.js";
@@ -114,6 +115,7 @@ function realAccounts(): Partial<BuildAppOptions> {
     facts: dbFactsReader(db),
     store: dbNudgeStore(db),
     notifier,
+    triggers: dbTriggerStateStore(db),
     writer:
       config.llm.mode === "groq"
         ? llmWriter({ chat: groqChat({ apiKey: config.llm.apiKey }), model: config.llm.model })
