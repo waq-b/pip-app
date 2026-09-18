@@ -6,7 +6,7 @@ Living doc. Every screen, rule, alert, and state the app has — written for a h
 
 **Pip** — "Three pots. One number. No homework." — is live at https://pip.example.com (the old pip-old.example.net address redirects). Every screen from the signed-off design (`docs/DESIGN.md`) is built at phone, tablet and desktop sizes, in light and dark, behind a real sign-in (emailed magic link).
 
-Connect a Trading 212 **practice** account and Pip shows what it really holds, valued with market prices, with history rebuilt from its orders — see "Real accounts" below. Kraken (Side Bet) connects with a read-only key (Phase 3); real-money Trading 212 accounts connect in Phase 7. Nothing Pip does can move money: it has no code that places an order.
+Connect a Trading 212 **practice** account and Pip shows what it really holds, valued with market prices, with history rebuilt from its orders — see "Real accounts" below. Kraken (Side Bet) connects with a read-only key (Phase 3); real-money Trading 212 accounts connect in Phase 8. Nothing Pip does can move money: it has no code that places an order.
 
 Locally, `PROVIDER_MODE=stub` still runs the whole app on the design's sample data, which is what the screen descriptions below mostly describe.
 

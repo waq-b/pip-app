@@ -2,7 +2,7 @@
  * Trading 212, read-only, practice account only (CLAUDE.md s13, hard lines 1, 3).
  *
  * Every request is a GET to an allowlisted path. There is no code path to an
- * order or pies endpoint, and `live` isn't a valid environment until Phase 7.
+ * order or pies endpoint, and `live` isn't a valid environment until Phase 8.
  * Responses are checked for the fields Pip relies on, so a beta API renaming
  * something fails loudly here instead of producing a wrong number later.
  */
@@ -132,7 +132,7 @@ export interface T212Client {
 
 export function createT212Client(options: T212ClientOptions): T212Client {
   if (options.env !== "demo") {
-    // Hard line 3: paper before live. Phase 7 adds live, read-only.
+    // Hard line 3: paper before live. Phase 8 adds live, read-only.
     throw new Error("Only the Trading 212 practice environment is allowed in Phase 2");
   }
   if (!options.key || !options.secret) throw new T212AuthError();

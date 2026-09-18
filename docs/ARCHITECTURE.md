@@ -250,7 +250,7 @@ An unknown pot or holding is a 404; an unrecognised timeframe or range is a 400 
 - **Not built from real data yet, and saying so**: `activityComingSoon`, `moneyIn.comingSoon`, `monthlySplit.comingSoon`, empty instrument `note` (Phase 5), a pot's rule `available: false` (status `unavailable`) while it isn't connected. Verdicts are "Up/Down £X today." then "Nothing needs you." or, with a broken cap, "Side Bet needs a look." (rules engine).
 - Tested on PGlite (values, today/all/month, bought-today, Side Bet, freshness, a second user seeing nothing, cash row, chart caption, intraday, 404, rules) and run against the practice ISA: £5,003.07 across four holdings on Yahoo prices.
 
-**The server** (`server.ts`) builds the stub or real set from `PROVIDER_MODE`. In `t212` mode: `liveReadModel`, `liveConnectionService` (starting history rebuild in the background on connect), `createRefreshJob`, all on the privileged `getDb()` with `liveMarket`; `T212_ENV` must be `demo` until Phase 7; `JOB_SECRET` must be at least 32 characters when set.
+**The server** (`server.ts`) builds the stub or real set from `PROVIDER_MODE`. In `t212` mode: `liveReadModel`, `liveConnectionService` (starting history rebuild in the background on connect), `createRefreshJob`, all on the privileged `getDb()` with `liveMarket`; `T212_ENV` must be `demo` until Phase 8; `JOB_SECRET` must be at least 32 characters when set.
 
 **Connecting an account** (`routes/connections.ts`) — `GET /connections`, `POST /connections/:provider` (body `{ accountKind?, key, secret? }`) and `DELETE /connections/:provider?accountKind=`, all behind the guard. The routes parse and hand over to a `ConnectionService`; which one depends on the mode.
 
@@ -278,7 +278,7 @@ interface Provider {
 
 ### Trading 212 (`providers/t212/`, Phase 2)
 
-- **`client.ts`** — read-only client for the **practice environment only** (`env: "demo"`; anything else throws until Phase 7). HTTP Basic `key:secret`. Every request is a `GET` to an allowlisted path (summary, positions, instrument and exchange metadata, order history); a test reads the source and fails if a write method, `equity/orders` or `pies` ever appears. Methods: `accountSummary`, `positions`, `instruments`, `exchanges`, and `fills()` — an async generator following `nextPagePath` cursor pages, skipping unfilled orders.
+- **`client.ts`** — read-only client for the **practice environment only** (`env: "demo"`; anything else throws until Phase 8). HTTP Basic `key:secret`. Every request is a `GET` to an allowlisted path (summary, positions, instrument and exchange metadata, order history); a test reads the source and fails if a write method, `equity/orders` or `pies` ever appears. Methods: `accountSummary`, `positions`, `instruments`, `exchanges`, and `fills()` — an async generator following `nextPagePath` cursor pages, skipping unfilled orders.
 - **Errors are typed**: `T212AuthError` (401, never retried), `T212PermissionError` naming the missing permission (T212's 403 is bare, so it's inferred from the endpoint), `T212UnavailableError` (5xx, network, or 429 after retries), `T212ShapeError` (a field Pip relies on is missing — the beta API changed).
 - **Rate limits** come from T212's own headers: when `x-ratelimit-remaining` hits 0 the next call to that endpoint waits until `x-ratelimit-reset`; a 429 waits and retries twice, then gives up.
 - **`rows.ts`** — responses → stored rows: holdings (quantity and average price at full precision, total cost in pence), cash in pence, instruments, and trades (net value and fees in pence). `currentPrice` and `walletImpact.currentValue` are dropped (hard line 8). Anything not in pounds raises `NotInPoundsError`.
@@ -667,7 +667,7 @@ Auth and route tests otherwise use in-memory stores, and CI never talks to Supab
 
 | Var                                                  | Purpose                                                                                                                                                                                | Default                                     |
 | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| `PROVIDER_MODE`                                      | `stub` (fake data) or `t212` (real providers: Trading 212 from Phase 2, Kraken from Phase 3 — the name predates Kraken). `t212` needs `MASTER_KEY` (and `T212_ENV=demo` until Phase 7) | `stub`                                      |
+| `PROVIDER_MODE`                                      | `stub` (fake data) or `t212` (real providers: Trading 212 from Phase 2, Kraken from Phase 3 — the name predates Kraken). `t212` needs `MASTER_KEY` (and `T212_ENV=demo` until Phase 8) | `stub`                                      |
 | `MASTER_KEY`                                         | 32 random bytes, base64 — seals provider keys. **Render only**; never in Supabase, git or chat. `pnpm --filter api master-key` makes one                                               | none — required for `t212`                  |
 | `MASTER_KEY_VERSION`                                 | Which version `MASTER_KEY` is; stamped on every sealed value                                                                                                                           | `1`                                         |
 | `MASTER_KEY_PREVIOUS`, `MASTER_KEY_PREVIOUS_VERSION` | Only during a rotation: the old key, so old values can be opened and re-sealed                                                                                                         | none                                        |
@@ -694,7 +694,7 @@ Provider keys are never server env vars in a deployed Pip: each user's keys are 
 - **Startup.** `config.ts` refuses `PROVIDER_MODE=t212` without a valid `MASTER_KEY` (32 bytes, base64); error messages never echo the key.
 - **Logging.** The server's pino logger redacts auth and job-secret headers and any `key`, `secret`, `apiKey`, `apiSecret`, `password`, `accessToken` or `masterKey` field (`logging.ts`); a test logs real-looking values and checks none reach the output. Fastify's default request serializer logs no headers or bodies in the first place.
 
-**Losing `MASTER_KEY`** makes every stored key unreadable. Nothing else is lost: users re-paste their keys (they're read-only until Phase 8). Keep a copy somewhere safe outside Render and Supabase — a password manager.
+**Losing `MASTER_KEY`** makes every stored key unreadable. Nothing else is lost: users re-paste their keys (they're read-only unless order placement is unparked from v2). Keep a copy somewhere safe outside Render and Supabase — a password manager.
 
 ### Rotating `MASTER_KEY` (runbook)
 

@@ -33,6 +33,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Constitution
 
+- Changed: roadmap (Waqar, 2026-09-18) — phase 7 is deep links (a server-built link to the exact instrument at Kraken or Trading 212 wherever Pip talks about a holding), T212 live becomes phase 8 with its plan unchanged (`docs/phases/phase-8.md`), phase 9 is beta; order placement leaves the phases for a new "v2 — Later features" backlog group, with every parked idea as its own item. CLAUDE.md s2, s3, s4, s5, s7 and s13 updated; board groups renamed and added, nothing deleted (#3233510467)
 - Changed: CLAUDE.md section 1 — for Waqar, Pip also recommends a course of action (hold, take some profit, rebalance) when the facts and his own rules point to one, says why, and leaves the decision to him; hard line 12 becomes "Recommendations, not forecasts" (personal_research users only, built on what is true now and on discipline, never predicting prices; others get generic information). Hard line 2 unchanged. Waqar's decision in chat, 2026-09-17 ("Change the goal: yes. Pip recommends a course of action for me when the facts and my own rules point to one.") (#3230768753)
 
 ## [0.5.0] — 2026-09-17
