@@ -665,7 +665,7 @@ export function createNudgeService(
           )),
         );
       }
-      const saved = await deps.store.saveDaily(user, rows);
+      const saved = await deps.store.saveDaily(user, rows, now);
       await pushUrgent(deps, user, rows, today, now);
       return saved;
     },

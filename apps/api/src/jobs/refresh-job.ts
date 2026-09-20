@@ -16,6 +16,7 @@ import { refreshDue, type PricedInstrument } from "../market/refresh.js";
 import type { withFallback } from "../market/sources/fallback.js";
 import { backfillHistory } from "../sync/backfill.js";
 import { backfillKrakenHistory } from "../sync/kraken-history.js";
+import { recordConnectionGaps, type GapOutcome } from "../notify/gaps.js";
 import { pollKraken, type CoinDirectory, type KrakenClientFor } from "../sync/kraken.js";
 import {
   credentialsDue,
@@ -72,6 +73,8 @@ export interface RefreshJobDeps {
 
 export interface RefreshJobSummary {
   polled: number;
+  /** Connection gaps opened and closed this run (bell rows, never pushes). */
+  gaps: GapOutcome;
   backfilled: number;
   pricesRefreshed: number;
   pricesFailed: number;
@@ -97,6 +100,7 @@ export function createRefreshJob(deps: RefreshJobDeps) {
     const at = now();
     const summary: RefreshJobSummary = {
       polled: 0,
+      gaps: { opened: 0, closed: 0 },
       backfilled: 0,
       pricesRefreshed: 0,
       pricesFailed: 0,
@@ -145,6 +149,9 @@ export function createRefreshJob(deps: RefreshJobDeps) {
               : await pollCredential(deps.db, deps.box, credential, deps.clientFor, at);
           if (outcome?.outcome === "polled") summary.polled += 1;
         }
+        // An account that hasn't answered for hours becomes a bell row, never
+        // a push: only the figure's age has changed.
+        summary.gaps = await recordConnectionGaps(deps.db, at);
       },
       "poll",
     );

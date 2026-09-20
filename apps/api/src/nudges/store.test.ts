@@ -109,8 +109,8 @@ describe("the nudge log in the database", () => {
       builtOn: "2026-09-15",
       dedupeKey: "cap:Degen:2026-09-15",
     });
-    expect(await store.saveDaily(ALICE, [daily])).toBe(1);
-    expect(await store.saveDaily(ALICE, [daily])).toBe(0);
+    expect(await store.saveDaily(ALICE, [daily], new Date("2026-09-15T09:00:00Z"))).toBe(1);
+    expect(await store.saveDaily(ALICE, [daily], new Date("2026-09-15T09:00:00Z"))).toBe(0);
     expect(await store.daily(ALICE, "2026-09-15")).toHaveLength(1);
     const history = await store.history(ALICE, "2026-09-16", "2026-09-14");
     expect(history).toMatchObject({

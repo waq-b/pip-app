@@ -318,7 +318,7 @@ describe("urgent notes (Phase 6)", () => {
       THURSDAY,
     );
     const rows = [urgentRow(1), urgentRow(2), urgentRow(3)];
-    await store.saveDaily(waqar, rows);
+    await store.saveDaily(waqar, rows, THURSDAY);
     await pushUrgent({ store, notifier } as never, waqar, rows, "2026-09-17", THURSDAY);
 
     expect(push.sent).toHaveLength(2);

@@ -12,6 +12,7 @@ import {
 } from "../providers/t212/client.js";
 import { assertPounds, NotInPoundsError } from "../providers/t212/rows.js";
 import type { ConnectionService, ConnectionUser } from "../routes/connections.js";
+import { closeGapsFor } from "../notify/gaps.js";
 import { bucketForAccountKind } from "../valuation/value.js";
 import {
   pollKraken,
@@ -214,6 +215,8 @@ export function liveConnectionService(options: LiveConnectionOptions): Connectio
               eq(dailyValues.bucket, bucketForAccountKind(accountKind)),
             ),
           );
+        // A gap on an account nobody has any more is over, not open forever.
+        await closeGapsFor(tx, user.userId, provider, options.now?.() ?? new Date());
       });
     },
   };

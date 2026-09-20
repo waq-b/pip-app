@@ -69,8 +69,12 @@ export interface NudgeStore {
   weekExists(user: ReadUser, weekOf: string): Promise<boolean>;
   /** False when that week was already built — the first build stands. */
   saveWeek(user: ReadUser, week: WeekRecord, rows: NewNudge[]): Promise<boolean>;
-  /** Rows already logged today (same key) are skipped. Returns how many were new. */
-  saveDaily(user: ReadUser, rows: NewNudge[]): Promise<number>;
+  /**
+   * Rows already logged today (same key) are skipped. Returns how many were
+   * new. `now` is when the build ran: the log says when a note was written,
+   * which is what the trust rules judge its facts' age against on a re-read.
+   */
+  saveDaily(user: ReadUser, rows: NewNudge[], now: Date): Promise<number>;
   week(user: ReadUser, weekOf: string | "latest"): Promise<StoredWeek | null>;
   /** Mondays, newest first. */
   weeks(user: ReadUser): Promise<string[]>;
@@ -160,11 +164,13 @@ export function dbNudgeStore(db: Db): NudgeStore {
       });
     },
 
-    async saveDaily(user, rows) {
+    async saveDaily(user, rows, now) {
       if (rows.length === 0) return 0;
       const inserted = await db
         .insert(nudges)
-        .values(rows.map((row) => ({ ...row, userId: user.userId, digestId: null })))
+        .values(
+          rows.map((row) => ({ ...row, userId: user.userId, digestId: null, createdAt: now })),
+        )
         .onConflictDoNothing()
         .returning({ id: nudges.id });
       return inserted.length;
@@ -240,12 +246,17 @@ export function memoryNudgeStore(): NudgeStore & { all: () => StoredNudge[] } {
     counter += 1;
     return `00000000-0000-4000-8000-${String(counter).padStart(12, "0")}`;
   };
-  const make = (user: ReadUser, row: NewNudge, digestId: string | null): StoredNudge => ({
+  const make = (
+    user: ReadUser,
+    row: NewNudge,
+    digestId: string | null,
+    createdAt: Date,
+  ): StoredNudge => ({
     ...row,
     id: id(),
     userId: user.userId,
     digestId,
-    createdAt: new Date(),
+    createdAt,
     response: null,
     respondedAt: null,
   });
@@ -269,11 +280,11 @@ export function memoryNudgeStore(): NudgeStore & { all: () => StoredNudge[] } {
         ...week,
         id: digestId,
         userId: user.userId,
-        nudges: rows.map((r) => make(user, r, digestId)),
+        nudges: rows.map((r) => make(user, r, digestId, week.builtAt)),
       });
       return true;
     },
-    async saveDaily(user, rows) {
+    async saveDaily(user, rows, now) {
       let added = 0;
       for (const row of rows) {
         const exists = daily.some(
@@ -281,7 +292,7 @@ export function memoryNudgeStore(): NudgeStore & { all: () => StoredNudge[] } {
             n.userId === user.userId && n.dedupeKey === row.dedupeKey && n.builtOn === row.builtOn,
         );
         if (exists) continue;
-        daily.push(make(user, row, null));
+        daily.push(make(user, row, null, now));
         added += 1;
       }
       return added;
