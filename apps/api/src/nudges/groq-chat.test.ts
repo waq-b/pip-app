@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { TemplateFacts } from "../research/templates.js";
 import type { CandidateFacts } from "./candidates.js";
-import { groqChat, LlmUnavailableError } from "./groq-chat.js";
+import { groqChat, LlmUnavailableError, retryAfterMs } from "./groq-chat.js";
 
 const request = {
   model: "openai/gpt-oss-120b",
@@ -48,6 +48,53 @@ describe("the Groq chat client", () => {
     expect(error).toBeInstanceOf(LlmUnavailableError);
     expect((error as LlmUnavailableError).reason).toBe(reason);
     expect(String(error)).not.toContain("gsk_secret");
+  });
+});
+
+describe("Groq's per-minute limit", () => {
+  const ok = () =>
+    new Response(JSON.stringify({ model: "m", choices: [{ message: { content: "{}" } }] }));
+  const limited = (headers: Record<string, string>) => new Response("{}", { status: 429, headers });
+
+  it("waits as long as Groq asks, once, then carries on", async () => {
+    const waits: number[] = [];
+    const responses = [limited({ "retry-after": "7" }), ok()];
+    const fetch = vi.fn(async () => responses.shift()!);
+    const answer = await groqChat({
+      apiKey: "k",
+      fetch,
+      sleep: async (ms) => void waits.push(ms),
+    })(request);
+    expect(answer.content).toBe("{}");
+    expect(waits).toEqual([7000]);
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("gives up rather than wait long, or twice", async () => {
+    const sleep = vi.fn(async () => undefined);
+    const tooLong = groqChat({
+      apiKey: "k",
+      fetch: async () => limited({ "retry-after": "60" }),
+      sleep,
+    });
+    await expect(tooLong(request)).rejects.toMatchObject({ reason: "429" });
+    expect(sleep).not.toHaveBeenCalled();
+
+    const fetch = vi.fn(async () => limited({ "retry-after": "1" }));
+    await expect(groqChat({ apiKey: "k", fetch, sleep })(request)).rejects.toMatchObject({
+      reason: "429",
+    });
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it.each([
+    [{ "retry-after": "3" }, 3000],
+    [{ "x-ratelimit-reset-tokens": "7.66s" }, 7660],
+    [{ "x-ratelimit-reset-requests": "1m2.5s" }, 62_500],
+    [{ "x-ratelimit-reset-tokens": "120ms" }, 120],
+    [{}, null],
+  ])("reads %j as %s ms", (headers, ms) => {
+    expect(retryAfterMs(new Headers(headers))).toBe(ms);
   });
 });
 

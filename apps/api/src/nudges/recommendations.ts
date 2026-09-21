@@ -1,10 +1,6 @@
 import type { Bucket } from "@finance-app/shared";
-import {
-  recommendationTemplate,
-  type RecommendationBriefInput,
-} from "../research/recommendation.js";
-import type { NudgeWriter } from "../research/writer.js";
-import { exclusionsCheck } from "../rules/trust.js";
+import type { BriefDraft, RecommendationBriefInput } from "../research/recommendation.js";
+import { exclusionsCheck, type TrustCheck } from "../rules/trust.js";
 import type { Gathered } from "./gather.js";
 import type { NewNudge } from "./store.js";
 import {
@@ -84,66 +80,78 @@ function briefInput(hit: RecommendationHit, gathered: Gathered): RecommendationB
   };
 }
 
-export async function recommendationRows(
-  deps: { triggers: TriggerStateStore; writer: NudgeWriter },
+/** A recommendation that fired this run, with what its brief needs. */
+export interface PreparedRecommendation {
+  hit: RecommendationHit & { eventId: string };
+  input: RecommendationBriefInput;
+  /** Something on their exclusions list is logged, never shown, pushed or sent to a writer. */
+  excluded: TrustCheck;
+  holding: ReturnType<Gathered["details"]["get"]>;
+}
+
+/** Moves every trigger on and returns the crossings confirmed this run, ready to be worded. */
+export async function prepareRecommendations(
+  deps: { triggers: TriggerStateStore },
   user: { userId: string },
   gathered: Gathered,
   builtOn: string,
   now: Date,
-): Promise<NewNudge[]> {
+): Promise<PreparedRecommendation[]> {
   const hits = await evaluateRecommendations(
     deps.triggers,
     user.userId,
     triggerInputFrom(gathered, now, builtOn),
   );
-  const rows: NewNudge[] = [];
-  for (const hit of hits) {
+  return hits.map((hit) => {
     const holding = hit.instrumentId ? gathered.details.get(hit.instrumentId) : undefined;
-    // Something on their exclusions list is logged, never shown or pushed —
-    // and never sent to a writer.
-    const excluded = exclusionsCheck(
-      gathered.input.exclusions,
-      hit.name,
-      holding?.detail.ticker ?? "",
-    );
-    const input = briefInput(hit, gathered);
-    const words = excluded.passed
-      ? await deps.writer.recommendation(input)
-      : recommendationTemplate(input);
-    rows.push({
-      cadence: "daily",
-      kind: "recommendation",
-      reason: hit.trigger,
-      bucket: hit.bucket as Bucket,
-      instrumentId: hit.instrumentId,
-      title: words.title,
-      body: words.body,
-      basis: null,
-      facts: {
-        type: "recommendation",
-        name: hit.name,
-        shortName: holding?.detail.ticker ?? "",
-        amountPence: hit.amountPence,
-        eventId: hit.eventId,
-        brief: words.parts,
-        ...hit.facts,
-      },
-      checks: [excluded],
-      shown: excluded.passed,
-      model: words.model,
-      promptVersion: words.promptVersion,
-      personalised: true,
-      // One brief per crossing, however many runs see it.
-      dedupeKey: `rec:${hit.eventId}`,
-      builtOn,
-      priceAt: holding ? String(holding.detail.price) : null,
-      priceCurrency: holding ? "GBP_PENCE" : null,
-      priceSource: holding ? holding.detail.freshness.source : null,
-      potShareAt: null,
-      urgent: hit.urgent,
-      recommendation: hit.recommendation,
-      trigger: hit.trigger,
-    });
-  }
-  return rows;
+    return {
+      hit,
+      input: briefInput(hit, gathered),
+      excluded: exclusionsCheck(gathered.input.exclusions, hit.name, holding?.detail.ticker ?? ""),
+      holding,
+    };
+  });
+}
+
+/** One confirmed crossing as one `recommendation` nudge, with the words it was given. */
+export function recommendationRow(
+  prepared: PreparedRecommendation,
+  words: BriefDraft,
+  builtOn: string,
+): NewNudge {
+  const { hit, excluded, holding } = prepared;
+  return {
+    cadence: "daily",
+    kind: "recommendation",
+    reason: hit.trigger,
+    bucket: hit.bucket as Bucket,
+    instrumentId: hit.instrumentId,
+    title: words.title,
+    body: words.body,
+    basis: null,
+    facts: {
+      type: "recommendation",
+      name: hit.name,
+      shortName: holding?.detail.ticker ?? "",
+      amountPence: hit.amountPence,
+      eventId: hit.eventId,
+      brief: words.parts,
+      ...hit.facts,
+    },
+    checks: [excluded],
+    shown: excluded.passed,
+    model: words.model,
+    promptVersion: words.promptVersion,
+    personalised: true,
+    // One brief per crossing, however many runs see it.
+    dedupeKey: `rec:${hit.eventId}`,
+    builtOn,
+    priceAt: holding ? String(holding.detail.price) : null,
+    priceCurrency: holding ? "GBP_PENCE" : null,
+    priceSource: holding ? holding.detail.freshness.source : null,
+    potShareAt: null,
+    urgent: hit.urgent,
+    recommendation: hit.recommendation,
+    trigger: hit.trigger,
+  };
 }

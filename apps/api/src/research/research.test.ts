@@ -10,6 +10,7 @@ import {
 import { OPENING_TEMPLATE, templateFor } from "./templates.js";
 import type { Chat, NewsNudgeInput } from "./types.js";
 import { llmWriter, stubWriter } from "./writer.js";
+import { WORDING_PROMPT_VERSION } from "./prompts/wording.v1.js";
 
 const recordedGroq = JSON.parse(
   readFileSync(
@@ -182,28 +183,42 @@ describe("the prompt", () => {
   });
 });
 
+/** A whole answer, in the shape the one request asks for. */
+const wording = (parts: { notes?: object[]; briefs?: object[]; opening?: string | null }) => ({
+  notes: parts.notes ?? [],
+  briefs: parts.briefs ?? [],
+  opening: parts.opening ?? null,
+});
+
+const newsOnly = (input: NewsNudgeInput) => ({ news: [input], recommendations: [], opening: null });
+
 describe("the LLM writer", () => {
   it("uses the model's words when they pass, citing reports by id", async () => {
-    const chat = answering(good);
-    const draft = await llmWriter({ chat, model: "openai/gpt-oss-120b" }).news(asml());
-    expect(draft).toEqual({
+    const chat = answering(wording({ notes: [{ id: "n1", ...good }] }));
+    const { news } = await llmWriter({ chat, model: "openai/gpt-oss-120b" }).words(
+      newsOnly(asml()),
+    );
+    expect(news[0]).toEqual({
       title: good.title,
       body: good.body,
       citedIds: ["a", "b"],
       model: "groq:openai/gpt-oss-120b",
-      promptVersion: AWARENESS_PROMPT_VERSION,
+      promptVersion: WORDING_PROMPT_VERSION,
     });
   });
 
   it("throws out the recorded Groq answer ('benefit a long-term holder') and uses Pip's words", async () => {
     const onFallback = vi.fn();
+    const recorded = JSON.parse(recordedGroq.response.choices[0]!.message.content) as object;
     const chat = answering(
-      recordedGroq.response.choices[0]!.message.content,
+      wording({ notes: [{ id: "n1", ...recorded }] }),
       recordedGroq.response.model,
     );
-    const draft = await llmWriter({ chat, model: "openai/gpt-oss-120b", onFallback }).news(asml());
+    const { news } = await llmWriter({ chat, model: "openai/gpt-oss-120b", onFallback }).words(
+      newsOnly(asml()),
+    );
     expect(onFallback).toHaveBeenCalledWith("judging it good");
-    expect(draft).toMatchObject({
+    expect(news[0]).toMatchObject({
       title: "ASML was in the news",
       model: "template",
       citedIds: ["a", "b", "c"],
@@ -214,56 +229,143 @@ describe("the LLM writer", () => {
     const chat = vi.fn(async () => {
       throw new Error("503");
     });
-    const draft = await llmWriter({ chat, model: "m" }).news(asml());
-    expect(draft).toMatchObject({ model: "template" });
+    const { news } = await llmWriter({ chat, model: "m" }).words(newsOnly(asml()));
+    expect(news[0]).toMatchObject({ model: "template" });
   });
 
   it("passes on 'not material' so the build can hold the nudge back", async () => {
-    const draft = await llmWriter({
-      chat: answering({ material: false, title: null, body: null, cited: [] }),
+    const { news } = await llmWriter({
+      chat: answering(
+        wording({ notes: [{ id: "n1", material: false, title: null, body: null, cited: [] }] }),
+      ),
       model: "m",
-    }).news(asml());
-    expect(draft).toEqual({
+    }).words(newsOnly(asml()));
+    expect(news[0]).toEqual({
       material: false,
       model: "groq:openai/gpt-oss-120b",
-      promptVersion: AWARENESS_PROMPT_VERSION,
+      promptVersion: WORDING_PROMPT_VERSION,
     });
   });
 
   it("never calls the model for someone without personal research", async () => {
-    const chat = answering(good);
-    const draft = await llmWriter({ chat, model: "m" }).news(asml({ plan: null }));
+    const chat = answering(wording({}));
+    const { news, opening } = await llmWriter({ chat, model: "m" }).words({
+      news: [asml({ plan: null })],
+      recommendations: [],
+      opening: null,
+    });
     expect(chat).not.toHaveBeenCalled();
-    expect(draft).toMatchObject({ title: "ASML was in the news", model: "template" });
-    expect((draft as { body: string }).body).not.toMatch(/worth a look/i);
+    expect(opening).toBeNull();
+    expect(news[0]).toMatchObject({ title: "ASML was in the news", model: "template" });
+    expect((news[0] as { body: string }).body).not.toMatch(/worth a look/i);
   });
 
-  it("writes the week's opening from titles, or falls back to the plain one", async () => {
-    const writer = llmWriter({
-      chat: answering({ sentence: "One story and one date this week." }),
-      model: "m",
+  it("asks once for a whole week — every note and the opening line in one request", async () => {
+    const chat = answering(
+      wording({
+        notes: [
+          { id: "n1", ...good },
+          { id: "n2", material: false, title: null, body: null, cited: [] },
+        ],
+        opening: "One story and one date this week.",
+      }),
+    );
+    const result = await llmWriter({ chat, model: "m" }).words({
+      news: [asml(), asml({ name: "Greggs", shortName: "GRG" })],
+      recommendations: [],
+      opening: { titles: ["Nvidia reports results on Wed 23 Sep"] },
     });
-    expect(await writer.opening(["ASML plans to make more EUV tools"])).toMatchObject({
+    expect(chat).toHaveBeenCalledTimes(1);
+    expect(result.news.map((n) => ("material" in n ? "routine" : n.title))).toEqual([
+      good.title,
+      "routine",
+    ]);
+    expect(result.opening).toMatchObject({
       sentence: "One story and one date this week.",
-      promptVersion: "week.v1",
+      promptVersion: WORDING_PROMPT_VERSION,
     });
-    expect(await writer.opening([])).toEqual({
+  });
+
+  it("lets one bad piece fall back without costing the others", async () => {
+    const onFallback = vi.fn();
+    const chat = answering(
+      wording({
+        notes: [
+          { id: "n1", ...good },
+          { id: "n2", material: true, title: "Greggs is cheap", body: "Buy now.", cited: [1] },
+        ],
+        opening: "Buy now.",
+      }),
+    );
+    const result = await llmWriter({ chat, model: "m", onFallback }).words({
+      news: [asml(), asml({ name: "Greggs", shortName: "GRG" })],
+      recommendations: [],
+      opening: { titles: [] },
+    });
+    expect(result.news[0]).toMatchObject({
+      title: good.title,
+      promptVersion: WORDING_PROMPT_VERSION,
+    });
+    expect(result.news[1]).toMatchObject({ title: "Greggs was in the news", model: "template" });
+    expect(result.opening).toEqual({
       sentence: OPENING_TEMPLATE,
       model: "template",
       promptVersion: null,
     });
-    const bad = llmWriter({ chat: answering({ sentence: "Buy now." }), model: "m" });
-    expect((await bad.opening(["x"])).sentence).toBe(OPENING_TEMPLATE);
+    expect(onFallback.mock.calls.map(([why]) => why)).toEqual(["valuation verdict", "buy or sell"]);
+  });
+
+  it("falls back for a note the answer left out", async () => {
+    const onFallback = vi.fn();
+    const { news } = await llmWriter({
+      chat: answering(wording({})),
+      model: "m",
+      onFallback,
+    }).words(newsOnly(asml()));
+    expect(news[0]).toMatchObject({ model: "template" });
+    expect(onFallback).toHaveBeenCalledWith("missing a note");
+  });
+
+  it("makes no request when there's nothing a model would write", async () => {
+    const chat = answering(wording({}));
+    const result = await llmWriter({ chat, model: "m" }).words({
+      news: [],
+      recommendations: [],
+      opening: { titles: [] },
+    });
+    expect(chat).not.toHaveBeenCalled();
+    expect(result.opening).toEqual({
+      sentence: OPENING_TEMPLATE,
+      model: "template",
+      promptVersion: null,
+    });
+  });
+
+  it("sends at most eight reports for one holding", async () => {
+    let sent = "";
+    const chat: Chat = async (request) => {
+      sent = request.user;
+      return { content: JSON.stringify(wording({})), model: "m" };
+    };
+    const many = Array.from({ length: 12 }, (_, i) => ({
+      id: `r${i}`,
+      publisher: "Reuters",
+      publishedAt: new Date("2026-09-14T00:00:00Z"),
+      headline: `Story ${i}`,
+      snippet: null,
+    }));
+    await llmWriter({ chat, model: "m" }).words(newsOnly(asml({ reports: many })));
+    expect(sent).toContain("Story 7");
+    expect(sent).not.toContain("Story 8");
   });
 });
 
 describe("the stub writer", () => {
   it("writes canned words from the facts, with no network, citing every report", async () => {
-    const draft = await stubWriter().news(asml());
-    expect(draft).toMatchObject({ model: "stub", citedIds: ["a", "b", "c"] });
-    expect(
-      checkWords((draft as { title: string }).title, (draft as { body: string }).body),
-    ).toEqual({ ok: true });
+    const { news } = await stubWriter().words(newsOnly(asml()));
+    expect(news[0]).toMatchObject({ model: "stub", citedIds: ["a", "b", "c"] });
+    const draft = news[0] as { title: string; body: string };
+    expect(checkWords(draft.title, draft.body)).toEqual({ ok: true });
   });
 });
 

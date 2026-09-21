@@ -1,16 +1,11 @@
 import { checkNewsAnswer, checkOpeningAnswer, checkRecommendationAnswer } from "./guard.js";
 import {
-  AWARENESS_PROMPT_VERSION,
-  AWARENESS_SCHEMA,
-  AWARENESS_SYSTEM,
-  awarenessUser,
-} from "./prompts/awareness.v2.js";
-import {
-  RECOMMENDATION_PROMPT_VERSION,
-  RECOMMENDATION_SCHEMA,
-  RECOMMENDATION_SYSTEM,
-  recommendationUser,
-} from "./prompts/recommendation.v1.js";
+  MAX_REPORTS_PER_NOTE,
+  WORDING_PROMPT_VERSION,
+  WORDING_SCHEMA,
+  WORDING_SYSTEM,
+  wordingUser,
+} from "./prompts/wording.v1.js";
 import {
   briefBody,
   briefTitle,
@@ -18,28 +13,44 @@ import {
   type BriefDraft,
   type RecommendationBriefInput,
 } from "./recommendation.js";
-import { WEEK_PROMPT_VERSION, WEEK_SCHEMA, WEEK_SYSTEM, weekUser } from "./prompts/week.v1.js";
 import { OPENING_TEMPLATE, templateFor } from "./templates.js";
 import type { Chat, NewsNudgeInput, NotMaterial, NudgeDraft } from "./types.js";
 
 /**
- * The nudge writer (Phase 5 decision 6). Only news nudges for readers with
- * personal research on, and the week's opening sentence, ever reach an LLM;
- * everything else is Pip's own template. Every LLM answer passes the guard or
- * is replaced by the template — a failure never leaves a week unwritten.
+ * The nudge writer (Phase 5 decision 6, one request since 2026-09-21). Only
+ * news notes and Pip's takes for readers with personal research on, and their
+ * week's opening sentence, ever reach an LLM; everything else is Pip's own
+ * template. A build asks for all of it in **one** request, and every piece of
+ * the answer passes the guard on its own or is replaced by its template — a
+ * failure never leaves a week unwritten, and one bad piece never costs the rest.
  */
+
+export interface WordingRequest {
+  /** News notes. Those without a plan (no personal research) get Pip's words and cost nothing. */
+  news: NewsNudgeInput[];
+  /** Pip's takes: code has chosen the course and the pounds; only the reasons are asked for. */
+  recommendations: RecommendationBriefInput[];
+  /** The week's opening line, from the titles of the notes Pip wrote itself. Null on a daily build. */
+  opening: { titles: string[] } | null;
+}
+
+export interface Opening {
+  sentence: string;
+  model: string;
+  promptVersion: string | null;
+}
+
+export interface WordingResult {
+  /** In the order asked for. */
+  news: (NudgeDraft | NotMaterial)[];
+  recommendations: BriefDraft[];
+  opening: Opening | null;
+}
+
 export interface NudgeWriter {
-  /** `groq`, `stub`. */
+  /** `llm`, `stub`. */
   readonly kind: string;
-  news(input: NewsNudgeInput): Promise<NudgeDraft | NotMaterial>;
-  opening(
-    titles: string[],
-  ): Promise<{ sentence: string; model: string; promptVersion: string | null }>;
-  /**
-   * A recommendation brief (Phase 6, personal research only). The title and
-   * the course are code's; only the reasons may come from an LLM.
-   */
-  recommendation(input: RecommendationBriefInput): Promise<BriefDraft>;
+  words(request: WordingRequest): Promise<WordingResult>;
 }
 
 /**
@@ -61,6 +72,27 @@ const newsTemplate = (input: NewsNudgeInput): NudgeDraft =>
     reports: input.reports,
   });
 
+const templateOpening: Opening = {
+  sentence: OPENING_TEMPLATE,
+  model: "template",
+  promptVersion: null,
+};
+
+/** Pip's own words for everything: the whole answer when nothing needs a model, or it failed. */
+function allTemplates(request: WordingRequest): WordingResult {
+  return {
+    news: request.news.map(newsTemplate),
+    recommendations: request.recommendations.map(recommendationTemplate),
+    opening: request.opening ? templateOpening : null,
+  };
+}
+
+interface RawWording {
+  notes?: { id?: unknown }[];
+  briefs?: { id?: unknown }[];
+  opening?: unknown;
+}
+
 /** An LLM behind a `Chat` — in production Groq's OpenAI-compatible API. */
 export function llmWriter(options: {
   chat: Chat;
@@ -73,129 +105,148 @@ export function llmWriter(options: {
   return {
     kind: "llm",
 
-    async news(input) {
-      // No plan means no personal research: general words, and nothing sent anywhere.
-      if (!input.plan || input.reports.length === 0) return newsTemplate(input);
+    async words(request) {
+      const result = allTemplates(request);
+      // Only news with a plan and something to read goes to the model.
+      const notes = request.news
+        .map((input, index) => ({ id: `n${index + 1}`, index, input }))
+        .filter(({ input }) => input.plan !== null && input.reports.length > 0);
+      const briefs = request.recommendations.map((input, index) => ({
+        id: `r${index + 1}`,
+        index,
+        input,
+      }));
+      const wantOpening =
+        request.opening !== null && (request.opening.titles.length > 0 || notes.length > 0);
+      if (notes.length === 0 && briefs.length === 0 && !wantOpening) return result;
+
       let content: string;
       let answeredBy = model;
       try {
         const answer = await chat({
           model,
-          system: AWARENESS_SYSTEM,
-          user: awarenessUser(input),
-          schema: AWARENESS_SCHEMA,
+          system: WORDING_SYSTEM,
+          user: wordingUser({
+            plan: notes[0]?.input.plan ?? briefs[0]?.input.plan ?? null,
+            notes,
+            briefs,
+            titles: wantOpening ? request.opening!.titles : null,
+          }),
+          schema: WORDING_SCHEMA,
         });
         content = answer.content;
         answeredBy = answer.model || model;
       } catch (error) {
         fellBack(unavailable(error));
-        return newsTemplate(input);
+        return result;
       }
-      const checked = checkNewsAnswer(content, input.reports.length);
-      if (!checked.ok) {
-        fellBack(checked.why);
-        return newsTemplate(input);
+
+      let raw: RawWording;
+      try {
+        raw = JSON.parse(content) as RawWording;
+      } catch {
+        fellBack("not JSON");
+        return result;
       }
-      if (!checked.material) {
-        return {
-          material: false,
-          model: `groq:${answeredBy}`,
-          promptVersion: AWARENESS_PROMPT_VERSION,
+      const by = `groq:${answeredBy}`;
+      const byId = <T extends { id?: unknown }>(list: T[] | undefined, id: string) =>
+        (Array.isArray(list) ? list : []).find((item) => item?.id === id);
+
+      for (const { id, index, input } of notes) {
+        const note = byId(raw.notes, id);
+        if (!note) {
+          fellBack("missing a note");
+          continue;
+        }
+        const checked = checkNewsAnswer(
+          JSON.stringify(note),
+          Math.min(input.reports.length, MAX_REPORTS_PER_NOTE),
+        );
+        if (!checked.ok) {
+          fellBack(checked.why);
+          continue;
+        }
+        result.news[index] = checked.material
+          ? {
+              title: checked.title,
+              body: checked.body,
+              citedIds: checked.cited.map((n) => input.reports[n - 1]!.id),
+              model: by,
+              promptVersion: WORDING_PROMPT_VERSION,
+            }
+          : { material: false, model: by, promptVersion: WORDING_PROMPT_VERSION };
+      }
+
+      for (const { id, index, input } of briefs) {
+        const brief = byId(raw.briefs, id);
+        if (!brief) {
+          fellBack("missing a brief");
+          continue;
+        }
+        const checked = checkRecommendationAnswer(JSON.stringify(brief), input.course);
+        if (!checked.ok) {
+          fellBack(checked.why);
+          continue;
+        }
+        result.recommendations[index] = {
+          parts: checked.parts,
+          title: briefTitle(input),
+          body: briefBody(checked.parts),
+          citedIds: [],
+          model: by,
+          promptVersion: WORDING_PROMPT_VERSION,
         };
       }
-      return {
-        title: checked.title,
-        body: checked.body,
-        citedIds: checked.cited.map((n) => input.reports[n - 1]!.id),
-        model: `groq:${answeredBy}`,
-        promptVersion: AWARENESS_PROMPT_VERSION,
-      };
-    },
 
-    async opening(titles) {
-      if (titles.length === 0)
-        return { sentence: OPENING_TEMPLATE, model: "template", promptVersion: null };
-      try {
-        const answer = await chat({
-          model,
-          system: WEEK_SYSTEM,
-          user: weekUser(titles),
-          schema: WEEK_SCHEMA,
-        });
-        const checked = checkOpeningAnswer(answer.content);
+      if (wantOpening) {
+        const checked = checkOpeningAnswer(JSON.stringify({ sentence: raw.opening }));
         if (checked.ok) {
-          return {
+          result.opening = {
             sentence: checked.sentence,
-            model: `groq:${answer.model || model}`,
-            promptVersion: WEEK_PROMPT_VERSION,
+            model: by,
+            promptVersion: WORDING_PROMPT_VERSION,
           };
-        }
-        fellBack(checked.why);
-      } catch (error) {
-        fellBack(unavailable(error));
+        } else fellBack(checked.why);
       }
-      return { sentence: OPENING_TEMPLATE, model: "template", promptVersion: null };
-    },
-
-    async recommendation(input) {
-      try {
-        const answer = await chat({
-          model,
-          system: RECOMMENDATION_SYSTEM,
-          user: recommendationUser(input),
-          schema: RECOMMENDATION_SCHEMA,
-        });
-        const checked = checkRecommendationAnswer(answer.content, input.course);
-        if (checked.ok) {
-          return {
-            parts: checked.parts,
-            title: briefTitle(input),
-            body: briefBody(checked.parts),
-            citedIds: [],
-            model: `groq:${answer.model || model}`,
-            promptVersion: RECOMMENDATION_PROMPT_VERSION,
-          };
-        }
-        fellBack(checked.why);
-      } catch (error) {
-        fellBack(unavailable(error));
-      }
-      return recommendationTemplate(input);
+      return result;
     },
   };
 }
 
 /**
  * Stub mode and CI (hard line 7): canned words built from the facts, no
- * network. Always "material", citing every report, so the loop test can see a
- * news nudge travel end to end.
+ * network. News with a plan is always "material", citing every report, so the
+ * loop test can see a news nudge travel end to end; briefs are Pip's template.
  */
 export function stubWriter(): NudgeWriter {
   return {
     kind: "stub",
-    async news(input) {
-      if (!input.plan || input.reports.length === 0) return newsTemplate(input);
-      const publishers = [...new Set(input.reports.map((r) => r.publisher))];
+    async words(request) {
       return {
-        title: `${input.name} in the news`,
-        body: `Sample words from stub mode: ${publishers.join(" and ")} reported on ${input.name} this week.`,
-        citedIds: input.reports.map((report) => report.id),
-        model: "stub",
-        promptVersion: AWARENESS_PROMPT_VERSION,
-      };
-    },
-    async opening(titles) {
-      return titles.length === 0
-        ? { sentence: OPENING_TEMPLATE, model: "template", promptVersion: null }
-        : {
-            sentence: "Here's your week, from stub mode.",
+        news: request.news.map((input) => {
+          if (!input.plan || input.reports.length === 0) return newsTemplate(input);
+          const publishers = [...new Set(input.reports.map((r) => r.publisher))];
+          return {
+            title: `${input.name} in the news`,
+            body: `Sample words from stub mode: ${publishers.join(" and ")} reported on ${input.name} this week.`,
+            citedIds: input.reports.map((report) => report.id),
             model: "stub",
-            promptVersion: WEEK_PROMPT_VERSION,
+            promptVersion: WORDING_PROMPT_VERSION,
           };
-    },
-    // Pip's own brief: the same words the LLM's answer falls back to.
-    async recommendation(input) {
-      return recommendationTemplate(input);
+        }),
+        recommendations: request.recommendations.map(recommendationTemplate),
+        opening:
+          request.opening === null
+            ? null
+            : request.opening.titles.length === 0 &&
+                !request.news.some((input) => input.plan && input.reports.length > 0)
+              ? templateOpening
+              : {
+                  sentence: "Here's your week, from stub mode.",
+                  model: "stub",
+                  promptVersion: WORDING_PROMPT_VERSION,
+                },
+      };
     },
   };
 }

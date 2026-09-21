@@ -111,25 +111,39 @@ describe("the guard on a recommendation brief", () => {
 });
 
 describe("the writer", () => {
+  /** A brief answer inside the one request's shape. */
+  const briefAnswer = (content: string) => {
+    try {
+      return JSON.stringify({
+        notes: [],
+        briefs: [{ id: "r1", ...JSON.parse(content) }],
+        opening: null,
+      });
+    } catch {
+      return content;
+    }
+  };
   const writerWith = (content: string | Error) => {
     const fellBack: string[] = [];
     const chat: Chat = async () => {
       if (content instanceof Error) throw content;
-      return { content, model: "openai/gpt-oss-120b" };
+      return { content: briefAnswer(content), model: "openai/gpt-oss-120b" };
     };
     return {
       writer: llmWriter({ chat, model: "m", onFallback: (why) => fellBack.push(why) }),
       fellBack,
     };
   };
+  const brief = async (writer: ReturnType<typeof llmWriter>, input = nvidia) =>
+    (await writer.words({ news: [], recommendations: [input], opening: null })).recommendations[0]!;
 
   it("wraps good reasons in code's title and 'Your call.'", async () => {
     const { writer } = writerWith(answer({}));
-    const draft = await writer.recommendation(nvidia);
+    const draft = await brief(writer);
     expect(draft).toMatchObject({
       title: "Nvidia is worth 3.2× what you put in",
       model: "groq:openai/gpt-oss-120b",
-      promptVersion: "recommendation.v1",
+      promptVersion: "wording.v1",
     });
     expect(draft.body).toBe(briefBody(good));
     expect(draft.body.endsWith(YOUR_CALL)).toBe(true);
@@ -142,14 +156,13 @@ describe("the writer", () => {
     ["a missing trade-off", answer({ tradeoff: "" })],
   ])("falls back to the template on %s", async (_label, content) => {
     const { writer, fellBack } = writerWith(content);
-    const draft = await writer.recommendation(nvidia);
-    expect(draft).toEqual(recommendationTemplate(nvidia));
+    expect(await brief(writer)).toEqual(recommendationTemplate(nvidia));
     expect(fellBack).toHaveLength(1);
   });
 
   it("falls back to the template when Groq is down", async () => {
     const { writer, fellBack } = writerWith(new Error("503"));
-    expect(await writer.recommendation(nvidia)).toEqual(recommendationTemplate(nvidia));
+    expect(await brief(writer)).toEqual(recommendationTemplate(nvidia));
     expect(fellBack).toEqual(["unavailable"]);
   });
 
@@ -161,11 +174,9 @@ describe("the writer", () => {
         throw Object.assign(new Error("anything at all"), { reason });
       };
     for (const reason of ["403", "timeout", "a sentence with spaces"]) {
-      await llmWriter({
-        chat: failing(reason),
-        model: "m",
-        onFallback: (why) => reasons.push(why),
-      }).recommendation(nvidia);
+      await brief(
+        llmWriter({ chat: failing(reason), model: "m", onFallback: (why) => reasons.push(why) }),
+      );
     }
     expect(reasons).toEqual(["unavailable (403)", "unavailable (timeout)", "unavailable"]);
   });
@@ -174,9 +185,9 @@ describe("the writer", () => {
     let sent = "";
     const chat: Chat = async (request) => {
       sent = request.user + request.system;
-      return { content: answer({}), model: "m" };
+      return { content: briefAnswer(answer({})), model: "m" };
     };
-    await llmWriter({ chat, model: "m" }).recommendation(nvidia);
+    await brief(llmWriter({ chat, model: "m" }));
     expect(sent).not.toMatch(/£|\b1,?000\b|3,?200/);
     expect(sent).toContain("3.2 times");
   });

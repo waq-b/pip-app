@@ -95,7 +95,7 @@ describe("the loop", () => {
     expect(logged).toMatchObject({
       shown: true,
       model: "stub",
-      promptVersion: "awareness.v2",
+      promptVersion: "wording.v1",
       personalised: true,
     });
     expect((logged.facts as { reports: unknown[] }).reports).toHaveLength(2);

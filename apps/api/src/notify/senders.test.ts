@@ -54,7 +54,6 @@ describe("why a push failed", () => {
         endpoint: "https://web.push.apple.com/x",
         p256dh: "k",
         auth: "a",
-        label: "iPhone",
       },
       { title: "t", body: "b", url: "/" },
     );

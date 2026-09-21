@@ -7,6 +7,7 @@ import { memoryRulesStore } from "../rules/store.js";
 import { fixedSideBetLimits } from "../rules/side-bet.js";
 import { memoryTrustSettingsStore } from "../rules/trust-settings.js";
 import { stubWriter, type NudgeWriter } from "../research/writer.js";
+import type { NewsNudgeInput, NotMaterial, NudgeDraft } from "../research/types.js";
 import { moveSince, stubFactsReader } from "./gather.js";
 import { memoryProfileStore } from "./profile.js";
 import { createNudgeService, mondayOf, pushUrgent, type NudgeUser } from "./service.js";
@@ -49,6 +50,21 @@ function setup(writer: NudgeWriter = stubWriter(), moneyInPence = 40_000) {
 }
 
 const titles = (nudges: { title: string }[]) => nudges.map((n) => n.title);
+
+/** The stub writer, with news notes (those with a plan) written by `write`. */
+function withNews(write: (input: NewsNudgeInput) => NudgeDraft | NotMaterial): NudgeWriter {
+  const stub = stubWriter();
+  return {
+    kind: "test",
+    async words(request) {
+      const result = await stub.words(request);
+      return {
+        ...result,
+        news: request.news.map((input, i) => (input.plan ? write(input) : result.news[i]!)),
+      };
+    },
+  };
+}
 
 describe("building a week", () => {
   it("isn't due before 07:00 UTC on the Monday, and is built once", async () => {
@@ -99,7 +115,7 @@ describe("building a week", () => {
       ["news", false, "template"],
     ]);
     expect(logged.find((n) => n.shown && n.reason === "news")).toMatchObject({
-      promptVersion: "awareness.v2",
+      promptVersion: "wording.v1",
       personalised: true,
       priceCurrency: "GBP_PENCE",
     });
@@ -108,32 +124,29 @@ describe("building a week", () => {
 
   it("gives general words and sends nothing to a writer for someone without personal research", async () => {
     const writer = stubWriter();
-    const news = vi.spyOn(writer, "news");
-    const opening = vi.spyOn(writer, "opening");
+    const words = vi.spyOn(writer, "words");
     const { service, store } = setup(writer);
     await service.buildWeekIfDue(friend, MONDAY);
     const week = (await service.week(friend, "latest", MONDAY))!;
     expect(titles(week.nudges)).toContain("ASML was in the news");
-    expect(news.mock.calls.every(([input]) => input.plan === null)).toBe(true);
-    expect(opening).not.toHaveBeenCalled();
+    // Asked with nothing that could reach a model: no plan, no brief, no opening.
+    for (const [request] of words.mock.calls) {
+      expect(request.news.every((input) => input.plan === null)).toBe(true);
+      expect(request.recommendations).toEqual([]);
+      expect(request.opening).toBeNull();
+    }
     expect(week.opening).toBe("Here's your week.");
     expect(store.all().every((n) => !n.personalised)).toBe(true);
   });
 
   it("holds a story back when the writer cites too few publishers", async () => {
-    const writer: NudgeWriter = {
-      ...stubWriter(),
-      async news(input) {
-        const reuters = input.reports.filter((r) => r.publisher === "Reuters");
-        return {
-          title: "ASML story",
-          body: "Reuters reports it.",
-          citedIds: reuters.map((r) => r.id),
-          model: "groq:m",
-          promptVersion: "awareness.v2",
-        };
-      },
-    };
+    const writer = withNews((input) => ({
+      title: "ASML story",
+      body: "Reuters reports it.",
+      citedIds: input.reports.filter((r) => r.publisher === "Reuters").map((r) => r.id),
+      model: "groq:m",
+      promptVersion: "wording.v1",
+    }));
     const { service } = setup(writer);
     await service.buildWeekIfDue(waqar, MONDAY);
     const week = (await service.week(waqar, "latest", MONDAY))!;
@@ -144,10 +157,11 @@ describe("building a week", () => {
   });
 
   it("holds a story back when the writer judges it routine, and says nothing needs you if that was all", async () => {
-    const writer: NudgeWriter = {
-      ...stubWriter(),
-      news: async () => ({ material: false, model: "groq:m", promptVersion: "awareness.v2" }),
-    };
+    const writer = withNews(() => ({
+      material: false,
+      model: "groq:m",
+      promptVersion: "wording.v1",
+    }));
     // Side Bet well under its limit too, so a quiet week really is quiet.
     const { service, rulesStore, profileStore } = setup(writer, 10_000);
     await rulesStore.set(waqar, { handpickedTarget: 21 }, MONDAY);
@@ -511,12 +525,12 @@ describe("recommendations (Phase 6)", () => {
       limitPence: 50_000,
       handpickedTarget: 15,
     });
-    const recommend = vi.spyOn(writer, "recommendation");
+    const words = vi.spyOn(writer, "words");
     for (const at of [NINE, HALF_NINE, TEN]) await service.buildDaily(friend, at);
     expect(recommendations(store)).toEqual([]);
     expect(push.sent).toEqual([]);
     expect(triggers.rows.size).toBe(0);
-    expect(recommend).not.toHaveBeenCalled();
+    expect(words.mock.calls.every(([request]) => request.recommendations.length === 0)).toBe(true);
   });
 
   it("logs, but never shows or pushes, a recommendation about something they've excluded", async () => {

@@ -12,6 +12,7 @@ import {
 } from "@finance-app/shared";
 import { OPENING_TEMPLATE, templateFor, type TemplateFacts } from "../research/templates.js";
 import type { NudgeWriter } from "../research/writer.js";
+import type { NewsNudgeInput, NotMaterial, NudgeDraft } from "../research/types.js";
 import type { ReadUser } from "../read/model.js";
 import {
   capRoomCheck,
@@ -30,9 +31,9 @@ import {
   type CalendarItem,
 } from "./candidates.js";
 import { gather, type GatherDeps, type Gathered } from "./gather.js";
-import { recommendationRows } from "./recommendations.js";
+import { prepareRecommendations, recommendationRow } from "./recommendations.js";
 import type { TriggerStateStore } from "./triggers.js";
-import { takeLine, type BriefParts } from "../research/recommendation.js";
+import { recommendationTemplate, takeLine, type BriefParts } from "../research/recommendation.js";
 import { renderWeekEmail, SEALED_R1 } from "./email.js";
 import type { NewNudge, NudgeStore, StoredNudge, StoredWeek } from "./store.js";
 
@@ -96,46 +97,21 @@ const reportsOf = (facts: StoredFacts): NewsItem[] =>
 
 // ─── Build ────────────────────────────────────────────────────────────────────
 
-async function wordsFor(
+/** What a shown news note gives the writer. Null for anything Pip words itself. */
+function newsInputFor(
   candidate: Candidate,
   gathered: Gathered,
   user: NudgeUser,
-  writer: NudgeWriter,
-): Promise<{ row: Partial<NewNudge>; checks: TrustCheck[]; shown: boolean; citedIds: string[] }> {
-  const checks = [...candidate.checks];
-  let shown = candidate.shown;
-  const holding = candidate.instrumentId ? gathered.details.get(candidate.instrumentId) : undefined;
-
-  if (candidate.facts.type !== "news") {
-    const draft = templateFor(candidate.facts as TemplateFacts, { bucket: candidate.bucket });
-    return { row: draft, checks, shown, citedIds: [] };
-  }
-
-  const facts = candidate.facts;
+): NewsNudgeInput | null {
   // Held-back news gets Pip's own words: no model call for something nobody sees.
-  if (!shown) {
-    const draft = templateFor(facts as TemplateFacts);
-    return { row: draft, checks, shown, citedIds: draft.citedIds };
-  }
-
-  const detail = holding!.detail;
+  if (candidate.facts.type !== "news" || !candidate.shown) return null;
+  const holding = gathered.details.get(candidate.instrumentId!)!;
   const history = gathered.input.holdings.find((h) => h.instrumentId === candidate.instrumentId)!;
-  const plan = user.personalResearch
-    ? {
-        goals: gathered.profile.goals,
-        horizonYears: gathered.profile.horizonYears,
-        riskWords: gathered.profile.riskWords,
-        shape: {
-          foundation: 100 - gathered.rules.handpickedTarget,
-          handpicked: gathered.rules.handpickedTarget,
-        },
-      }
-    : null;
-  const result = await writer.news({
-    name: detail.name,
-    shortName: detail.ticker,
-    bucket: detail.bucket,
-    potSharePercent: holding!.potSharePercent,
+  return {
+    name: holding.detail.name,
+    shortName: holding.detail.ticker,
+    bucket: holding.detail.bucket,
+    potSharePercent: holding.potSharePercent,
     moves: {
       day: history.moves.day?.percent ?? null,
       week: history.moves.week?.percent ?? null,
@@ -143,20 +119,51 @@ async function wordsFor(
     },
     nextResultsDate:
       history.resultsDates.filter((d) => d >= londonDay(gathered.input.now)).sort()[0] ?? null,
-    reports: facts.reports,
-    plan,
-  });
+    reports: candidate.facts.reports,
+    // Only someone with personal research on gets words written for their plan.
+    plan: user.personalResearch ? planOf(gathered) : null,
+  };
+}
 
-  if ("material" in result) {
+function planOf(gathered: Gathered) {
+  return {
+    goals: gathered.profile.goals,
+    horizonYears: gathered.profile.horizonYears,
+    riskWords: gathered.profile.riskWords,
+    shape: {
+      foundation: 100 - gathered.rules.handpickedTarget,
+      handpicked: gathered.rules.handpickedTarget,
+    },
+  };
+}
+
+type Words = { row: Partial<NewNudge>; checks: TrustCheck[]; shown: boolean; citedIds: string[] };
+
+/** A candidate's words: Pip's template, or what the writer gave a news note, checked again. */
+function wordsFor(
+  candidate: Candidate,
+  gathered: Gathered,
+  written: NudgeDraft | NotMaterial | null,
+): Words {
+  const checks = [...candidate.checks];
+  let shown = candidate.shown;
+
+  if (written === null) {
+    const draft = templateFor(candidate.facts as TemplateFacts, { bucket: candidate.bucket });
+    return { row: draft, checks, shown, citedIds: draft.citedIds };
+  }
+
+  const facts = candidate.facts as Extract<Candidate["facts"], { type: "news" }>;
+  if ("material" in written) {
     const fallback = templateFor(facts as TemplateFacts);
     checks.push({
       rule: "not_material",
-      setting: result.model,
+      setting: written.model,
       passed: false,
       detail: "The writer judged these reports routine",
     });
     return {
-      row: { ...fallback, model: result.model, promptVersion: result.promptVersion },
+      row: { ...fallback, model: written.model, promptVersion: written.promptVersion },
       checks,
       shown: false,
       citedIds: fallback.citedIds,
@@ -164,26 +171,25 @@ async function wordsFor(
   }
 
   // The words rest on the cited reports, so the independent-sources rule is checked on those.
-  const cited = facts.reports.filter((r) => result.citedIds.includes(r.id));
-  if (result.model !== "template" && cited.length < facts.reports.length) {
+  const cited = facts.reports.filter((r) => written.citedIds.includes(r.id));
+  if (written.model !== "template" && cited.length < facts.reports.length) {
     const recheck = independentSourcesCheck(cited, gathered.trust);
     recheck.detail = `Cited: ${recheck.detail}`;
     checks.push(recheck);
     if (!recheck.passed) shown = false;
   }
-  return { row: result, checks, shown, citedIds: result.citedIds };
+  return { row: written, checks, shown, citedIds: written.citedIds };
 }
 
-async function rowsFor(
-  deps: NudgeServiceDeps,
+function rowsFor(
   user: NudgeUser,
   gathered: Gathered,
   candidates: Candidate[],
+  written: (NudgeDraft | NotMaterial | null)[],
   builtOn: string,
-): Promise<NewNudge[]> {
-  const rows: NewNudge[] = [];
-  for (const candidate of candidates) {
-    const words = await wordsFor(candidate, gathered, user, deps.writer);
+): NewNudge[] {
+  return candidates.map((candidate, index) => {
+    const words = wordsFor(candidate, gathered, written[index] ?? null);
     const holding = candidate.instrumentId
       ? gathered.details.get(candidate.instrumentId)
       : undefined;
@@ -193,7 +199,7 @@ async function rowsFor(
     const pot = candidate.bucket
       ? gathered.input.rules.pots.find((p) => p.bucket === candidate.bucket)
       : undefined;
-    rows.push({
+    return {
       cadence: gathered.input.cadence,
       kind: candidate.kind,
       reason: candidate.reason,
@@ -222,9 +228,8 @@ async function rowsFor(
       priceSource: holding ? holding.detail.freshness.source : null,
       potShareAt: candidate.kind === "shape" && pot ? String(pot.actualPercent) : null,
       urgent: candidate.urgent,
-    });
-  }
-  return rows;
+    };
+  });
 }
 
 /**
@@ -551,16 +556,58 @@ export function createNudgeService(
   options: { buildOnRead?: boolean; now?: () => Date } = {},
 ): NudgeService {
   const clock = options.now ?? (() => new Date());
+  /**
+   * One build: gather → candidates → **one** request for every word a model
+   * writes (news notes, Pip's takes, the week's opening line) → rows. Everyone
+   * without personal research on costs no request at all.
+   */
   async function build(user: NudgeUser, now: Date, cadence: "weekly" | "daily") {
     const today = londonDay(now);
     const history = await deps.store.history(user, today, mondayOf(today));
     const gathered = await gather(deps, user, now, cadence, history);
     const { candidates, counts, next } = buildCandidates(gathered.input);
     const worded = candidates.filter((c) => c.kind !== "none");
-    const rows = await rowsFor(deps, user, gathered, worded, today);
+
+    const newsInputs = worded.map((c) => newsInputFor(c, gathered, user));
+    const recommendations =
+      cadence === "daily" && user.personalResearch && deps.triggers
+        ? await prepareRecommendations({ triggers: deps.triggers }, user, gathered, today, now)
+        : [];
+    const toWord = recommendations.filter((r) => r.excluded.passed);
+    // The opening line reads the titles Pip writes itself; the model adds its own notes.
+    const templateTitles = worded
+      .filter((c, i) => c.shown && newsInputs[i] === null)
+      .map((c) => templateFor(c.facts as TemplateFacts, { bucket: c.bucket }).title);
+
+    const words = await deps.writer.words({
+      news: newsInputs.filter((input): input is NewsNudgeInput => input !== null),
+      recommendations: toWord.map((r) => r.input),
+      opening: cadence === "weekly" && user.personalResearch ? { titles: templateTitles } : null,
+    });
+
+    // The answers come back in the order asked; put each beside its candidate.
+    const answers = words.news[Symbol.iterator]();
+    const written = newsInputs.map((input) => (input === null ? null : answers.next().value!));
+    const rows = rowsFor(user, gathered, worded, written, today);
     // Shown by the trust rules but held back once written (not material, or cited too few publishers).
     const heldAfterWords = worded.filter((c, i) => c.shown && !rows[i]!.shown).length;
-    return { gathered, rows, counts, next, today, heldAfterWords };
+
+    for (const prepared of recommendations) {
+      const index = toWord.indexOf(prepared);
+      rows.push(
+        recommendationRow(
+          prepared,
+          index >= 0 ? words.recommendations[index]! : recommendationTemplate(prepared.input),
+          today,
+        ),
+      );
+    }
+    const opening = words.opening ?? {
+      sentence: OPENING_TEMPLATE,
+      model: "template",
+      promptVersion: null,
+    };
+    return { gathered, rows, counts, next, today, heldAfterWords, opening };
   }
 
   /**
@@ -634,16 +681,23 @@ export function createNudgeService(
       if (now.getTime() < due) return "not_due";
       if (await deps.store.weekExists(user, weekOf)) return "exists";
 
-      const { gathered, rows, counts, next, heldAfterWords } = await build(user, now, "weekly");
+      const { gathered, rows, counts, next, heldAfterWords, opening } = await build(
+        user,
+        now,
+        "weekly",
+      );
       const shown = rows.filter((row) => row.shown);
-      if (shown.length === 0) rows.push(quietRow(counts, next, today, heldAfterWords));
-      // Titles name holdings, so they only go to a writer for someone with personal research on.
-      const opening = user.personalResearch
-        ? await deps.writer.opening(shown.map((row) => row.title))
-        : { sentence: OPENING_TEMPLATE, model: "template", promptVersion: null };
+      const quiet = shown.length === 0;
+      if (quiet) rows.push(quietRow(counts, next, today, heldAfterWords));
       const saved = await deps.store.saveWeek(
         user,
-        { weekOf, opening: opening.sentence, counts: { ...counts, next }, builtAt: now },
+        {
+          weekOf,
+          // The line was written before Pip knew nothing would survive; a quiet week opens plainly.
+          opening: quiet ? OPENING_TEMPLATE : opening.sentence,
+          counts: { ...counts, next },
+          builtAt: now,
+        },
         rows,
       );
       if (!saved) return "exists";
@@ -653,18 +707,7 @@ export function createNudgeService(
     },
 
     async buildDaily(user, now = clock()) {
-      const { gathered, rows, today } = await build(user, now, "daily");
-      if (user.personalResearch && deps.triggers) {
-        rows.push(
-          ...(await recommendationRows(
-            { triggers: deps.triggers, writer: deps.writer },
-            user,
-            gathered,
-            today,
-            now,
-          )),
-        );
-      }
+      const { rows, today } = await build(user, now, "daily");
       const saved = await deps.store.saveDaily(user, rows, now);
       await pushUrgent(deps, user, rows, today, now);
       return saved;

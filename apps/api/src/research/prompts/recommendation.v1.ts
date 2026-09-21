@@ -54,7 +54,7 @@ const COURSE_WORDS = {
 } as const;
 
 /** The situation in words: no pounds reach the model (Phase 5 decision 6). */
-function situation(input: RecommendationBriefInput): string {
+export function recommendationSituation(input: RecommendationBriefInput): string {
   const f = input.facts;
   const name = quoted(input.name);
   switch (input.trigger) {
@@ -80,7 +80,7 @@ function situation(input: RecommendationBriefInput): string {
 export function recommendationUser(input: RecommendationBriefInput): string {
   const plan = input.plan;
   return `<situation>
-${situation(input)}
+${recommendationSituation(input)}
 Pip's take: ${COURSE_WORDS[input.course]}.
 </situation>
 <plan>

@@ -316,9 +316,16 @@ describe("Pip's take", () => {
     // A planted answer that tells the reader to buy: the guard throws it out.
     const chat = async () => ({
       content: JSON.stringify({
-        why: "It has run up a long way — buy more while it lasts.",
-        typical: "Everyone takes some profit here.",
-        tradeoff: "None to speak of.",
+        notes: [],
+        briefs: [
+          {
+            id: "r1",
+            why: "It has run up a long way — buy more while it lasts.",
+            typical: "Everyone takes some profit here.",
+            tradeoff: "None to speak of.",
+          },
+        ],
+        opening: null,
       }),
       model: "planted",
     });
