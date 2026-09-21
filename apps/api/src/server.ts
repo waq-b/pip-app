@@ -101,7 +101,13 @@ function realAccounts(): Partial<BuildAppOptions> {
 
   const notifications = dbNotificationStore(db);
   const netAssets = dbNetAssetsStore(db, box, config.masterKeyVersion);
-  const notifier = createNotifier({ store: notifications, ...senders() });
+  const notifier = createNotifier({
+    store: notifications,
+    ...senders(),
+    // A push or email that didn't go: why, and which kind — never a message or an address.
+    onError: (error, context) =>
+      app.log.warn({ ...context, why: (error as Error).message }, "notification not delivered"),
+  });
   const sideBetLimits = dbSideBetLimits(db, netAssets);
   const rulesStore = dbRulesStore(db);
   const profileStore = dbProfileStore(db);

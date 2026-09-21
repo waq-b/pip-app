@@ -51,6 +51,19 @@ beforeEach(async () => {
 });
 
 describe("what the freshness check calls stale", () => {
+  it("gives the first morning refresh its hour before judging prices", async () => {
+    // Last night's final refresh, then 08:00 London (07:00 UTC in summer): the
+    // morning's first run has only just started. This cried wolf on 2026-09-21.
+    await ran("prices", new Date("2026-09-20T22:00:40Z"));
+    await ran("weekly_build", new Date("2026-09-21T07:01:16Z"));
+    expect(await stale(new Date("2026-09-21T07:00:01Z"))).toEqual([]);
+    expect(await stale(new Date("2026-09-21T07:59:00Z"))).toEqual([]);
+    // From 09:00 London a refresh that still hasn't happened is a real problem.
+    expect((await stale(new Date("2026-09-21T08:00:00Z"))).map((row) => row.job)).toEqual([
+      "prices",
+    ]);
+  });
+
   it("says nothing when every job has just run cleanly", async () => {
     await ran("prices", new Date("2026-09-14T08:50:00Z"));
     await ran("weekly_build", new Date("2026-09-14T07:05:00Z"));

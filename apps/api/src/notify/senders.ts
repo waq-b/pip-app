@@ -89,11 +89,37 @@ export function webPushSender(vapid: VapidKeys, library?: WebPushLike): PushSend
           ok: false,
           // 404 and 410: the subscription is gone for good, so its row goes too.
           gone: status === 404 || status === 410,
-          detail: `${status ?? "error"}`,
+          detail: pushFailure(error, status),
         };
       }
     },
   };
+}
+
+/**
+ * Why a push service refused, for the log: its status and the reason it gives
+ * ("403 BadJwtToken"), or web-push's own complaint when nothing was sent. Only
+ * short word-like codes survive, so nothing key-shaped can reach a log line.
+ */
+export function pushFailure(error: unknown, status: number | undefined): string {
+  const body = (error as { body?: unknown }).body;
+  let reason = "";
+  if (typeof body === "string") {
+    try {
+      const parsed = JSON.parse(body) as { reason?: unknown; message?: unknown };
+      reason = String(parsed.reason ?? parsed.message ?? "");
+    } catch {
+      reason = body;
+    }
+  } else if (status === undefined) {
+    reason = (error as Error).message ?? "";
+  }
+  const words = reason
+    .split(/\s+/)
+    .filter((word) => /^([A-Za-z][A-Za-z.'-]{0,30}|\d{1,4})$/.test(word))
+    .slice(0, 12)
+    .join(" ");
+  return [status ?? "error", words].filter(Boolean).join(" ");
 }
 
 type Fetch = (url: string, init: RequestInit) => Promise<Response>;
