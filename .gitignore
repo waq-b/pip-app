@@ -18,3 +18,6 @@ coverage/
 pnpm-debug.log*
 
 .turbo/
+
+# Local database dumps (Pip is parked; restore from here if Supabase won't resume it)
+backups/
