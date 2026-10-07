@@ -2,7 +2,7 @@
 
 **A calm, read-only investing dashboard that turns a Trading 212 account and a Kraken account into three "pots" and one number, and only speaks up when something matters.**
 
-[![CI](https://github.com/waq-b/pip/actions/workflows/ci.yml/badge.svg)](https://github.com/waq-b/pip/actions/workflows/ci.yml)
+[![CI](https://github.com/waq-b/pip-app/actions/workflows/ci.yml/badge.svg)](https://github.com/waq-b/pip-app/actions/workflows/ci.yml)
 
 > **Status: parked, not abandoned.** I paused Pip to stop paying for hosting. It works end to end against a Trading 212 practice account, but it is not deployed, so there is no live URL.
 
