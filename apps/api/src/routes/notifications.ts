@@ -12,7 +12,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { DeviceSummary, NotificationItem, NotificationStore } from "../notify/store.js";
 
 /**
- * The bell and its switches (Phase 6 decision 4). Behind the auth guard like
+ * The bell and its switches . Behind the auth guard like
  * every route. Nothing here sends anything, and nothing here can move money:
  * these are switches, device rows and a list of what Pip has already said.
  */

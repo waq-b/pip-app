@@ -18,7 +18,7 @@ export type Handler = StubResponse | ((init: RequestInit | undefined, url: URL) 
  * Renders the real route table at a path, signed in as `session` (or signed
  * out), with the API answered by stubs keyed on pathname. Anything not stubbed
  * answers 500, so a screen calling an endpoint the test didn't expect fails
- * loudly instead of hanging. No network, ever (CLAUDE.md hard line 7).
+ * loudly instead of hanging. No network, ever (design rule 6).
  */
 export function renderRoute(
   path: string,

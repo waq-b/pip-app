@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { limitFor, moneyInFrom, windowStart, type LedgerEntry } from "./side-bet.js";
 
 /**
- * Side Bet's limit and what it's judged against (phase-6.md decision 13).
+ * Side Bet's limit and what it's judged against.
  * The point of counting money in, less taken out, is that it moves only when
  * the user moves money — so nothing here depends on a price.
  */

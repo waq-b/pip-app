@@ -17,7 +17,7 @@ import { ICON_STROKE } from "../shell/nav";
  *
  * Pip uses it for one thing: Side Bet's limit, the FCA's 10% guide. It never
  * goes to a broker, never appears on the home screen, and Pip can't act on it —
- * it can only say where the line is (hard line 1).
+ * it can only say where the line is (design rule 1).
  */
 
 const STEP_POUNDS = 5_000;

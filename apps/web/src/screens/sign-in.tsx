@@ -20,7 +20,7 @@ type Step =
 
 /**
  * No passwords, nothing to set up (DESIGN.md §7). Sign-in is an emailed
- * 8-digit code (Waqar, 2026-09-17) — Google returns later. A code, not a link,
+ * 8-digit code  — Google returns later. A code, not a link,
  * because a link opens the system browser, and an app installed to the Home
  * Screen keeps its own storage: the browser got signed in, the app didn't. The
  * email still carries the link, which works in a desktop browser tab. The only screen with

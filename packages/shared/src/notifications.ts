@@ -1,7 +1,7 @@
 /**
  * Phase 6: what Pip may send, what Side Bet's limit is measured against, and
  * what a recommendation may say. Deterministic code owns every one of these
- * numbers — the writer only puts words around them (CLAUDE.md hard line 2).
+ * numbers — the writer only puts words around them (design rule 2).
  */
 
 // ─── What Pip sends ───────────────────────────────────────────────────────────
@@ -10,7 +10,7 @@
  * A push Pip can send. `limit` is Side Bet nearing or reaching its limit,
  * `urgent` an urgent note or a pushed recommendation, `digest` the week being
  * ready. Ops alerts aren't here: the freshness check inside the database emails
- * Waqar, because Pip may be asleep on purpose (phase-6.md decision 7).
+ * the owner, because Pip may be asleep on purpose.
  */
 export const PUSH_KINDS = ["limit", "urgent", "digest"] as const;
 export type PushKind = (typeof PUSH_KINDS)[number];
@@ -64,7 +64,7 @@ export const LIMIT_ALERT_SHARES = [0.8, 1] as const;
 /** Under an alerted threshold by this much, the threshold can alert again. */
 export const LIMIT_REARM_PENCE = 2_500;
 
-// ─── Recommendations (hard line 12, personal_research users only) ─────────────
+// ─── Recommendations (design rule 9, personal_research users only) ─────────────
 
 /** What Pip may recommend. Code picks it; the writer only explains it. */
 export const RECOMMENDATIONS = ["hold", "take_some_profit", "rebalance"] as const;
@@ -119,7 +119,7 @@ export const URGENT_PUSH_DAILY_MAX = 2;
 /**
  * What records a run in `job_runs`. `refresh` is the whole scheduled run;
  * the rest are its steps, so freshness can be judged per kind of work rather
- * than per run (phase-6.md decision 7).
+ * than per run.
  */
 export const JOB_NAMES = [
   "refresh",
@@ -134,7 +134,7 @@ export type JobName = (typeof JOB_NAMES)[number];
 
 /**
  * How stale each kind of work may get before the freshness check inside
- * Supabase emails Waqar. Pip is allowed to sleep, so nothing pings the API —
+ * Supabase emails the owner. Pip is allowed to sleep, so nothing pings the API —
  * these are judged from the rows the jobs themselves wrote.
  */
 export const STALE_REFRESH_MINUTES = 75;

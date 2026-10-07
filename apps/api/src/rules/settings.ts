@@ -2,7 +2,7 @@ import type { RuleSettings } from "@finance-app/shared";
 
 /**
  * Checking a shape someone asks for. The API enforces the limits — never the
- * screen (hard line 11) — so this runs on every save, whatever sent it.
+ * screen (design rule 8) — so this runs on every save, whatever sent it.
  *
  * Since Phase 6 the shape is one number: Handpicked's target, with Foundation
  * the rest. Side Bet isn't in the shape — it has a limit in pounds, which

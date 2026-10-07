@@ -4,7 +4,7 @@ import { marketSymbolsFor } from "./symbols.js";
 /**
  * Trading 212 responses → the rows Pip stores. Facts about what is held and
  * what was paid only: `currentPrice` and `walletImpact.currentValue` are
- * deliberately dropped, because values come from market data (hard line 8).
+ * deliberately dropped, because values come from market data (design rule 7).
  */
 
 export class NotInPoundsError extends Error {

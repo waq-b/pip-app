@@ -17,7 +17,7 @@ import { OPENING_TEMPLATE, templateFor } from "./templates.js";
 import type { Chat, NewsNudgeInput, NotMaterial, NudgeDraft } from "./types.js";
 
 /**
- * The nudge writer (Phase 5 decision 6, one request since 2026-09-21). Only
+ * The nudge writer (one request since 2026-09-21). Only
  * news notes and Pip's takes for readers with personal research on, and their
  * week's opening sentence, ever reach an LLM; everything else is Pip's own
  * template. A build asks for all of it in **one** request, and every piece of
@@ -214,7 +214,7 @@ export function llmWriter(options: {
 }
 
 /**
- * Stub mode and CI (hard line 7): canned words built from the facts, no
+ * Stub mode and CI (design rule 6): canned words built from the facts, no
  * network. News with a plan is always "material", citing every report, so the
  * loop test can see a news nudge travel end to end; briefs are Pip's template.
  */

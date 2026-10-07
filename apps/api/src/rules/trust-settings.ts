@@ -11,7 +11,7 @@ import { domainOf } from "../facts/normalise.js";
 import type { ReadUser } from "../read/model.js";
 
 /**
- * The trust rules a user sets (Phase 5 decision 3) — which reports count and
+ * The trust rules a user sets  — which reports count and
  * how many nudges Pip may show. Limits are enforced here, on the server,
  * whatever the screen allowed; the database checks them again.
  */

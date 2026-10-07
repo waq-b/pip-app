@@ -16,7 +16,7 @@ export function registerWaitlistRoute(
     const user = request.authUser!;
     await options.store.add(user.email, user.name);
 
-    // No queue position and no promise of an email: Waqar lets people in by hand.
+    // No queue position and no promise of an email: the owner lets people in by hand.
     return reply.status(200).send({ status: "added", email: user.email });
   });
 }

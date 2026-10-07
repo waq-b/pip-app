@@ -2,10 +2,10 @@ import type { Bucket } from "@finance-app/shared";
 import type { CashBalance, HistoryEntry, Position, Provider } from "../provider.js";
 
 /**
- * The sample holdings from the design handover, with one correction: the
+ * The sample holdings from the design mockups, with one correction: the
  * prototype's activity feed had ISA money buying Rolls-Royce, but Rolls-Royce
  * sits in Handpicked (the Invest account). Money never crosses pots, in
- * fixtures any more than in real life (CLAUDE.md hard line 11).
+ * fixtures any more than in real life (design rule 8).
  */
 const POSITIONS: Record<Bucket, Position[]> = {
   Base: [

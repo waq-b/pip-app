@@ -2,7 +2,7 @@ import { PriceSourceError, type DailyClose, type PriceSource } from "./types.js"
 
 /**
  * Kraken's public market data — no key, no account, so it's a market-data
- * source and not the trading API (Phase 3 decision 1). The fallback for crypto
+ * source and not the trading API . The fallback for crypto
  * prices, and the source for history older than CoinGecko's 365 days. The
  * target's `symbol` is a Kraken pair quoted in pounds (`XBTGBP`); coins with
  * no pounds pair aren't priced here.

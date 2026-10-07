@@ -1,7 +1,7 @@
 /**
  * The only way the app talks to its own API. Every request carries the
  * Supabase access token as a bearer token; the API verifies it and checks the
- * allowlist on every route (CLAUDE.md s3).
+ * allowlist on every route.
  */
 
 export class ApiError extends Error {

@@ -2,11 +2,11 @@ import type { Bucket, Pence, PriceFreshness, PriceRange, SeriesPoint } from "@fi
 
 /**
  * Market data providers answer "what is it worth, and what has it done?"
- * (CLAUDE.md s4). They are deliberately separate from trading providers, which
+ *. They are deliberately separate from trading providers, which
  * only ever answer "what is held, and how much cash?".
  *
  * Every price and every chart in the app comes from here. Nothing reads prices
- * from a trading API — that is hard line 8, and keeping the two layers apart is
+ * from a trading API — that is design rule 7, and keeping the two layers apart is
  * how it stays true.
  */
 export interface MarketData {

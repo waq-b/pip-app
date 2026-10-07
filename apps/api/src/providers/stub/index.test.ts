@@ -45,7 +45,7 @@ describe("bucket integrity", () => {
 
   it("keeps Rolls-Royce in Handpicked, not in the ISA", async () => {
     // The design prototype's feed had ISA money buying Rolls-Royce. It doesn't
-    // here, and it must never start doing so (hard line 11).
+    // here, and it must never start doing so (design rule 8).
     const found = allStubPositions().find(({ position }) => position.id === "rolls-royce");
 
     expect(found?.bucket).toBe("Medium");

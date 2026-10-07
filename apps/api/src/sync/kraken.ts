@@ -62,7 +62,7 @@ export const krakenInstrumentId = (altname: string) => `kraken:${altname}`;
 /**
  * `XXBT` → `XBT`; `DOT.S`, `DOT28.S` → `DOT`, staked; `GBP.HOLD` → `GBP`.
  * Suffixes are Kraken's read-only views of the base asset (staked, rewards,
- * bonded), so they count as the same coin (Phase 3 decision 4).
+ * bonded), so they count as the same coin .
  */
 export function baseAsset(asset: string, altnames: Map<string, string>) {
   const [name, suffix] = asset.split(".", 2) as [string, string | undefined];

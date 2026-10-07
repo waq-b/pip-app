@@ -11,7 +11,7 @@ import { PipMark } from "../shell/pip-mark";
  * (DESIGN.md §7). The person here is signed in — just not allowed — so asking
  * for the waiting list is an ordinary authenticated request, and the API takes
  * their address from their sign-in. No queue position, no countdown, and no
- * promise of an email: Waqar lets people in by hand (DESIGN.md §6.5).
+ * promise of an email: the owner lets people in by hand (DESIGN.md §6.5).
  */
 export function NotOnTheListScreen() {
   const { state, signOut } = useAuth();

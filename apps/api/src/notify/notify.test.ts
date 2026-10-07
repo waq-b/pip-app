@@ -5,7 +5,7 @@ import { stubEmailSender, stubPushSender, webPushSender } from "./senders.js";
 import { memoryNotificationStore, type NotificationStore } from "./store.js";
 
 /**
- * The rules about sending (Phase 6 decision 1): the switches decide, one event
+ * The rules about sending : the switches decide, one event
  * is one push however many times a job runs, urgent has a daily budget, and a
  * subscription the push service has forgotten is forgotten here too.
  */

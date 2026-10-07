@@ -1,0 +1,5 @@
+# Test files use obviously fake credentials ("read-only-key-0123456789" and so on)
+# to check that keys are sealed, redacted and refused. They are not real.
+[allowlist]
+description = "fake credentials in tests"
+paths = ['''.*\.test\.tsx?$''']

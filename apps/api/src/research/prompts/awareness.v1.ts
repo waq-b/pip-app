@@ -1,7 +1,7 @@
 import { displayNameFor } from "@finance-app/shared";
 import type { NewsNudgeInput } from "../types.js";
 
-/** Prompt v1 for a news nudge (docs/phases/phase-5.md decision 6, as signed off). */
+/** Prompt v1 for a news nudge. */
 export const AWARENESS_PROMPT_VERSION = "awareness.v1";
 
 export const AWARENESS_SYSTEM = `You write one short note for Pip, a read-only investing app. The reader is not a

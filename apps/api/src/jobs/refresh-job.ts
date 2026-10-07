@@ -27,7 +27,7 @@ import {
 } from "../sync/poll.js";
 
 /**
- * One scheduled refresh (Phase 2 task 11), fired by `pg_cron` through
+ * One scheduled refresh, fired by `pg_cron` through
  * `POST /jobs/refresh`. Every step is idempotent and skips what's already
  * fresh, so running it twice, or alongside a user's refresh-on-read, is
  * harmless. A step failing never stops the others.
@@ -43,7 +43,7 @@ import {
  *    so a week is built from the freshest reports.
  * 7. Fill in what happened 7 and 30 days after each nudge, from cached closes.
  *
- * Each step records a `job_runs` row of its own (Phase 6 decision 7), so a kind
+ * Each step records a `job_runs` row of its own , so a kind
  * of work going stale or failing is visible without anything asking the API.
  */
 

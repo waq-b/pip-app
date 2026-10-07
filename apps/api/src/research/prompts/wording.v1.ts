@@ -4,7 +4,7 @@ import type { NewsNudgeInput } from "../types.js";
 import { recommendationSituation } from "./recommendation.v1.js";
 
 /**
- * One request for everything a build needs worded (Waqar, 2026-09-21: "limit
+ * One request for everything a build needs worded (the owner, 2026-09-21: "limit
  * requests to Groq and make them more performant"). Pip has already gathered
  * every fact and made every decision; this asks for the words in one go —
  * news notes, the reasons inside Pip's takes, and the week's opening line —

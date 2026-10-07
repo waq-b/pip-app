@@ -24,7 +24,7 @@ import { takeLine } from "../research/recommendation.js";
 import type { RulesEvaluation } from "../rules/engine.js";
 
 /**
- * Monday's email (phase-6.md decision 6): the week Pip just built, laid out
+ * Monday's email: the week Pip just built, laid out
  * with the "Pip Emails" digest template. Pure — the same inputs always give
  * the same email — so it's snapshot-tested and never touches the network.
  *

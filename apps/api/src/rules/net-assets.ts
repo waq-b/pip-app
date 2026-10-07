@@ -9,7 +9,7 @@ import type { ReadUser } from "../read/model.js";
  * The user's net assets: the one figure Pip has no other way of knowing, and
  * the most sensitive thing it holds. Sealed at rest with the same box as
  * provider keys and opened only in memory, when the limit is worked out
- * (CLAUDE.md hard line 6). It is used for exactly one thing — Side Bet's limit
+ * (design rule 5). It is used for exactly one thing — Side Bet's limit
  * — and never leaves the API except when the user asks to see it.
  */
 

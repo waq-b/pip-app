@@ -5,7 +5,7 @@ import { companyFeedsAdapter, GENERAL_FEEDS, generalFeedAdapter } from "./source
 import type { FactsAdapter } from "./types.js";
 
 /**
- * The real facts sources (Phase 5 task 1 decisions). Keyless ones always; a
+ * The real facts sources. Keyless ones always; a
  * source whose key isn't configured is simply left out.
  */
 export function liveFactsAdapters(keys: {

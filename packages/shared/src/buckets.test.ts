@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { BUCKETS, BUCKET_META, displayNameFor, type Bucket } from "./buckets";
 
 describe("BUCKETS", () => {
-  it("has exactly the three buckets CLAUDE.md defines, in order", () => {
+  it("has exactly the three buckets Pip defines, in order", () => {
     expect(BUCKETS).toEqual(["Base", "Medium", "Degen"]);
   });
 });
@@ -36,7 +36,7 @@ describe("BUCKET_META", () => {
   });
 
   it("keeps display names out of the bucket ids", () => {
-    // Guards the decision in phase-1.md: renaming a pot in the UI must never
+    // Guards a design decision: renaming a pot in the UI must never
     // require an API or database change.
     const ids: Bucket[] = [...BUCKETS];
     expect(ids).not.toContain("Foundation" as unknown as Bucket);

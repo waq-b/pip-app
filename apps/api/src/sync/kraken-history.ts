@@ -21,16 +21,16 @@ import {
 import { londonDay, type Credential } from "./poll.js";
 
 /**
- * Side Bet's history and cost, from the Kraken ledger (Phase 3 task 6).
+ * Side Bet's history and cost, from the Kraken ledger.
  *
  * Every ledger entry carries the asset's balance after it, so what was held on
  * any past day is read, not reconstructed. Values use each day's market close
- * in pounds — never Kraken's own account figures (hard line 8).
+ * in pounds — never Kraken's own account figures (design rule 7).
  *
  * Cost is average cost, in pence, per coin:
  * - bought with pounds, dollars or euros: what was paid (converted at that day's rate), fees excluded;
  * - swapped for from another coin, deposited or transferred in: its pound value that day
- *   (Phase 3 decision 5) — unknown if there's no price for that day;
+ *    — unknown if there's no price for that day;
  * - staking and earn rewards: nothing;
  * - sold, swapped away or withdrawn: cost leaves in proportion to the amount;
  * - moving between spot and staking: no change — it's the same coin.

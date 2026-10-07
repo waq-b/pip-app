@@ -2,7 +2,7 @@ import { displayNameFor } from "@finance-app/shared";
 import type { RecommendationBriefInput } from "../recommendation.js";
 
 /**
- * Prompt v1 for a recommendation brief (phase-6.md decision 14). Personal
+ * Prompt v1 for a recommendation brief. Personal
  * research only. Code has already chosen the course and worked out the
  * pounds; the model writes the three sentences that explain it, and never
  * sees a pound.
@@ -53,7 +53,7 @@ const COURSE_WORDS = {
   rebalance: "point new money at the other pot until the shape evens back out",
 } as const;
 
-/** The situation in words: no pounds reach the model (Phase 5 decision 6). */
+/** The situation in words: no pounds reach the model . */
 export function recommendationSituation(input: RecommendationBriefInput): string {
   const f = input.facts;
   const name = quoted(input.name);

@@ -1,6 +1,8 @@
-# Free Supabase projects pause after about a week of low activity and need a
-# manual resume. Scheduled jobs inside the database aren't documented as
-# activity, so this makes a small request from outside every three days.
+# Why this workflow exists: free Supabase projects pause after about a week
+# without activity and then need a manual resume. Pip is hosted on the free
+# tier, so this keeps the database from pausing between uses.
+#
+# Scheduled jobs inside the database aren't documented as activity, so this makes a small request from outside every three days.
 #
 # It uses the publishable key, which is public by design (it ships in the web
 # app). The request is refused by Row Level Security, which is fine: it still

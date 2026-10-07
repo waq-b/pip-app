@@ -163,7 +163,7 @@ export function NotificationsAsk({
   );
 }
 
-/** The one sentence iPhone and iPad need (phase-6.md decision 5). No button: Safari can't ask. */
+/** The one sentence iPhone and iPad need. No button: Safari can't ask. */
 export function InstallSteps() {
   return (
     <>

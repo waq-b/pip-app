@@ -3,7 +3,7 @@ import { createClient, type Session } from "@supabase/supabase-js";
 /**
  * What the app needs from sign-in, and nothing more. Supabase sits behind this
  * interface so screens never import it, and tests swap in a fake without a
- * Supabase project (CLAUDE.md hard line 7).
+ * Supabase project (design rule 6).
  */
 export interface AuthSession {
   accessToken: string;

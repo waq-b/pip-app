@@ -23,9 +23,9 @@ import { bucketForAccountKind, toPencePounds } from "../valuation/value.js";
 import { londonDay, type Credential, type T212ClientFor } from "./poll.js";
 
 /**
- * Rebuilding a pot's history from order history (Phase 2 decision 6): what was
+ * Rebuilding a pot's history from order history : what was
  * held on each past day, valued with that day's market close and FX — never
- * the trading API's prices (hard line 8). Investments only; see
+ * the trading API's prices (design rule 7). Investments only; see
  * `snapshotDailyValues` for why cash isn't included.
  *
  * Refuses to guess. If the fills don't add up to what the account holds now

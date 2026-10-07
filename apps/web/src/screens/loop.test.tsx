@@ -11,7 +11,7 @@ import { ME_ALLOWED, renderRoute } from "../test/render-route";
 import { PHONE_WIDTH, setViewportWidth } from "../test/setup";
 
 /**
- * The loop on screen (Phase 5 task 11): the planted ASML story is on Your
+ * The loop on screen: the planted ASML story is on Your
  * week; one trust rule is changed and saved on Rules; back on Your week it's
  * gone, held back with its reason. The API does the deciding — proven in
  * `apps/api/src/nudges/loop.test.ts`; this proves the screens ask again and

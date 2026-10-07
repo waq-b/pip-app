@@ -5,7 +5,7 @@ import { memoryNotificationStore } from "../notify/store.js";
 import { testAuth } from "../test-support/auth.js";
 
 /**
- * The bell's routes (Phase 6 decision 4): switches, this device, and what Pip
+ * The bell's routes : switches, this device, and what Pip
  * has told you. Behind the guard like everything else, and one person never
  * sees another's.
  */

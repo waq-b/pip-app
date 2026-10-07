@@ -7,7 +7,7 @@ export const STUB_SOURCE = "Sample prices · stub data";
 /**
  * Current prices, in pence. These live here rather than with the holdings
  * because prices are the market layer's job — the trading layer only knows what
- * is held and what it is worth (CLAUDE.md hard line 8). Phase 2 replaces this
+ * is held and what it is worth (design rule 7). Phase 2 replaces this
  * table with a real source behind the same interface.
  */
 const PRICES: Record<string, Pence> = {
@@ -67,7 +67,7 @@ export interface SeriesAnchors {
 /**
  * Deterministic fake prices: the same instrument always produces the same
  * series, so screenshots, tests and fixtures agree with each other. No network,
- * no filesystem, no database (CLAUDE.md hard line 7).
+ * no filesystem, no database (design rule 6).
  */
 export function createStubMarketData(options: StubMarketDataOptions = {}): MarketData {
   const now = options.now ?? (() => new Date());

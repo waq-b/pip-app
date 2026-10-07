@@ -7,7 +7,7 @@ import {
 
 /**
  * Yahoo Finance's chart endpoint — unofficial, keyless, and against Yahoo's
- * terms for automated use (Waqar's call for Phase 2; re-decided before anyone
+ * terms for automated use (the owner's call for Phase 2; re-decided before anyone
  * else uses Pip). Treated as fragile: every response is checked, a 429 is
  * "blocked", and callers fall back to Alpha Vantage.
  */

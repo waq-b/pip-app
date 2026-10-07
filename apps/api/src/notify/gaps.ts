@@ -4,7 +4,7 @@ import { connectionGaps, providerCredentials } from "../db/schema.js";
 import type { Db } from "../db/user-scope.js";
 
 /**
- * When a connected account goes quiet (phase-6.md decision 4, round 2 Q2).
+ * When a connected account goes quiet (round 2 Q2).
  * `last_polled_at` is only set by a poll that worked, so an account that
  * hasn't been read for `CONNECTION_GAP_HOURS` has a gap. One row per gap,
  * closed when the account answers again.

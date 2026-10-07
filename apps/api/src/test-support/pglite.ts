@@ -8,7 +8,7 @@ import type { Db } from "../db/user-scope.js";
 /**
  * A real Postgres, in-process, with our real migrations applied — for tests
  * that need Row Level Security to actually run. No network, no Supabase
- * (CLAUDE.md hard line 7).
+ * (design rule 6).
  *
  * Supabase provides the `anon` and `authenticated` roles and `auth.uid()`; this
  * recreates just those, with `auth.uid()` reading the JWT claims the same way.

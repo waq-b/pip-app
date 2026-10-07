@@ -7,7 +7,7 @@ import type { TrustCheck } from "../rules/trust.js";
 import type { NudgeHistory } from "./candidates.js";
 
 /**
- * The nudge log (Phase 5 decision 10): every nudge Pip built, shown or held
+ * The nudge log : every nudge Pip built, shown or held
  * back, with what it was built from. Reads run as the user (RLS); writes go
  * through the privileged connection after the guard or the job has decided
  * whose they are.

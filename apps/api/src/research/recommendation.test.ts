@@ -11,8 +11,7 @@ import type { Chat } from "./types.js";
 import { llmWriter } from "./writer.js";
 
 /**
- * The recommendation brief and its guard (phase-6.md decision 14, hard line
- * 12). Code decides the course and the pounds; the model may only explain
+ * The recommendation brief and its guard (design rule 9). Code decides the course and the pounds; the model may only explain
  * them. Every planted bad answer here must end up as Pip's own template.
  */
 

@@ -4,7 +4,7 @@ import { testAuth } from "../test-support/auth.js";
 import type { JobStatus, JobStatusReader } from "./status.js";
 
 /**
- * The two ways to see what Pip has been doing (phase-6.md decisions 7 and 10).
+ * The two ways to see what Pip has been doing.
  * Neither is called on a schedule: `/status` is a line on Setup, `/health/jobs`
  * is a browser tab. The watching happens inside the database.
  */

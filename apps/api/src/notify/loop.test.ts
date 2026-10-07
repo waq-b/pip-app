@@ -26,7 +26,7 @@ import { dbNotificationStore } from "./store.js";
 
 /**
  * Every way Pip speaks, end to end, on real Postgres with nothing stubbed but
- * the market and the writer — no network anywhere (hard line 7):
+ * the market and the writer — no network anywhere (design rule 6):
  *
  *   a line crossed → the alert or brief code decided → `notify()`'s switches,
  *   one push per event, the daily budget → the device, the inbox and the bell.

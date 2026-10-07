@@ -5,7 +5,7 @@ import type { Db } from "../db/user-scope.js";
 import { testDatabase } from "../test-support/pglite.js";
 
 /**
- * The ops check that never wakes Pip (phase-6.md decision 7). `private.stale_jobs`
+ * The ops check that never wakes Pip. `private.stale_jobs`
  * is the whole judgement — what the emailer sends is just these rows — so it's
  * tested here on a real Postgres, against the real migration.
  *

@@ -11,7 +11,7 @@ import { WarmingUp } from "./warming-up";
 
 /**
  * The frontend's view of the two walls. It is cosmetic — the API refuses every
- * request that fails either check regardless (CLAUDE.md hard line 4) — but it
+ * request that fails either check regardless (design rule 4) — but it
  * sends people to the right screen instead of a page of failures:
  *
  * signed out → sign in · signed in but not on the list → the refusal screen ·
@@ -51,7 +51,7 @@ export function RequireSession() {
 }
 
 /**
- * Pip is allowed to sleep (phase-6.md decision 7), so the first answer after
+ * Pip is allowed to sleep, so the first answer after
  * a while can take up to a minute. Blank at first, then — after
  * `WARMING_AFTER_MS` — it says so in plain words, and the screen swaps itself
  * in when the answer arrives.

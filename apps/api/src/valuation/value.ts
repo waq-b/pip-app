@@ -2,7 +2,7 @@ import type { Bucket } from "@finance-app/shared";
 
 /**
  * Turning what's held into pounds. Prices come from market data, never from a
- * trading API (hard line 8). Everything leaves here as integer pence.
+ * trading API (design rule 7). Everything leaves here as integer pence.
  */
 
 export interface PriceRow {
@@ -40,7 +40,7 @@ export function toPencePounds(
   return Math.round(quantity * price * poundsPerUnit(currency, fxRates) * 100);
 }
 
-/** Account kind → pot: T212 ISA and Invest, Kraken spot. Money never crosses pots (hard line 11). */
+/** Account kind → pot: T212 ISA and Invest, Kraken spot. Money never crosses pots (design rule 8). */
 export function bucketForAccountKind(accountKind: string): Bucket {
   if (accountKind === "isa") return "Base";
   if (accountKind === "invest") return "Medium";

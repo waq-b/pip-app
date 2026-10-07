@@ -6,7 +6,7 @@ import { londonDay, type Notifier } from "../notify/notify.js";
 import type { SideBetInput } from "./engine.js";
 
 /**
- * Side Bet's two alerts (phase-6.md decision 2): one when money in reaches 80%
+ * Side Bet's two alerts: one when money in reaches 80%
  * of the limit, one when it reaches the limit itself.
  *
  * Money in, less taken out, only moves when the user moves money, so there's
@@ -16,7 +16,7 @@ import type { SideBetInput } from "./engine.js";
  * same threshold can alert again.
  *
  * The alert is information: it says where the line is. Pip can't stop anyone
- * buying anything (hard line 1).
+ * buying anything (design rule 1).
  */
 
 const THRESHOLDS = LIMIT_ALERT_SHARES.map((share) => Math.round(share * 100) as 80 | 100);

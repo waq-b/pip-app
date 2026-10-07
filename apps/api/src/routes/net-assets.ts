@@ -3,7 +3,7 @@ import { dueReview, parseNetAssets, type NetAssetsStore } from "../rules/net-ass
 import { limitFor } from "../rules/side-bet.js";
 
 /**
- * Net assets (phase-6.md decision 13). The figure is sealed and the routes are
+ * Net assets. The figure is sealed and the routes are
  * built so it isn't handed out by accident: the ordinary read says only whether
  * it's set and when it was reviewed, and the figure — with the limit, which
  * gives it away ten times over — comes back only from an explicit reveal.

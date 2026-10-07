@@ -2,7 +2,7 @@ import { DEVICE_WORDS, useThisDevice } from "../lib/push";
 import { InstallSteps } from "./notifications-ask";
 
 /**
- * This device's push state (DESIGN §10.4, phase-6.md decision 5). A button
+ * This device's push state (DESIGN §10.4, ). A button
  * only where the browser can actually ask; on an iPhone or iPad in a Safari
  * tab, the Add to Home Screen sentence instead. A dropped subscription shows
  * "Notifications stopped on this device" with the button again — that's the

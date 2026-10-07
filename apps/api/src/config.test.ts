@@ -49,7 +49,7 @@ describe("server config", () => {
     });
   });
 
-  it("refuses an LLM mode it doesn't know — no Ollama (Waqar, 2026-09-17)", () => {
+  it("refuses an LLM mode it doesn't know — no Ollama", () => {
     expect(() => loadConfig({ LLM_MODE: "ollama" })).toThrow(/stub" or "groq/);
   });
 

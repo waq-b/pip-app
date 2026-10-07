@@ -99,7 +99,7 @@ export function buildApp(options: BuildAppOptions = {}) {
 
   // The guard goes on first and covers everything registered afterwards, so a
   // route is protected by existing rather than by anyone remembering to
-  // protect it (CLAUDE.md hard line 4).
+  // protect it (design rule 4).
   registerAuthGuard(app, {
     verifier: options.verifier ?? refuseEveryone,
     allowlist,

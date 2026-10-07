@@ -19,7 +19,7 @@ const KIND_WORDS: Record<NudgeView["kind"], string> = {
 };
 
 /**
- * Your week (Phase 5 decision 7): one card per note, with what it rests on,
+ * Your week : one card per note, with what it rests on,
  * which trust rules it passed, and what you did about it. A quiet week is a
  * finding with its working. What the trust rules held back is one tap away,
  * so silence is visibly the rules working. Earlier weeks sit underneath.

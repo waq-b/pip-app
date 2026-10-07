@@ -74,7 +74,7 @@ export interface JobStatus {
   stale: boolean;
 }
 
-/** "Pip last checked prices and news 12 min ago" (plan decision 10). */
+/** "Pip last checked prices and news 12 min ago" . */
 export function useJobStatus() {
   return useQuery({ queryKey: ["status"], queryFn: () => apiGet<JobStatus>("/status") });
 }

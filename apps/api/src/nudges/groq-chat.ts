@@ -1,7 +1,7 @@
 import type { Chat } from "../research/types.js";
 
 /**
- * The one place an LLM is called over the network (Phase 5 decision 6): Groq's
+ * The one place an LLM is called over the network : Groq's
  * OpenAI-compatible chat completions with a strict JSON schema. It lives
  * outside `research/` on purpose — the research module never holds a key or
  * makes a request; it's handed this function.

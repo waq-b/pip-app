@@ -4,7 +4,7 @@ import type { Db } from "../db/user-scope.js";
 import { poundsPerUnit } from "../valuation/value.js";
 
 /**
- * Outcomes (Phase 5 task 8): what happened after a nudge — a holding's price
+ * Outcomes: what happened after a nudge — a holding's price
  * 7 and 30 days on, a pot's share for shape nudges — filled in from cached
  * closes, never a new call, never an LLM. Nothing reads them on screen yet;
  * they're for learning, months on, which kinds of nudge earned trust.

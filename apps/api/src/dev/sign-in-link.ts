@@ -3,7 +3,7 @@
  * without sending an email (Supabase's built-in sender allows about two an
  * hour). Authentication is unchanged — the link signs the browser in through
  * Supabase exactly like an emailed one, and the API still verifies every
- * request and checks the allowlist (CLAUDE.md hard line 4).
+ * request and checks the allowlist (design rule 4).
  *
  *   pnpm --filter api sign-in-link [email]
  *

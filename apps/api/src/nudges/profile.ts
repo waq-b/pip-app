@@ -10,7 +10,7 @@ import { asUser, type Db } from "../db/user-scope.js";
 import type { ReadUser } from "../read/model.js";
 
 /**
- * What a user tells Pip about their plan (Phase 5 decision 5): goals, horizon,
+ * What a user tells Pip about their plan : goals, horizon,
  * monthly money in, risk in their own words, and things never to nudge on.
  * The nudge writer reads it for personalised users only.
  */

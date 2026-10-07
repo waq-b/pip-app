@@ -1,35 +1,44 @@
 # Architecture
 
-Living doc. Reflects what's actually built, not what's planned — check `docs/phases/phase-N.md` for what's coming. Last updated: Phase 5 — research agent and Your week (0.5.0), after 0.4.0 (rules engine), 0.3.0 (Kraken read-only) and 0.2.0 (Trading 212 practice accounts, market data, deployed on Render).
+How Pip is put together, as built. Pip is parked (see the README) but everything below exists in the code.
 
-## Platform: Supabase (decided 2026-09-16)
+"Phase N" in this document and in the code comments refers to the build stages listed in [CHANGELOG.md](../CHANGELOG.md).
 
-Supabase for Postgres and Auth, with Fastify kept as the backend and the wall (CLAUDE.md s3).
+## Design rules
 
-**Built:** Supabase Auth end to end — sign-in in the browser and token verification in the API, see [Auth](#auth) — and Row Level Security switched on for every table. **Not built yet:**
+These are the constraints the code is built around. Code comments refer to them as "design rule N".
 
-- **RLS as a second wall.** Today RLS, with no policies, only shuts Supabase's REST API off from the tables; Fastify queries as a role that bypasses it. Making it a real wall behind the API means querying as a non-bypass role with the verified user's claims set per request, inside a transaction. That arrives with the first user-owned table in Phase 2 — built now it would guard nothing.
-- **Scheduled work** from `pg_cron`. Price refresh, which touches no user secret, may run in an Edge Function. Anything that uses a provider key is triggered by `pg_cron` but executed by Fastify, because provider keys are never decrypted outside it (hard line 6).
-- **Provider keys** encrypted with our own AES-256-GCM and a `MASTER_KEY` held in Render — not Supabase Vault (Phase 2).
+1. **Code never decides money.** Pip reads. There is no code path that places an order, moves money or rebalances, and none is planned.
+2. **LLMs never touch money.** The model produces text only: summaries and notes. It never sets a rule, changes a limit or triggers anything. Deterministic code owns every number that matters.
+3. **Practice before live.** Trading 212 is connected through its practice (demo) environment. Kraken has no practice mode for spot, so it is read through a read-only key, and Pip refuses a Kraken key that can trade or withdraw.
+4. **Every API route is authenticated.** The only exceptions are the health checks and the sign-in flow. The frontend gating is cosmetic; the API is the wall.
+5. **Secrets never leave the backend.** Provider keys are encrypted at rest per user, decrypted only in memory when a provider call is made, never logged and never sent to the frontend.
+6. **No real network calls in tests.** Stub mode is first class, and CI never touches a broker, market-data source, LLM or hosted database.
+7. **Provider calls are minimised.** Trading APIs are called only to learn what is held and what cash exists, on a schedule, and the result is cached. Prices and history come from market-data sources, never from a trading API.
+8. **Pot integrity.** Money in one pot is never counted, moved or displayed as another. Limits are enforced in code, not in the UI.
+9. **Recommendations, not forecasts.** For users with personal research switched on, Pip may recommend a course of action (hold, take some profit, rebalance) with its reasoning and the trade-offs, always as the user's decision. It never predicts where a price is going. Everyone else gets general information only, with "information, not advice" framing.
 
-**Not used:** Realtime, Storage. Phase 2 decisions are in `docs/phases/phase-2-inputs.md`.
+## Platform: Supabase and Fastify
+
+Supabase provides Postgres and Auth. Fastify is the backend and the wall: every API route, every provider call and every use of a decrypted provider key runs in Fastify, not in the database or an edge function.
+
+- **Auth:** Supabase Auth proves who someone is (an emailed code); a row in our own `users` allowlist table is what lets them in. See [Auth](#auth).
+- **Row Level Security** is on for every table. User-facing reads run as the signed-in user inside a transaction, so RLS is a second wall behind the API. See [Storage](#storage).
+- **Scheduled work** comes from `pg_cron`, which asks the API to run the refresh job. Anything that uses a provider key is executed by Fastify, because provider keys are never decrypted outside it (design rule 5).
+- **Provider keys** are sealed with our own AES-256-GCM and a `MASTER_KEY` that lives on the app host rather than beside the database, instead of Supabase Vault. See [Key encryption](#key-encryption).
+
+**Not used:** Realtime, Storage.
 
 ## Monorepo layout
 
 ```
-finance-app-personal/
-├── CLAUDE.md
+pip/
 ├── CHANGELOG.md
 ├── docs/
 │   ├── ARCHITECTURE.md    ← this file
 │   ├── FEATURES.md
-│   ├── DESIGN.md          ← signed off; the visual source of truth
-│   ├── design/            ← the Claude Design prototype, verbatim
-│   └── phases/
-│       ├── phase-0.md
-│       ├── phase-1.md
-│       ├── phase-2-inputs.md
-│       └── phase-2.md
+│   ├── DESIGN.md          ← design notes: tokens, components, layouts
+│   └── design/            ← the design mockups, as exported (HTML)
 ├── apps/
 │   ├── web/                ← React frontend (Vite + TS + Tailwind v4 + PWA)
 │   └── api/                ← Fastify backend
@@ -83,11 +92,11 @@ finance-app-personal/
             └── api.ts        ← response types for every API route
 ```
 
-`research/` (Phase 5 task 6) is walled off — see [Research](#research-research-phase-5). Don't scaffold them early. `auth/` and `market/` arrived in Phase 1: `market/` earlier than originally planned, because instrument charts need price history and prices may never come from a trading API.
+`research/` is walled off — see [Research](#research-research-phase-5). `market/` is separate from `providers/` because instrument charts need price history, and prices never come from a trading API.
 
 ## Brand assets and fonts (Phase 1)
 
-The Claude Design handover ("Pip") lives in the repo, not just in the design tool:
+The design mockups live in the repo, not just in the design tool:
 
 - `docs/design/Pip.dc.html` — the original prototype, kept as the reference for every screen and state. Read-only; it is never built or imported.
 - `apps/web/src/assets/brand/` — the logo mark as SVG. The mark has **two cuts**: standard geometry for 48px and up (`pip-mark.svg`, `-dark.svg`, `-reversed.svg`, `-mono.svg`) and a small cut for 16–48px (`pip-mark-small.svg`), where the radii compress and the centres push out so the third seed survives. App-icon artwork: `pip-icon.svg` (standard cut on cream) and `pip-icon-maskable.svg` (small cut reversed on a full-bleed terracotta plate, inside the Android safe circle).
@@ -96,7 +105,7 @@ The Claude Design handover ("Pip") lives in the repo, not just in the design too
 
 The PWA manifest (`apps/web/vite.config.ts`) and `index.html` carry the Pip name, the cream/dark theme colours and these icons.
 
-**Updates, behind a launch splash** (ported from Terpa, 2026-09-17). `index.html` carries a static splash — the mark, "Pip", "Checking for updates…" — that shows before any JS, in the saved Appearance (a tiny inline script sets `data-theme` before first paint). `vite-plugin-pwa` runs with `registerType: "prompt"`, so a new service worker waits instead of taking over mid-use. `src/update.ts` registers it and asks for an update: if a new version is waiting, or arrives within `CHECK_MS` (3s), it's applied (`SKIP_WAITING`) and the page reloads into it with the splash still up. If one is still downloading at 3s, the splash waits for it up to `INSTALLING_MAX_MS` (15s) — a phone giving up at 3s left the new build half-installed launch after launch (fixed 2026-09-18). Otherwise the splash fades after at least `SPLASH_MIN_MS` (0.6s). The check is skipped on a first visit, offline and in dev; an update found after the splash waits for the next launch. The worker handles the `SKIP_WAITING` message itself (below).
+**Updates, behind a launch splash**. `index.html` carries a static splash — the mark, "Pip", "Checking for updates…" — that shows before any JS, in the saved Appearance (a tiny inline script sets `data-theme` before first paint). `vite-plugin-pwa` runs with `registerType: "prompt"`, so a new service worker waits instead of taking over mid-use. `src/update.ts` registers it and asks for an update: if a new version is waiting, or arrives within `CHECK_MS` (3s), it's applied (`SKIP_WAITING`) and the page reloads into it with the splash still up. If one is still downloading at 3s, the splash waits for it up to `INSTALLING_MAX_MS` (15s) — a phone giving up at 3s left the new build half-installed launch after launch. Otherwise the splash fades after at least `SPLASH_MIN_MS` (0.6s). The check is skipped on a first visit, offline and in dev; an update found after the splash waits for the next launch. The worker handles the `SKIP_WAITING` message itself (below).
 
 **Pip's own service worker** (`src/sw.ts`, Phase 6 task 7). `strategies: "injectManifest"`, built into one self-contained `sw.js` (the same file name, so installed apps update into it). It precaches the build, answers every page load with `index.html` (never `/api/`), and handles:
 
@@ -123,7 +132,7 @@ export const BUCKETS = ["Base", "Medium", "Degen"] as const;
 export type Bucket = (typeof BUCKETS)[number];
 ```
 
-Both apps import this — nothing hardcodes bucket names elsewhere. Each bucket maps to exactly one trading provider (Base/Medium → Trading 212, Degen → Kraken); see CLAUDE.md section 1 for what each bucket is for.
+Both apps import this — nothing hardcodes bucket names elsewhere. Each bucket maps to exactly one trading provider (Base/Medium → Trading 212, Degen → Kraken); `docs/FEATURES.md` describes what each pot is for.
 
 **Display names are a UI concern only.** `BUCKET_META` maps each id to what the screen calls it (Foundation, Handpicked, Side Bet), the accent scope the theme keys off (`fnd`/`pick`/`bet`), and the provider named in the read-only footer. The ids never reach a screen and the display names never reach the API or the database, so renaming a pot is a one-line change with no migration.
 
@@ -133,7 +142,7 @@ Both apps import this — nothing hardcodes bucket names elsewhere. Each bucket 
 
 - **Money is integer pence** (`Pence`), so nothing rounds in transit. `Percent` is percentage points.
 - **Every `Change` carries both** an amount and a percent, which is what makes "pounds before percent" (DESIGN.md §4.1) impossible to break by accident.
-- **`PriceFreshness`** carries the market-data source, the last successful read, whether the last fetch failed, and whether markets are closed. It names a market-data source, never a trading API (hard line 8). Deriving the green/amber/red state from it is the web app's staleness ladder (`apps/web/src/lib/staleness.ts`), not these types.
+- **`PriceFreshness`** carries the market-data source, the last successful read, whether the last fetch failed, and whether markets are closed. It names a market-data source, never a trading API (design rule 7). Deriving the green/amber/red state from it is the web app's staleness ladder (`apps/web/src/lib/staleness.ts`), not these types.
 
 ## Web app
 
@@ -259,7 +268,7 @@ An unknown pot or holding is a 404; an unrecognised timeframe or range is a 400 
 **Connecting an account** (`routes/connections.ts`) — `GET /connections`, `POST /connections/:provider` (body `{ accountKind?, key, secret? }`) and `DELETE /connections/:provider?accountKind=`, all behind the guard. The routes parse and hand over to a `ConnectionService`; which one depends on the mode.
 
 - **One row per account.** `Connection` has an `id` (`trading212:isa`, `trading212:invest`, `kraken`), `accountKind`, `available` (false for Kraken until Setup can take its private key, Phase 3 task 8 — the API already connects it) and `permissionsVerified` (Kraken true; Trading 212 false, because T212 can't report a key's permissions). A Trading 212 request without `accountKind` is a 400.
-- **One account, one pot.** A Trading 212 credential stores the account's own id (`provider_account_id`, from the summary; migration 0012), set on connect and refreshed on every poll. Connecting a key whose account already feeds the user's other Trading 212 pot is refused with `same_account` before anything is stored (hard line 11).
+- **One account, one pot.** A Trading 212 credential stores the account's own id (`provider_account_id`, from the summary; migration 0012), set on connect and refreshed on every poll. Connecting a key whose account already feeds the user's other Trading 212 pot is refused with `same_account` before anything is stored (design rule 8).
 - **Every verdict is a 200**, with the outcome in the body: `connected`, `invalid_key`, `too_much_access`, `missing_permission` (+ `missingPermission`), `not_pounds`, `unavailable`, `not_available_yet`. The message's first sentence is the card heading. No response echoes a key.
 - **Stub mode** (`stubConnectionService`) keeps Phase 1's behaviour: it judges the key's shape (too short, or carrying `trade`/`withdraw`) and stores nothing; listing returns the design's three accounts.
 - **Trading 212 mode** (`sync/connections.ts`, `liveConnectionService`): validates the key and secret against the practice API (account summary + positions) **before storing anything**; seals both halves (bound to user, provider, account kind and field); upserts one credential per user + provider + account kind, so reconnecting replaces the key; runs the first poll with the data it already read (no second wait on T212's 1-per-5s limit); and calls `onConnected` (history backfill, task 10). Listing reads as the user, so RLS applies. Disconnecting deletes the credential — cascading to its holdings, cash and trades — and that pot's `daily_values`, since that history came from the account. Kraken answers `not_available_yet`.
@@ -285,7 +294,7 @@ interface Provider {
 - **`client.ts`** — read-only client for the **practice environment only** (`env: "demo"`; anything else throws until Phase 8). HTTP Basic `key:secret`. Every request is a `GET` to an allowlisted path (summary, positions, instrument and exchange metadata, order history); a test reads the source and fails if a write method, `equity/orders` or `pies` ever appears. Methods: `accountSummary`, `positions`, `instruments`, `exchanges`, and `fills()` — an async generator following `nextPagePath` cursor pages, skipping unfilled orders.
 - **Errors are typed**: `T212AuthError` (401, never retried), `T212PermissionError` naming the missing permission (T212's 403 is bare, so it's inferred from the endpoint), `T212UnavailableError` (5xx, network, or 429 after retries), `T212ShapeError` (a field Pip relies on is missing — the beta API changed).
 - **Rate limits** come from T212's own headers: when `x-ratelimit-remaining` hits 0 the next call to that endpoint waits until `x-ratelimit-reset`; a 429 waits and retries twice, then gives up.
-- **`rows.ts`** — responses → stored rows: holdings (quantity and average price at full precision, total cost in pence), cash in pence, instruments, and trades (net value and fees in pence). `currentPrice` and `walletImpact.currentValue` are dropped (hard line 8). Anything not in pounds raises `NotInPoundsError`.
+- **`rows.ts`** — responses → stored rows: holdings (quantity and average price at full precision, total cost in pence), cash in pence, instruments, and trades (net value and fees in pence). `currentPrice` and `walletImpact.currentValue` are dropped (design rule 7). Anything not in pounds raises `NotInPoundsError`.
 - **`symbols.ts`** — T212 ticker → Yahoo and Alpha Vantage symbols from the exchange the ticker encodes (`GRGl_EQ` → `GRG.L` / `GRG.LON`, `ASMLa_EQ` → `ASML.AS` / `ASML.AMS`, `NVDA_US_EQ` → `NVDA`). Unknown formats give null, for a manual override.
 - Tests replay `fixtures/recorded/t212/`; the client was also run once against the practice account (summary, 4 holdings, 4 fills across pages, 17 exchanges).
 
@@ -302,21 +311,21 @@ interface Provider {
 - **Side Bet history and cost** (`sync/kraken-history.ts`, Phase 3). `createLedgerBook` replays stored ledger entries grouped by `refid`: quantities come straight from each entry's balance-after (summed across a coin's staked views), and cost is average cost in pence — bought with GBP/USD/EUR at what was paid (that day's FX close, fees excluded); swapped in, deposited or transferred in at that day's close (unknown → `null`, which clears once the coin is fully gone); staking and earn rewards free; spot↔staking transfers and earn allocations change nothing; anything leaving takes cost in proportion. `backfillKrakenHistory` fetches the coins' closes (CoinGecko for the last year, Kraken public further back; if the far end can't be had, the last 364 days), checks the replayed ledger ends at current holdings (else `holdings_mismatch`, nothing written), writes Side Bet `daily_values` up to yesterday (unknown cost counted as value; snapshots never overwritten), sets holdings' cost, and records `history_starts_on` — the same outcomes and statuses as the Trading 212 rebuild.
 - **`credentialsDue`** lists `live`/`error` credentials not polled recently, for the scheduled job.
 - **`snapshotDailyValues(db, userId, day)`** writes each pot's **invested** value and cost for the day into `daily_values` (`source: snapshot`) from the latest holdings and cached prices. **Cash isn't included** — on either side — because rebuilt history can't know past cash reliably, and the chart must not jump where rebuilt days meet live ones; cash is shown at its current amount instead. A pot with an unpriced holding is skipped, never written wrong. Days are London calendar days (`londonDay`).
-- **`backfillHistory(db, box, credential, clientFor, marketFor)`** (Phase 2 decision 6) rebuilds a pot's past from order history: reads every fill into `trades` (keyed by fill id, so reruns never double-count), gap-fills daily closes and FX for the instruments involved, then walks each London day from the first trade to yesterday — quantity held × that day's close (carried over weekends and holidays) × that day's FX — into `daily_values` (`source: backfill`). Cost uses average-cost bookkeeping on the **same basis as Trading 212's `totalCost`**: a buy adds its net value minus fees and taxes; a sell removes cost in proportion. It **refuses to guess**: if the fills don't add up to what the account holds now (transfers in, pies, missing pages), nothing is written and history starts today (`partial`, `holdings_mismatch`); days before every holding can be priced are skipped (`partial`, `prices_missing`). A rebuilt day never overwrites a real snapshot. Status and `history_starts_on` are kept on the credential; a failure marks it `failed` without half-writing. Capped at five years. Run once against the practice ISA: four fills, matching holdings, no past days (all bought today).
+- **`backfillHistory(db, box, credential, clientFor, marketFor)`** rebuilds a pot's past from order history: reads every fill into `trades` (keyed by fill id, so reruns never double-count), gap-fills daily closes and FX for the instruments involved, then walks each London day from the first trade to yesterday — quantity held × that day's close (carried over weekends and holidays) × that day's FX — into `daily_values` (`source: backfill`). Cost uses average-cost bookkeeping on the **same basis as Trading 212's `totalCost`**: a buy adds its net value minus fees and taxes; a sell removes cost in proportion. It **refuses to guess**: if the fills don't add up to what the account holds now (transfers in, pies, missing pages), nothing is written and history starts today (`partial`, `holdings_mismatch`); days before every holding can be priced are skipped (`partial`, `prices_missing`). A rebuilt day never overwrites a real snapshot. Status and `history_starts_on` are kept on the credential; a failure marks it `failed` without half-writing. Capped at five years. Run once against the practice ISA: four fills, matching holdings, no past days (all bought today).
 - **`valuation/value.ts`** — the one place a holding becomes pounds: quantity × market price × pounds per unit (GBP 1, GBX 1/100, USD/EUR ÷ the GBP rate), rounded to pence. A missing rate throws rather than guesses. `bucketForAccountKind`: `isa` → Foundation, `invest` → Handpicked.
 - Tested on PGlite with recorded T212 responses: the practice ISA snapshots within 0.2% of Trading 212's own total.
 
 ## Scheduled refresh (`jobs/`, `drizzle/0006`, `.github/workflows/keep-supabase-awake.yml`)
 
-- **`POST /jobs/refresh`** is the scheduler's door. It's a **machine caller**: the guard (`JOB_PATHS`) requires `x-job-secret` to match `JOB_SECRET` (compared as SHA-256 digests with `timingSafeEqual`) instead of a user token, and refuses everyone when no secret is configured — still authenticated, so hard line 4 holds; the route-coverage test sees it answer 401. It answers **202 immediately** and runs the job afterwards, because a sleeping Render instance takes about a minute to wake.
+- **`POST /jobs/refresh`** is the scheduler's door. It's a **machine caller**: the guard (`JOB_PATHS`) requires `x-job-secret` to match `JOB_SECRET` (compared as SHA-256 digests with `timingSafeEqual`) instead of a user token, and refuses everyone when no secret is configured — still authenticated, so design rule 4 holds; the route-coverage test sees it answer 401. It answers **202 immediately** and runs the job afterwards, because a sleeping Render instance takes about a minute to wake.
 - **The job** (`createRefreshJob`) runs seven idempotent steps, each isolated so one failing doesn't stop the rest: poll accounts not polled in 25 minutes; rebuild history for one account still `pending`; refresh due prices for everything held; snapshot today's pot values for everyone with a live account; collect facts for what's held (Phase 5, see [Facts](#facts-facts-phase-5)); build Your week and daily nudges for everyone with a live account (see [Your week](#your-week-nudges-phase-5)); fill in nudge outcomes. A second trigger while one is running joins it rather than starting another.
 - **`pg_cron`** (migration 0006) calls `private.request_refresh()` every 30 minutes on weekdays 07:00–21:59 UTC and once daily at 22:00 UTC. That function reads the URL and job secret from `private.job_settings` — a single row written at deploy, never in git, unreadable to `anon`/`authenticated` — and `net.http_post`s with a 90-second timeout. Without the row it does nothing. The migration is guarded, so a database without `pg_cron`/`pg_net` (PGlite in tests) still applies it. `pg_net` lives in the `extensions` schema (0007), per Supabase's security advisor. Off-hours cadence keeps Render awake only during market hours, which matters because its 750 free hours are shared across the workspace. **Crypto** (migration 0010): `private.request_crypto_refresh()` runs hourly outside those hours — weekday 23:00–06:59 UTC and weekends except 22:00 — and only calls `request_refresh()` when some holding is a `CRYPTO` instrument, so nobody holding crypto means no extra wake-ups. Holding crypto adds roughly 100 awake hours a month on Render's free plan (each hourly wake keeps the instance up ~15 minutes).
-- **Refresh-on-read** in the routes (task 12) covers anything the schedule misses.
+- **Refresh-on-read** in the routes covers anything the schedule misses.
 - **Keep-alive**: free Supabase projects pause after about a week of low activity, and scheduled jobs inside the database aren't documented as activity. A GitHub Actions workflow queries Supabase's REST API every three days with the publishable key (public by design; stored as repository secrets `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`). RLS refuses the read, but the request still reaches the database.
 
 ## Recommendation triggers (`nudges/triggers.ts`, `nudges/trigger-store.ts`, Phase 6)
 
-When Pip recommends a course of action (CLAUDE.md hard line 12), for personal-research users only. **Code decides the trigger, the recommended course and every amount**; the writer only explains it (hard line 2). The file is pure — no clock, no database.
+When Pip recommends a course of action (design rule 9), for personal-research users only. **Code decides the trigger, the recommended course and every amount**; the writer only explains it (design rule 2). The file is pure — no clock, no database.
 
 | #   | Trigger                                                      | Fires                                                                           | Recommends                                     | Amount                         | Re-arms                        | Pushed |
 | --- | ------------------------------------------------------------ | ------------------------------------------------------------------------------- | ---------------------------------------------- | ------------------------------ | ------------------------------ | ------ |
@@ -348,7 +357,7 @@ The fact (title, code's) → Pip's take (course and pounds, from the row) → wh
 
 ## The urgent tier (`nudges/candidates.ts`, `nudges/service.ts`, Phase 6)
 
-A stricter layer on the daily build, not a second copy of the trust rules (phase-6.md decision 3). A daily candidate is `urgent` when it already passes every Phase 5 check **and**:
+A stricter layer on the daily build, not a second copy of the trust rules (daily urgent notes). A daily candidate is `urgent` when it already passes every Phase 5 check **and**:
 
 - **an urgent move:** today's move is at least `URGENT_MOVE_MULTIPLIER` (2×) the pot's own big-move line — 6% / 14% / 30% by default — or
 - **urgent news** (personal research only; everyone else gets no news on the daily path at all): at least `URGENT_NEWS_MIN_SOURCES` (3) independent named publishers on one holding within `URGENT_NEWS_WINDOW_HOURS` (24), after stage A. The quiet period around results still holds, except on the results day itself. It then goes through the writer like any personalised news note — materiality and the independent-sources recheck included.
@@ -357,21 +366,21 @@ Urgent notes don't count against the daily budget. They're logged with `nudges.u
 
 ## Side Bet's limit alerts (`rules/limit-alerts.ts`, Phase 6)
 
-Two alerts, judged in the refresh job after the poll that reads the Kraken ledger — never on a price (phase-6.md decision 2).
+Two alerts, judged in the refresh job after the poll that reads the Kraken ledger — never on a price .
 
 - **80% of the limit**, then **the limit itself**. Money in, less taken out, only moves when the user moves money, so there is nothing to flicker and none of the two-run confirmation the old percentage cap needed.
 - **One alert per crossing.** A row in `limit_alerts` stays open until money in comes clearly back under that threshold — by `LIMIT_REARM_PENCE` (£25) — which sets `cleared_at` quietly, with no push. After that the same threshold can alert again, with a new row.
 - **The push** goes through `notify()`, so the user's switches and the one-push-per-event rule apply; the alert is recorded either way, including when nobody has a device subscribed.
-- **What it says** is where the line is, in pounds, and that Pip can't stop anything (hard line 1). The row is also what the bell shows.
+- **What it says** is where the line is, in pounds, and that Pip can't stop anything (design rule 1). The row is also what the bell shows.
 
 ## Ops: job freshness, with Pip asleep (`jobs/runs.ts`, `routes/status.ts`, `drizzle/0018`, Phase 6)
 
-**Nothing pings Pip.** Render is free and allowed to sleep; a liveness check on a schedule would be a keep-alive in disguise and would spend the free hours (CLAUDE.md s3, phase-6.md decision 7). So ops watches the **work**, from inside the database.
+**Nothing pings Pip.** Render is free and allowed to sleep; a liveness check on a schedule would be a keep-alive in disguise and would spend the free hours. So ops watches the **work**, from inside the database.
 
 - **Every job records a run.** `dbJobRecorder` writes a `job_runs` row when a step starts and fills in the same row when it finishes — one per kind of work: `refresh` (the whole run), `poll`, `prices`, `facts`, `weekly_build`, `daily_build`, `outcomes`. A job that dies mid-run leaves an unfinished row, which reads as a failure. The job drops rows older than `JOB_RUNS_KEPT_DAYS`.
 - **`private.stale_jobs(at)`** is the whole judgement, in SQL: no successful price refresh within `stale_refresh_minutes` **during the hours Pip is meant to run**; no Monday build by `weekly_build_by_hour` London on a Monday; anything started over 30 minutes ago and never finished — which is what an unreachable API looks like. Outside those hours silence is not a failure. Thresholds live in `private.job_settings`, so they change without a deploy. Tested on PGlite against the real migration (`jobs/freshness.test.ts`).
 - **`private.check_job_freshness()`** runs every 20 minutes under `pg_cron`, reads those rows and posts to Resend through `pg_net`. **One email per incident:** `private.job_alerts` holds an open row until the job runs cleanly again, and a recovered job closes it. The Resend key and `OPS_EMAIL` live in `private.job_settings`, server-only, never granted. Proven on the dev database, 2026-09-17: a planted unfinished job produced exactly one email (Resend 200), a second run sent none, and recovery closed the incident.
-- **`GET /status`** (signed in) gives Setup its line — when prices were last checked, and whether that's stale — and says nothing about why anything failed. **`GET /health/jobs`** answers `ok` or `stale` with no detail and no session, for Waqar to open in a browser; the guard allows it because it carries no data. **Nothing calls either on a schedule.**
+- **`GET /status`** (signed in) gives Setup its line — when prices were last checked, and whether that's stale — and says nothing about why anything failed. **`GET /health/jobs`** answers `ok` or `stale` with no detail and no session, for the operator to open in a browser; the guard allows it because it carries no data. **Nothing calls either on a schedule.**
 - **`GET /health`** stays for Render's own deploy check.
 - **The Supabase keep-alive stays** (`.github/workflows/keep-supabase-awake.yml`): it pings **Supabase**, not Pip, every three days, because a free Supabase project pauses after about a week and scheduled jobs inside it don't count as activity. It costs no Render hours.
 
@@ -381,7 +390,7 @@ One pure function, no I/O and no clock, so `/rules`, `/portfolio` and `/buckets/
 
 - **The shape is Foundation and Handpicked.** Handpicked's target is the one number set; Foundation is the rest. Targets are judged against the pots **in the shape**, so Side Bet's size never drags them off, and they're scaled when one of the two isn't connected.
 - **Side Bet has a limit in pounds** (`rules/side-bet.ts`): the FCA's 10% guide on the sealed net assets, or `SIDE_BET_STARTER_LIMIT_PENCE` (£350) until they're set. It's judged on **money in, less taken out, over 12 months** — GBP deposits minus withdrawals in the Kraken ledger, floored at zero — never on what Side Bet is worth. Money only moves when the user moves it, so prices can't push anyone over the line, and taking profit out makes room again.
-  - **Known gap:** a deposit in another currency, or crypto sent in from elsewhere, isn't counted. Waqar's account is in pounds, and guessing a rate would put an unsure number against a limit that matters.
+  - **Known gap:** a deposit in another currency, or crypto sent in from elsewhere, isn't counted. the owner's account is in pounds, and guessing a rate would put an unsure number against a limit that matters.
 - **Statuses:** `ok`, `near_limit` at 80% of the limit, `over_limit` at 100% — the only red — and `drifted` for a target five points either way.
 - **What growth means:** Side Bet worth more than went in is `grownBy`, a calm line ("That's good news"), never red.
 - **`fixIt`** is one amount now: taking that much out of Side Bet brings money in back under the limit. Arithmetic, not advice.
@@ -394,7 +403,7 @@ One pure function, no I/O and no clock, so `/rules`, `/portfolio` and `/buckets/
 
 ### Profile and trust rules (`nudges/profile.ts`, `rules/trust-settings.ts`, `routes/research-settings.ts`, Phase 5)
 
-Two per-user settings the research build reads (task 7). Neither can move money or change the shape rules; a test saves both and checks `/rules` is untouched.
+Two per-user settings the research build reads. Neither can move money or change the shape rules; a test saves both and checks `/rules` is untouched.
 
 | Route              | Does                                                                                                                                                                                                                                                                       |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -407,12 +416,12 @@ Stores follow the rules store: `dbProfileStore` / `dbTrustSettingsStore` read as
 
 ### Trust rules and candidate nudges (`rules/trust.ts`, `nudges/candidates.ts`, Phase 5)
 
-Both pure — no I/O, no clock — so a week gives the same answer when it's built and when it's re-checked after a rule changes. They decide what may be said; the research module (task 6) only writes the words.
+Both pure — no I/O, no clock — so a week gives the same answer when it's built and when it's re-checked after a rule changes. They decide what may be said; the research module only writes the words.
 
 **Trust rules** (`rules/trust.ts`):
 
 - **Publisher identity** — `publisherKey(domain)` drops `www.` and trailing country/kind labels (`com`, `co`, `uk`, `org`, `net`, `io`, `news`, `info`, `ac`, `gov`) and keeps the organisation's label: `bbc.co.uk` and `bbc.com` are both `bbc`, `uk.finance.yahoo.com` is `yahoo`. Independent sources are distinct keys, so two BBC reports are one source. `domainMatches` accepts a named domain or its subdomains, never a lookalike (`notreuters.com`).
-- **Stage A** (`stageA`, on reports): named publisher — in the user's list, **or the holding's own newsroom, for that holding only** (Waqar, 2026-09-17; from `COMPANY_FEEDS`) → inside the recency window (the user's days weekly, `DAILY_RECENCY_HOURS` 48 daily; nothing dated in the future) → no exclusion word in the headline or snippet. Kept reports are newest first; dropped ones carry the rule that dropped them.
+- **Stage A** (`stageA`, on reports): named publisher — in the user's list, **or the holding's own newsroom, for that holding only** → inside the recency window (the user's days weekly, `DAILY_RECENCY_HOURS` 48 daily; nothing dated in the future) → no exclusion word in the headline or snippet. Kept reports are newest first; dropped ones carry the rule that dropped them.
 - **Stage B** checks (each a `TrustCheck { rule, setting, passed, detail }`): `independent_sources` (≥ `minSources` distinct publishers, detail names them), `results_quiet` (no news nudge within `resultsQuietDays` of a results date either side; "No results date known" passes and says so), `cap_room` (always on: nothing on a Side Bet holding while the cap is broken), `exclusions` (whole word, any case).
 - `basisFor(reports)` — "Based on N sources over M days" (distinct publishers, distinct UTC days). Never a percentage.
 
@@ -425,7 +434,7 @@ Both pure — no I/O, no clock — so a week gives the same answer when it's bui
 | `earnings` (calendar)     | Results within `CALENDAR_LEAD_DAYS` 7                            | Within 2, once per date                         | exclusions                                               |
 | `isa_year_end` (calendar) | 5 April within `ISA_YEAR_END_LEAD_DAYS` 14, Foundation connected | Within 2, once                                  | exclusions ("ISA")                                       |
 | `move` (awareness)        | The **week's** move at or past the pot's big-move line           | The **day's** move, once a day                  | cap room, exclusions                                     |
-| `news` (awareness)        | Any report passing stage A                                       | — (weekly only, decision 4)                     | cap room, exclusions, results quiet, independent sources |
+| `news` (awareness)        | Any report passing stage A                                       | — (weekly only)                                 | cap room, exclusions, results quiet, independent sources |
 
 A candidate is shown when every check passes; `heldBackBy` is the first that didn't. Then budgets: **weekly**, awareness nudges past `weeklyBudget` are held back (`weekly_budget`), ranked by independent publishers, then newest report, then move size — shape and calendar never count and are never dropped. **Daily**, everything counts against what's left of `dailyBudgetPerDay` and `dailyBudgetPerWeek`, in order cap → results → ISA → moves (`daily_budget`). A weekly build with nothing shown adds a `none`/`quiet` candidate carrying the counts (holdings checked, reports read, reports counted, held back per rule) and the next dated thing (a results date or the ISA year end) — so a quiet week is a result with its working. Every candidate has a `dedupeKey` (`reason:subject:day-or-date`) for daily repeats.
 
@@ -473,7 +482,7 @@ What's being said about what users hold, and what's coming up — collected on t
 
 **Stores**: `dbNudgeStore` — reads as the user (RLS), writes on the privileged connection; `memoryNudgeStore` for stub mode. **Stub mode** (`app.ts`) builds a week on read from the sample data, stub facts and the stub writer — the sample's broken cap, Apple's weekly move and the planted ASML story shown; Nvidia (one publisher) and Bitcoin (Side Bet over its cap) held back.
 
-**The loop, tested end to end** (task 11): `nudges/loop.test.ts` drives the real routes in stub mode with a fixed Monday-morning clock (`createNudgeService(..., { now })`) — the planted ASML story passes the trust rules and is in `GET /week` and the log (model, prompt version, its two reports); `PUT /trust-rules` with three publishers required takes it off the week at once, held back with its reason, while the log keeps it as built; putting the rule back brings it back; an exclusion saved through `PUT /profile` does the same; the sample's broken cap stays throughout. `apps/web/src/screens/loop.test.tsx` does the screen side: story on Your week → slider moved and saved on Rules → Your week refetched, story gone, reason one tap away.
+**The loop, tested end to end**: `nudges/loop.test.ts` drives the real routes in stub mode with a fixed Monday-morning clock (`createNudgeService(..., { now })`) — the planted ASML story passes the trust rules and is in `GET /week` and the log (model, prompt version, its two reports); `PUT /trust-rules` with three publishers required takes it off the week at once, held back with its reason, while the log keeps it as built; putting the rule back brings it back; an exclusion saved through `PUT /profile` does the same; the sample's broken cap stays throughout. `apps/web/src/screens/loop.test.tsx` does the screen side: story on Your week → slider moved and saved on Rules → Your week refetched, story gone, reason one tap away.
 
 **Job step 6** (`refresh-job.ts`): for each allowlisted user with a live account and a linked sign-in, build the week if due, then daily nudges from 07:00 UTC; one person's failure is recorded (`nudges:<user>`) and the rest carry on. `server.ts` wires the database stores, `dbFactsReader`, and the Groq writer when `LLM_MODE=groq` (stub writer otherwise).
 
@@ -483,11 +492,11 @@ Checked against the dev database with a dry run (built in memory, nothing saved,
 
 ## Research (`research/`, Phase 5)
 
-Where words come from. **Handed values, hands back text** — nothing else (hard line 2, decision 9).
+Where words come from. **Handed values, hands back text** — nothing else (design rule 2).
 
 - **The wall.** `research/` imports only its own files and `@finance-app/shared`, and its code never touches `fetch`, `process`, `require`, `globalThis`, `eval` or the filesystem. `research/wall.test.ts` proves it: it lists every import in every non-test file with the TypeScript compiler (`ts.preProcessFile`, dynamic imports included), resolves relative ones and fails on anything leaving `research/` or any package but the shared one; scans code (comments stripped) for the forbidden globals; fails if it finds no files; and checks itself against a planted crossing. ESLint (`eslint.config.js`) flags the same in the editor: imports naming the rest of the API, other packages, and the `fetch`/`process` globals. So there's no path from an LLM to rules, keys, the database, providers or orders.
 - **The LLM is injected.** `Chat` (`types.ts`) is a function `{ model, system, user, schema } → { content, model }`. The only network implementation is `nudges/groq-chat.ts` (`groqChat`): Groq's OpenAI-compatible chat completions, strict `json_schema`, `reasoning_effort: low`, temperature 0.2, 30 s timeout; any failure is `LlmUnavailableError` with a reason and never the key. Zero Data Retention is on in Groq's console.
-- **Writers** (`writer.ts`), both `NudgeWriter { words(request) }` — **one request per build** since 2026-09-21 (Waqar: fewer, better requests; the old one-per-piece calls hit Groq's per-minute limit on Mondays). The build gathers every fact and makes every decision first, then asks once for all the words it needs: `{ news, recommendations, opening }`.
+- **Writers** (`writer.ts`), both `NudgeWriter { words(request) }` — **one request per build** since 2026-09-21 (fewer, better requests; the old one-per-piece calls hit Groq's per-minute limit on Mondays). The build gathers every fact and makes every decision first, then asks once for all the words it needs: `{ news, recommendations, opening }`.
   - `llmWriter({ chat, model, onFallback })` — news goes to the model **only when it has a plan** (personal research on) and reports; recommendations only exist for personal research; the opening line only on a weekly build for personal research. Nothing to write → no request at all, so everyone else costs nothing. The answer (`wording.v1`: `{ notes[], briefs[], opening }`, each piece keyed by id) is checked **piece by piece** by the guard; a piece that fails, or is missing, gets its own template and reports why through `onFallback` — one bad piece never costs the rest. `material: false` comes back as `NotMaterial` for the build to hold the note back. At most `MAX_REPORTS_PER_NOTE` (8) reports per holding go in. A quiet week opens with "Here's your week." whatever the model wrote, since the line is written before Pip knows nothing survived.
   - `stubWriter()` — stub mode and CI: canned words from the facts, always material, citing every report; Pip's template for briefs. No network.
   - `groqChat` waits once, as long as Groq's 429 asks (`retry-after` or `x-ratelimit-reset-*`, at most 20s), then gives up to the templates.
@@ -499,7 +508,7 @@ Where words come from. **Handed values, hands back text** — nothing else (hard
 
 ## Market data layer
 
-`apps/api/src/market/market.ts` is the other provider interface, and it answers a different question: _what is it worth, and what has it done?_ Trading providers only ever answer _what is held, and how much cash?_ Keeping the two apart is how hard line 8 stays true — every price and every chart in the app comes from here, and nothing reads a price from a trading API.
+`apps/api/src/market/market.ts` is the other provider interface, and it answers a different question: _what is it worth, and what has it done?_ Trading providers only ever answer _what is held, and how much cash?_ Keeping the two apart is how design rule 7 stays true — every price and every chart in the app comes from here, and nothing reads a price from a trading API.
 
 ```ts
 interface MarketData {
@@ -518,7 +527,7 @@ interface MarketData {
 
 The stub above still drives stub mode. Real prices come from two sources behind one small interface, `PriceSource` — `quote(target)` and `dailyCloses(target, from)` — where a target is a listing (by that source's symbol, plus T212's currency for it) or GBP→USD/EUR. Prices stay in the listing's currency here; pence and FX happen when a holding is valued.
 
-- **`yahoo.ts`** — the unofficial chart endpoint, primary (Waqar's call; against Yahoo's terms; re-decided before anyone else uses Pip). One call gives the quote and today's 5-minute points. Daily closes are keyed by the exchange's own calendar day. `GBp` becomes `GBX`. A 429 is `blocked`, an unknown symbol `not_found`.
+- **`yahoo.ts`** — the unofficial chart endpoint, primary (the owner's call; against Yahoo's terms; re-decided before anyone else uses Pip). One call gives the quote and today's 5-minute points. Daily closes are keyed by the exchange's own calendar day. `GBp` becomes `GBX`. A 429 is `blocked`, an unknown symbol `not_found`.
 - **`alpha-vantage.ts`** — the free tier, fallback: `GLOBAL_QUOTE`, `CURRENCY_EXCHANGE_RATE`, `TIME_SERIES_DAILY` / `FX_DAILY` compact (100 trading days). No intraday; latest data is the previous trading day, stamped at 21:00 UTC that day. AV never says a listing's currency, so the instrument's T212 currency is used. Its 200-with-a-message rate limit is `blocked`, and the key never appears in an error.
 - **`fallback.ts`** — `withFallback` asks each source in order (skipping one with no symbol for the target) and returns the answer **with the source that gave it**, so the provenance line always names the source a price really came from.
 - **`hours.ts`** — "is this market open" from T212's working schedules: open from an `OPEN` event until the next event of any kind, so US pre-market, after-hours and overnight don't count, and a holiday (no `OPEN`) is closed. `scheduleCovers` says when the published schedule has run out rather than guessing.
@@ -540,7 +549,7 @@ The stub above still drives stub mode. Real prices come from two sources behind 
 
 ## Auth
 
-Supabase Auth, an emailed 8-digit code (Supabase's Email OTP Length; `SIGN_IN_CODE_LENGTH` must match) for now (Google later), proves someone owns an email. A row in our own `users` table is what lets them in (CLAUDE.md s3, hard line 4). Sign-in itself happens between the browser and Supabase; the API never sees a password or an OAuth callback.
+Supabase Auth, an emailed 8-digit code (Supabase's Email OTP Length; `SIGN_IN_CODE_LENGTH` must match) for now (Google later), proves someone owns an email. A row in our own `users` table is what lets them in (design rule 4). Sign-in itself happens between the browser and Supabase; the API never sees a password or an OAuth callback.
 
 **Verifying a token** (`auth/jwt.ts`). Every request carries `Authorization: Bearer <Supabase access token>`. The API checks its signature against the project's published signing keys (JWKS, via `jose`), and checks the issuer (`<SUPABASE_URL>/auth/v1`) and audience (`authenticated`), so a token from another Supabase project, or one not issued to a signed-in user, is refused. Only asymmetric algorithms are accepted. The API holds no Supabase secret at all — just the project URL.
 
@@ -569,7 +578,7 @@ The guard is an `onRequest` hook on the root instance — deliberately not added
 
 **In the browser.** Screens never import Supabase. `lib/auth-client.ts` wraps it in a five-method `AuthClient` (get session, listen for changes, send a code, verify a code, sign out). `sendCode` calls `signInWithOtp` with `emailRedirectTo` set to the app's origin and `shouldCreateUser: false` (Supabase's "sign-ups not allowed" answer is treated as sent), and turns Supabase's send-limit error into `TooManyEmailsError`. `verifyCode` calls `verifyOtp({ email, token, type: "email" })`, which signs in **the window that typed the code**; a wrong, expired or used code — or an address with no account — becomes `WrongCodeError`, and a 429 `TooManyTriesError`.
 
-**Why a code, not a link** (fixed 2026-09-17). A Home Screen PWA on iOS and Android has its own storage. Tapping a magic link opens the system browser, which got the session while the installed app stayed signed out. The code is verified inside the app, so the session lands where it's needed. The email (generated into `packages/emails/supabase/sign-in-code.html`, pasted into Supabase → Authentication → Emails → Magic Link — see Email templates below) shows `{{ .Token }}` large and keeps `{{ .ConfirmationURL }}` as a fallback: in a desktop browser tab, `detectSessionInUrl` (on by default) picks the session out of the link and the sign-in screen redirects on the auth change. Using either uses up both. The screen sends a complete code **once** — typing past the end or autofill firing twice doesn't send it again, since each try counts towards Supabase's limit. **Google sign-in has the same problem on iOS** (an OAuth redirect lands in Safari, not the installed app) — noted on the Pre POC sign-in item for when Google returns.
+**Why a code, not a link**. A Home Screen PWA on iOS and Android has its own storage. Tapping a magic link opens the system browser, which got the session while the installed app stayed signed out. The code is verified inside the app, so the session lands where it's needed. The email (generated into `packages/emails/supabase/sign-in-code.html`, pasted into Supabase → Authentication → Emails → Magic Link — see Email templates below) shows `{{ .Token }}` large and keeps `{{ .ConfirmationURL }}` as a fallback: in a desktop browser tab, `detectSessionInUrl` (on by default) picks the session out of the link and the sign-in screen redirects on the auth change. Using either uses up both. The screen sends a complete code **once** — typing past the end or autofill firing twice doesn't send it again, since each try counts towards Supabase's limit. **Google sign-in has the same problem on iOS** (an OAuth redirect lands in Safari, not the installed app) — noted on the Pre POC sign-in item for when Google returns.
 
 `shell/auth-provider.tsx` holds the signed-in state and gives the API client a token getter. The token is read fresh on every request, so one Supabase has just refreshed is always the one sent. `RequireSession` routes by the two walls: no session → `/sign-in`; a session → ask `GET /me`; not allowed → `/not-on-the-list`; allowed → the app. If the API rejects a session the browser still holds (revoked, or expired past refreshing), the browser signs it out rather than redirecting — the sign-in screen would otherwise see a session and send you straight back, forever. Two details keep that from looping: the provider's sign-in and sign-out functions are stable for the life of the client, and a session update that changes nothing hands back the same state object. Tests use `test/fake-auth.ts` instead of Supabase.
 
@@ -577,36 +586,36 @@ The guard is an `onRequest` hook on the root instance — deliberately not added
 
 ## Email templates
 
-`packages/emails` turns already-decided content into email. It is **rendering only**: every template is a pure function from a plain input (formatted strings, bar percentages, URLs) to `{ subject, preheader, html, text }`, and nothing in it sends, schedules or decides. Phase 6's sender maps its own data (the week, rule results, nudges) onto these inputs.
+`packages/emails` turns already-decided content into email. It is **rendering only**: every template is a pure function from a plain input (formatted strings, bar percentages, URLs) to `{ subject, preheader, html, text }`, and nothing in it sends, schedules or decides. The API's sender maps its own data (the week, rule results, nudges) onto these inputs.
 
-- **Templates** (from the Claude Design "Pip Emails" board): `signInCodeEmail`, `weekDigestEmail` (one-thing, quiet, busy, a pot not connected, stale prices), `alertEmail` (one template: limit at 80%, cap reached, urgent move, push stopped), `recommendationEmail` (the digest's recommendation card sent alone), `waitlistEmail`, `youreInEmail`. Ops alerts aren't here — UptimeRobot sends its own (phase 6 decision 7).
+- **Templates** (from the "Pip Emails" design board): `signInCodeEmail`, `weekDigestEmail` (one-thing, quiet, busy, a pot not connected, stale prices), `alertEmail` (one template: limit at 80%, cap reached, urgent move, push stopped), `recommendationEmail` (the digest's recommendation card sent alone), `waitlistEmail`, `youreInEmail`. Ops alerts aren't here — nothing pings Pip, so there is nothing for an uptime service to send.
 - **Email-safe by construction:** tables and inline styles only; no SVG, border-radius, gradients, webfonts or script (a test checks every template). Georgia for numbers and headings, the system sans stack for sentences. Every colour is inline in its light value with a `pe-*` class that the head's `prefers-color-scheme: dark` block (and Outlook.com's `[data-ogsc]`) overrides. One column at 600px, narrowing to the screen under 620px.
 - **Escaping:** the `html` tag escapes everything interpolated unless it is already markup, so copy from code or a model can't add markup. `tidy` collapses the source's indentation out of the sent HTML.
 - **Advice label:** "Information, not advice" appears on anything that mentions a holding, a price or a nudge (digest, alerts about money, recommendation) and nowhere else (sign-in, account, push stopped) — tested.
 - **No button acts on money:** every link goes to a screen in Pip — tested.
-- **The mark** is `apps/web/public/email/pip-mark-96.png` (made by `pnpm --filter @finance-app/emails mark`, no dependencies), referenced absolutely from `https://pip-old.example.net/email/pip-mark-96.png`. With images off the text wordmark beside it carries the brand.
+- **The mark** is `apps/web/public/email/pip-mark-96.png` (made by `pnpm --filter @finance-app/emails mark`, no dependencies), referenced absolutely from `https://pip.example.com/email/pip-mark-96.png`. With images off the text wordmark beside it carries the brand.
 - **Supabase:** `pnpm --filter @finance-app/emails preview` renders every template with the board's sample data into `packages/emails/out/` (gitignored; open `out/index.html`) and regenerates `packages/emails/supabase/sign-in-code.html` with Supabase's `{{ .Token }}`, `{{ .ConfirmationURL }}` and `{{ .Email }}`. A test fails if the committed file is stale. The template says the code expires in 10 minutes, so Supabase's Email OTP Expiration must be 600 seconds.
 
 ## Signing in locally without email
 
-`pnpm --filter api sign-in-link [email]` (`src/dev/sign-in-link.ts`) asks Supabase's admin API for a one-time magic link back to `http://localhost:5173` — no email sent, so no rate limit. Authentication is unchanged: the link signs the browser in through Supabase like an emailed one, and the API still verifies every request and checks the allowlist. There is deliberately no "skip sign-in" switch or test email that bypasses it (hard line 4). The script needs `SUPABASE_SERVICE_ROLE_KEY` in `apps/api/.env` only, refuses to run with `NODE_ENV=production` or on Render, and only redirects to localhost.
+`pnpm --filter api sign-in-link [email]` (`src/dev/sign-in-link.ts`) asks Supabase's admin API for a one-time magic link back to `http://localhost:5173` — no email sent, so no rate limit. Authentication is unchanged: the link signs the browser in through Supabase like an emailed one, and the API still verifies every request and checks the allowlist. There is deliberately no "skip sign-in" switch or test email that bypasses it (design rule 4). The script needs `SUPABASE_SERVICE_ROLE_KEY` in `apps/api/.env` only, refuses to run with `NODE_ENV=production` or on Render, and only redirects to localhost.
 
-## Deploy (Render, Phase 2)
+## Deploy (Render)
 
-One **Render free web service**, `pip` — **https://pip.example.com** (Waqar's domain since 2026-09-17; `pip-old.example.net` still answers) — in Frankfurt (nearest to Supabase's eu-west-1), deploying `main` automatically on every push.
+Pip ran as one **Render free web service** in Frankfurt (nearest to Supabase's eu-west-1), deploying `main` automatically on every push. It is currently paused to save hosting costs, so there is no live URL; the notes below describe how it was deployed.
 
 - **Build:** `pnpm install --frozen-lockfile`, then `web` build (needs `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` at build time), then `api` build.
 - **Start:** `cd apps/api && node --import tsx dist/server.js`. `tsx` is a runtime dependency because `@finance-app/shared` is TypeScript source; plain Node can't resolve it.
 - **One origin** (`web.ts`): with `WEB_DIST_DIR=../web/dist`, Fastify's `rewriteUrl` sends `/api/*` to the API's own routes and everything else to `/app/*`, served from the built app — a real file, or `index.html` so a reload of `/rules` works. Fingerprinted `assets/` are cached for a year as immutable; `index.html` is `no-cache`; the shell gets `nosniff`, `same-origin` referrer and `DENY` framing. The static app is public (sign-in screen and code, no data); the guard exempts `/app/*` only when serving it. Health check: `/api/health`.
 - **Non-secret env** set on the service: `NODE_VERSION=24`, `NODE_ENV=production`, `PROVIDER_MODE=t212`, `T212_ENV=demo`, `WEB_DIST_DIR`, `LOG_LEVEL`, `MASTER_KEY_VERSION`, `SUPABASE_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`.
-- **Secrets, set only in Render's dashboard** (never through chat or git): `DATABASE_URL`, `MASTER_KEY`, `JOB_SECRET`, `AV_ACCESS_KEY`, `COINGECKO_KEY` (Phase 3), `MARKETAUX_API`, `GROQ_API_KEY` (Phase 5), with `LLM_MODE=groq` set alongside. The dev and production app share the one Supabase project, so `MASTER_KEY` must be the same key that sealed the stored credentials. `JOB_SECRET` must match the `private.job_settings` row, which already points `pg_cron` at `https://pip-old.example.net/api/jobs/refresh`.
-- **Supabase Auth**'s Site URL is `https://pip.example.com`, and its redirect URLs list that and the old Render address, or the email's fallback link signs into the wrong place.
-- **`CANONICAL_HOST=pip.example.com`** sends app pages asked for on any other host (the old Render address) to the new domain with a 302. `/api/*` answers on both, so the `pg_cron` refresh never breaks mid-move. Unset, Pip serves whatever host asked — which is what dev and tests do. Dropped once nothing points at the old address.
+- **Secrets, set only in Render's dashboard** (never through chat or git): `DATABASE_URL`, `MASTER_KEY`, `JOB_SECRET`, `AV_ACCESS_KEY`, `COINGECKO_KEY` (Phase 3), `MARKETAUX_API`, `GROQ_API_KEY` (Phase 5), with `LLM_MODE=groq` set alongside. The dev and production app share the one Supabase project, so `MASTER_KEY` must be the same key that sealed the stored credentials. `JOB_SECRET` must match the `private.job_settings` row, which points `pg_cron` at the service's `/api/jobs/refresh`.
+- **Supabase Auth**'s Site URL must be the app's public origin, and its redirect URLs must list it, or the email's fallback link signs into the wrong place.
+- **`CANONICAL_HOST`**, when set, sends app pages asked for on any other host (for example the default Render address after moving to a custom domain) to that host with a 302. `/api/*` answers on both, so the `pg_cron` refresh never breaks mid-move. Unset, Pip serves whatever host asked, which is what dev and tests do.
 - **Free hours are shared** across the Render workspace (750/month). The scheduled refresh runs only in weekday market hours so Pip sleeps otherwise; other services in the workspace draw on the same hours.
 
 ## Storage
 
-Postgres via Drizzle ORM, on Supabase. Single `DATABASE_URL` env var, nothing else host-specific (CLAUDE.md s3; never Render's free Postgres, it expires after 30 days).
+Postgres via Drizzle ORM, on Supabase. Single `DATABASE_URL` env var, nothing else host-specific (and never Render's free Postgres, which expires after 30 days).
 
 - **The database is hosted in every environment** — on Supabase, with a separate project for development (`pip`, eu-west-1). No local Postgres, no Docker. The server connects through the **session pooler** (port 5432), which suits a long-running process. Nothing in the test suite or CI ever talks to it.
 - `apps/api/drizzle/` — migration SQL, committed. `pnpm --filter api db:generate` writes one from the schema; hand-written SQL (RLS, policies, grants, functions) uses `drizzle-kit generate --custom`. `db:migrate` applies them; they're applied to the dev project.
@@ -638,7 +647,7 @@ Postgres via Drizzle ORM, on Supabase. Single `DATABASE_URL` env var, nothing el
 | `daily_closes`           | Daily closes per instrument or FX pair                                                                                                                                                                                                                                                                                                                                                                  | allowlisted users only (Supabase session + allowlist row)             |
 | `intraday_series`        | Today's points per instrument, for the Day chart                                                                                                                                                                                                                                                                                                                                                        | allowlisted users only (Supabase session + allowlist row)             |
 | `source_usage`           | Calls per market-data source per day, for call budgets                                                                                                                                                                                                                                                                                                                                                  | nobody — server only                                                  |
-| `push_subscriptions`     | One browser on one device (Phase 6): push endpoint (unique anywhere, `https://` only), its two keys, a label like "iPhone", when it last took a push or failed. Several per user                                                                                                                                                                                                                        | own rows, **label and dates only** — never the endpoint or keys       |
+| `push_subscriptions`     | One browser on one device (Phase 6): push endpoint (unique anywhere, `https://` only), its two keys, a label like "Phone", when it last took a push or failed. Several per user                                                                                                                                                                                                                         | own rows, **label and dates only** — never the endpoint or keys       |
 | `notification_settings`  | One row per user: the push master switch, the three per-kind switches (limit, urgent, digest), the weekly email, and when the first-login sheet was answered. No row means `DEFAULT_NOTIFICATION_SETTINGS`, everything on                                                                                                                                                                               | own row                                                               |
 | `push_deliveries`        | Every push sent: kind, the event's dedupe key (unique per user and kind — that's what makes one event one push), when, how many devices tried and delivered, the London day for the urgent budget                                                                                                                                                                                                       | nobody — server only                                                  |
 | `notification_reads`     | What the user has read in the bell, per item kind (`nudge`, `limit_alert`, `connection_gap`) and id. No row means unread                                                                                                                                                                                                                                                                                | own rows                                                              |
@@ -655,7 +664,7 @@ Postgres via Drizzle ORM, on Supabase. Single `DATABASE_URL` env var, nothing el
 **Row Level Security is on for every table** (`0001`, `0003`, `0013`, `0016`). The web app ships Supabase's public key and Supabase's REST API exposes `public` tables to it, so a table without RLS would be readable by anyone.
 
 - **Signed-in users only ever read.** All grants to `anon` and `authenticated` are revoked, then `SELECT` is granted back where the table above says so. Every write goes through the server's privileged connection.
-- **Shared tables** (instruments, prices, closes, intraday series, schedules, facts) need an allowlist row too: their policies are `private.current_app_user_id() IS NOT NULL` (`0014`), because `instruments` only holds what someone has held. `users` and `waitlist` grant nothing to `anon` or `authenticated` — Supabase's default grants were revoked in `0014`. Probed on the dev database: Waqar reads them; a session with no allowlist row reads nothing.
+- **Shared tables** (instruments, prices, closes, intraday series, schedules, facts) need an allowlist row too: their policies are `private.current_app_user_id() IS NOT NULL` (`0014`), because `instruments` only holds what someone has held. `users` and `waitlist` grant nothing to `anon` or `authenticated` — Supabase's default grants were revoked in `0014`. Probed on the dev database: the owner reads them; a session with no allowlist row reads nothing.
 - **"Own rows"** means `user_id = private.current_app_user_id()`: a `SECURITY DEFINER` function mapping `auth.uid()` to the caller's allowlist row. It lives in a `private` schema (`0004`) because Supabase exposes `public` functions over REST.
 - **A policy without a grant.** `push_deliveries`, `recommendation_state` and `job_runs` are the server's own bookkeeping: they carry an own-rows policy (so every user-owned table answers the same question) but no `SELECT` grant, which is what actually keeps them shut.
 - **Checked twice.** `db/rls.test.ts` reads the migrations and fails if a table lacks RLS, a user-owned table (any table with `user_id`) lacks an own-rows policy using the private helper, or the sealed credential columns are ever granted. And the policies were probed on the dev database as two throwaway users in a rolled-back transaction: each saw only their own rows; sealed columns, writes and `source_usage` were refused; shared instruments were visible. Supabase's security advisor reports nothing beyond the intended "RLS enabled, no policy" on the server-only tables.
@@ -687,11 +696,11 @@ Auth and route tests otherwise use in-memory stores, and CI never talks to Supab
 | `MARKETAUX_API`                                      | Marketaux free key — news for Phase 5 facts. Render only in production                                                                                                                 | none — Marketaux left out                   |
 | `STUB_STALENESS`                                     | Stub only: force the staleness ladder, e.g. `Degen:2` (amber), `Degen:failed` (red), `all:closed`. Unreadable values stop the server at startup                                        | empty — everything fresh                    |
 
-Provider keys are never server env vars in a deployed Pip: each user's keys are sealed per user in Postgres (below). `T212_API_KEY`/`T212_API_SECRET` in a local `apps/api/.env` exist only for developer verification against a practice account (Phase 2 task 1), and are never read by the server.
+Provider keys are never server env vars in a deployed Pip: each user's keys are sealed per user in Postgres (below). `T212_API_KEY`/`T212_API_SECRET` in a local `apps/api/.env` exist only for developer verification against a practice account , and are never read by the server.
 
 ## Key encryption
 
-`crypto/secrets.ts` is the only code that seals or opens a provider key (CLAUDE.md s3 "Key storage", hard line 6).
+`crypto/secrets.ts` is the only code that seals or opens a provider key (this document "Key storage", design rule 5).
 
 - **AES-256-GCM** with `MASTER_KEY`, a fresh random 12-byte IV per value, and the 16-byte auth tag stored alongside. Stored form: `pip:<keyVersion>:<iv>:<tag>:<ciphertext>` (base64url parts).
 - **Bound to where it belongs.** Every seal and open takes a context — `user:<id>|<provider>|<account kind>|key` or `…|secret` — passed to GCM as additional data. A value copied into another user's row, or from the key column to the secret column, fails to open instead of decrypting as someone else's credential.

@@ -10,7 +10,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * Runs `work` as the signed-in user, so Row Level Security decides what it can
- * see (the second wall behind the API — CLAUDE.md s3, Phase 2 task 4).
+ * see (the second wall behind the API — docs/ARCHITECTURE.md).
  *
  * Inside one transaction it sets the verified Supabase user id as the JWT
  * claims Supabase's `auth.uid()` reads, then drops to the `authenticated`

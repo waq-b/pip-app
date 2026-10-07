@@ -13,11 +13,10 @@ declare module "fastify" {
 }
 
 /**
- * The only routes that answer without a token (CLAUDE.md hard line 4).
+ * The only routes that answer without a token (design rule 4).
  *
  * - `/health` is Render's own deploy check.
- * - `/health/jobs` is up-or-down for Waqar to open in a browser (Phase 6
- *   decision 7). It carries no data at all: one word, "ok" or "stale". Nothing
+ * - `/health/jobs` is up-or-down for the owner to open in a browser. It carries no data at all: one word, "ok" or "stale". Nothing
  *   calls it on a schedule — Pip is allowed to sleep.
  */
 export const PUBLIC_PATHS = ["/health", "/health/jobs"];
@@ -31,7 +30,7 @@ export const SIGNED_IN_ONLY_PATHS = ["/me", "/waitlist"];
 /**
  * Machine callers: the scheduler, not a person. Authenticated by a shared job
  * secret in `x-job-secret` instead of a user token — still authenticated, so
- * hard line 4 holds. Without a configured secret these refuse everyone.
+ * design rule 4 holds. Without a configured secret these refuse everyone.
  */
 export const JOB_PATHS = ["/jobs/refresh"];
 

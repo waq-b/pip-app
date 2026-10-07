@@ -46,7 +46,7 @@
   }
  },
  "response": {
-  "id": "chatcmpl-5de5925f-a257-47b0-8ce0-b9f600bc00ea",
+  "id": "chatcmpl-PLACEHOLDER",
   "object": "chat.completion",
   "created": 1789600463,
   "model": "openai/gpt-oss-120b",
@@ -77,7 +77,7 @@
   "usage_breakdown": null,
   "system_fingerprint": "fp_bc9a6c9b5f",
   "x_groq": {
-   "id": "req_01m2p7zy05er7bactpyyah4xa2",
+   "id": "req_PLACEHOLDER",
    "seed": 1048019689
   },
   "service_tier": "on_demand"

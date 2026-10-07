@@ -8,7 +8,7 @@ import {
 import { getJson, HOUR_MS } from "./http.js";
 
 /**
- * Marketaux free plan (Phase 5 task 1): 100 requests a day, 3 articles a
+ * Marketaux free plan: 100 requests a day, 3 articles a
  * request, filtered to articles tagged with the holding. Publishers are
  * domains. The token never appears in an error.
  */

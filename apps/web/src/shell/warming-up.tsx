@@ -5,7 +5,7 @@ import { PipMark } from "./pip-mark";
 export const WARMING_AFTER_MS = 3000;
 
 /**
- * "Pip's warming up" (DESIGN §9, phase-6.md decision 7): no spinner that never
+ * "Pip's warming up" (DESIGN §9, ): no spinner that never
  * ends and nothing to tap. Built from the launch splash — the mark, the name's
  * type, one line — and replaced by the screen as soon as the answer arrives.
  */

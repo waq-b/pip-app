@@ -1,9 +1,9 @@
--- Ops without a pinger (phase-6.md decision 7).
+-- Ops without a pinger.
 --
 -- Pip is allowed to sleep, so nothing may call the API on a schedule: a
 -- liveness check every few minutes is a keep-alive in disguise and spends the
 -- free Render hours. Instead the jobs write what they did to `job_runs`, and
--- this check reads those rows from inside the database and emails Waqar when
+-- this check reads those rows from inside the database and emails the owner when
 -- work has gone stale, failed, or never happened at all — which is also what an
 -- unreachable API looks like, so it doubles as the only liveness check left.
 --
@@ -126,7 +126,7 @@ BEGIN
           AND a.job NOT IN (SELECT s.job FROM private.stale_jobs() s);
 
         FOR problem IN SELECT s.job, s.reason FROM private.stale_jobs() s LOOP
-          -- One email per incident: an open row means Waqar has already been told.
+          -- One email per incident: an open row means the owner has already been told.
           IF EXISTS (
             SELECT 1 FROM private.job_alerts a
             WHERE a.job = problem.job AND a.resolved_at IS NULL

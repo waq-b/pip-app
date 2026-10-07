@@ -17,7 +17,7 @@ import { html, type Html } from "../html.js";
 import { lines, wrap, type Email } from "../text.js";
 
 /**
- * A recommendation's six parts, always in this order (CLAUDE.md hard line 12:
+ * A recommendation's six parts, always in this order (design rule 9:
  * reasoning and trade-offs, always the reader's call). Only ever built for
  * personal_research users; code decides the take, the model only words it.
  */

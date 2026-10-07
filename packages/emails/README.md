@@ -1,8 +1,8 @@
 # @finance-app/emails
 
-Pip's email templates, built from the Claude Design "Pip Emails" board. Rendering only: each
+Pip's email templates, built from the "Pip Emails" design board. Rendering only: each
 template is a pure function from a plain input to `{ subject, preheader, html, text }`. Nothing here
-sends email — that's phase 6's `EmailSender` (Resend).
+sends email — that's the API's `EmailSender` (Resend).
 
 ```ts
 import { weekDigestEmail } from "@finance-app/emails";

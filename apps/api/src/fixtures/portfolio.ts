@@ -9,7 +9,7 @@ import type {
 } from "@finance-app/shared";
 
 /**
- * The words and numbers the design handover supplies, which the trading and
+ * The words and numbers the design mockups supplies, which the trading and
  * market layers don't own: blurbs, plain-English lines, captions, the feed and
  * the rules a user has set.
  *
@@ -133,7 +133,7 @@ export interface InstrumentFixture {
   /**
    * Hand-written in Phase 1 and shown under the not-advice label. The Phase 5
    * research module owns this text later, and keeps it generic for anyone other
-   * than Waqar (CLAUDE.md hard line 12).
+   * than the owner (design rule 9).
    */
   note: string;
 }
@@ -220,7 +220,7 @@ export const INSTRUMENT_FIXTURES: Record<string, InstrumentFixture> = {
 
 /**
  * Last week, in plain English. The prototype had ISA money buying Rolls-Royce;
- * it's the Invest account, and the wording says so (hard line 11).
+ * it's the Invest account, and the wording says so (design rule 8).
  */
 export const ACTIVITY: ActivityEntry[] = [
   {

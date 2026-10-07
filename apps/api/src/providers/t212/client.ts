@@ -1,5 +1,5 @@
 /**
- * Trading 212, read-only, practice account only (CLAUDE.md s13, hard lines 1, 3).
+ * Trading 212, read-only, practice account only (design rules 1, 3).
  *
  * Every request is a GET to an allowlisted path. There is no code path to an
  * order or pies endpoint, and `live` isn't a valid environment until Phase 8.
@@ -24,7 +24,7 @@ export interface T212Position {
   instrument: { ticker: string; name: string; isin: string; currency: string };
   quantity: number;
   averagePricePaid: number;
-  /** Ignored for display — prices come from market data (hard line 8). */
+  /** Ignored for display — prices come from market data (design rule 7). */
   currentPrice: number;
   walletImpact: { currency: string; totalCost: number; currentValue: number };
   createdAt: string;
@@ -132,7 +132,7 @@ export interface T212Client {
 
 export function createT212Client(options: T212ClientOptions): T212Client {
   if (options.env !== "demo") {
-    // Hard line 3: paper before live. Phase 8 adds live, read-only.
+    // design rule 3: paper before live. Phase 8 adds live, read-only.
     throw new Error("Only the Trading 212 practice environment is allowed in Phase 2");
   }
   if (!options.key || !options.secret) throw new T212AuthError();

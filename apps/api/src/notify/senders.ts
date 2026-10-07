@@ -1,7 +1,7 @@
 /**
  * Sending, and nothing else. What to send and whether to send it is decided in
  * `notify.ts`; these two just put it on the wire — or, in stub mode, in a list
- * (CLAUDE.md hard line 7: no real network in tests or CI).
+ * (design rule 6: no real network in tests or CI).
  */
 
 export interface PushMessage {
@@ -126,7 +126,7 @@ type Fetch = (url: string, init: RequestInit) => Promise<Response>;
 
 /**
  * Email through Resend's HTTP API — no SMTP from Render. The key never leaves
- * this call, and bodies are never logged (pino redaction, hard line 6).
+ * this call, and bodies are never logged (pino redaction, design rule 5).
  */
 export function resendEmailSender(options: {
   apiKey: string;

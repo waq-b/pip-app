@@ -14,7 +14,7 @@ import { ICON_STROKE } from "../shell/nav";
 const same = (a: TrustSettings, b: TrustSettings) => JSON.stringify(a) === JSON.stringify(b);
 
 /**
- * What Pip lets through (Phase 5 decision 3), under the rule cards on Rules.
+ * What Pip lets through , under the rule cards on Rules.
  * The trust rules decide which news and notes reach Your week. Like the
  * shape, nothing is sent until Save, and the API checks every limit. They
  * change what Pip tells you — never your money.

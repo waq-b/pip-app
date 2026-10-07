@@ -179,7 +179,7 @@ GRANT SELECT ON "notification_settings", "notification_reads", "connection_gaps"
 -- that device. The device row in Setup is built from these columns.
 GRANT SELECT ("id", "user_id", "label", "created_at", "last_delivered_at", "last_failed_at")
   ON "push_subscriptions" TO authenticated;--> statement-breakpoint
--- Never the sealed figure (hard line 6) — only when it was last reviewed.
+-- Never the sealed figure (design rule 5) — only when it was last reviewed.
 GRANT SELECT ("user_id", "reviewed_at", "updated_at") ON "net_assets" TO authenticated;--> statement-breakpoint
 CREATE POLICY "own devices" ON "push_subscriptions" FOR SELECT TO authenticated
   USING ("user_id" = private.current_app_user_id());--> statement-breakpoint

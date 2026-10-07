@@ -1,7 +1,7 @@
 import type { EventsAdapter, FactsTarget, HoldingNewsAdapter, NewsFact } from "./types.js";
 
 /**
- * Facts for stub mode and tests — no network (hard line 7). Dated relative to
+ * Facts for stub mode and tests — no network (design rule 6). Dated relative to
  * the moment they're asked for, so a week built from them is always "this
  * week".
  *

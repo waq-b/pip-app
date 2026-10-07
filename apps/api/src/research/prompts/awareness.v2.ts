@@ -2,7 +2,7 @@ import { displayNameFor } from "@finance-app/shared";
 import type { NewsNudgeInput } from "../types.js";
 
 /**
- * Prompt v2 for a news nudge (Waqar, 2026-09-17). v1 plus two lines after real
+ * Prompt v2 for a news nudge . v1 plus two lines after real
  * Groq drafts turned "JPMorgan says" into "the company announced": say who made
  * each claim, and state only what the reports say. v1 stays in
  * `awareness.v1.ts` so nudges logged with it can still be read against it.

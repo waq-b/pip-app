@@ -16,9 +16,9 @@ function poundsToPence(text: string): number | null | undefined {
 }
 
 /**
- * Your plan (Phase 5 decision 5), on Setup: what Pip writes your notes for.
+ * Your plan , on Setup: what Pip writes your notes for.
  * Nothing is required. Things never to nudge on apply to everyone; the rest
- * only shapes the words for people Waqar has turned personal research on for.
+ * only shapes the words for people the owner has turned personal research on for.
  */
 export function YourPlan() {
   const query = useProfile();

@@ -13,9 +13,9 @@ import {
  * whether a pot has drifted from its target, or Side Bet has reached its
  * limit. Pure — no I/O, no clock — so every route that asks gets the same
  * answer for the same input. It only ever describes; nothing here can move
- * money (hard lines 1, 2, 11).
+ * money (design rules 1, 2, 8).
  *
- * Decisions (docs/phases/phase-4.md, phase-6.md decision 13):
+ * Decisions:
  * - The shape is Foundation and Handpicked only: Foundation's target is
  *   100 − Handpicked's. Side Bet sits outside it.
  * - A pot's share is its value (investments + cash) over every connected pot's.

@@ -1,7 +1,7 @@
 import type { Recommendation } from "@finance-app/shared";
 
 /**
- * The output guard (Phase 5 decision 6): every word an LLM writes passes
+ * The output guard : every word an LLM writes passes
  * through here before anyone sees it. A draft that fails is thrown away and
  * Pip's own template is used instead — so advice, predictions or made-up
  * sources never reach the screen, whatever the model does.
@@ -12,7 +12,7 @@ export const BODY_MAX = 320;
 export const OPENING_MAX = 140;
 
 /**
- * Two audiences (phase-6.md decision 14). `ALWAYS` is banned for everyone,
+ * Two audiences. `ALWAYS` is banned for everyone,
  * a recommendation brief included: forecasts, verdicts on price, bare
  * percentages and pounds (figures come from Pip, never the model), and the
  * design's jargon. `GENERIC_ONLY` is advice language — banned for everyone
@@ -152,7 +152,7 @@ const COURSE_WORDS: Record<Recommendation, RegExp> = {
 };
 
 /**
- * A `personal_research` recommendation brief (phase-6.md decision 14): the
+ * A `personal_research` recommendation brief: the
  * writer's why / typical / trade-off, checked before code wraps them with
  * the fact, Pip's take and "Your call.". Advice verbs are allowed here —
  * forecasts, figures and jargon never are.

@@ -5,11 +5,11 @@ import { jobRuns } from "../db/schema.js";
 import type { Db } from "../db/user-scope.js";
 
 /**
- * What Pip has been doing (phase-6.md decisions 7 and 10).
+ * What Pip has been doing.
  *
  * `/status` is for Setup's one line — "Pip last checked prices and news 12 min
  * ago" — and says nothing about why anything failed. `/health/jobs` is a plain
- * up-or-down for Waqar to open in a browser; **nothing calls either on a
+ * up-or-down for the owner to open in a browser; **nothing calls either on a
  * schedule**, because Pip is allowed to sleep and a scheduled check would keep
  * it awake. The real watching is done inside the database.
  */
@@ -75,7 +75,7 @@ export function registerStatusRoutes(
   });
 
   /**
-   * Up or down, no detail, for Waqar to open by hand. It answers without a
+   * Up or down, no detail, for the owner to open by hand. It answers without a
    * session because it says nothing — and because a browser tab is the point.
    */
   app.get("/health/jobs", async (_request, reply) => {

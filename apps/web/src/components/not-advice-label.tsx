@@ -4,7 +4,7 @@ import { ICON_STROKE } from "../shell/nav";
 /**
  * On anything that reads like a suggestion, and on nothing that is a plain
  * fact — a balance or today's change never carries it, so the label keeps its
- * meaning (DESIGN.md §4, CLAUDE.md hard line 12).
+ * meaning (DESIGN.md §4, design rule 9).
  */
 export function NotAdviceLabel() {
   return (

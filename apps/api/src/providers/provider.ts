@@ -2,11 +2,11 @@ import type { Bucket, Pence } from "@finance-app/shared";
 
 /**
  * Trading providers answer one question: what does this user hold, and how much
- * cash (CLAUDE.md s4)? Prices and history of value come from the market layer,
+ * cash? Prices and history of value come from the market layer,
  * never from here.
  *
  * `placeOrder` does not exist and must not be added before order placement (v2 backlog) is
- * explicitly unparked (hard line 1).
+ * explicitly unparked (design rule 1).
  */
 export interface Position {
   /** Stable id used in URLs and as the market-data seed. */

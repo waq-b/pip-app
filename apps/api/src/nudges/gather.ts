@@ -26,7 +26,7 @@ import type { CandidateInput, HoldingInput, MoveFigures, NudgeHistory } from "./
 import type { ProfileStore } from "./profile.js";
 
 /**
- * Gathering a build's input (Phase 5 task 7): what the user holds and what it's
+ * Gathering a build's input: what the user holds and what it's
  * done from the read model (the same numbers every screen shows), their rules,
  * trust settings and profile, and the stored facts for their holdings.
  */

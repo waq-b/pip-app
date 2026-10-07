@@ -16,7 +16,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 /**
- * The allowlist, and the only record of who may use Pip (CLAUDE.md s3).
+ * The allowlist, and the only record of who may use Pip.
  *
  * Supabase Auth proves who someone is; a row here is what lets them in. Rows are
  * added by hand, keyed by email, before the person ever signs in.
@@ -31,7 +31,7 @@ export const users = pgTable("users", {
   authUserId: uuid("auth_user_id").unique(),
   /**
    * Personalised research (Phase 5): nudges written for this person's own plan.
-   * Off by default — everyone else gets general notes (hard line 12). Set only
+   * Off by default — everyone else gets general notes (design rule 9). Set only
    * with the allowlist CLI, never through the API.
    */
   personalResearch: boolean("personal_research").notNull().default(false),
@@ -85,7 +85,7 @@ export const providerCredentials = pgTable(
     accountCurrency: text("account_currency").notNull(),
     /**
      * The provider's own account id (Trading 212's summary `id`), so one account
-     * can't feed two pots (hard line 11). Filled on connect and on every poll.
+     * can't feed two pots (design rule 8). Filled on connect and on every poll.
      */
     providerAccountId: text("provider_account_id"),
     lastVerifiedAt: timestamp("last_verified_at", { withTimezone: true }),
@@ -102,7 +102,7 @@ export const providerCredentials = pgTable(
 /**
  * Tradable instruments Pip has met, keyed by the Trading 212 ticker. Not by
  * ISIN: one ISIN can be listed on several exchanges in several currencies
- * (CLAUDE.md s13). Symbols for each market-data source are derived from the
+ * Symbols for each market-data source are derived from the
  * ticker, with overrides where that doesn't work.
  */
 export const instruments = pgTable("instruments", {
@@ -632,7 +632,7 @@ export const nudges = pgTable(
     /** Phase 6: past the urgent line, so it pushes rather than waiting for the week. */
     urgent: boolean("urgent").notNull().default(false),
     /**
-     * Phase 6, `personal_research` users only (hard line 12): the course Pip
+     * Phase 6, `personal_research` users only (design rule 9): the course Pip
      * recommends, chosen by code — the writer only explains it.
      */
     recommendation: text("recommendation"),
@@ -818,7 +818,7 @@ export const connectionGaps = pgTable(
 
 /**
  * The user's net assets, sealed like a provider key and decrypted only in
- * memory when Pip needs the limit (hard line 6). It sets Side Bet's limit at
+ * memory when Pip needs the limit (design rule 5). It sets Side Bet's limit at
  * the FCA's 10% guide and is used for nothing else. The browser may read when
  * it was last reviewed, never the figure.
  */
@@ -853,7 +853,7 @@ export const limitAlerts = pgTable(
     alertedAt: timestamp("alerted_at", { withTimezone: true }).notNull().defaultNow(),
     /**
      * When money in came back clearly under this threshold. Until then the
-     * alert is open and the threshold stays quiet (phase-6.md decision 2).
+     * alert is open and the threshold stays quiet.
      */
     clearedAt: timestamp("cleared_at", { withTimezone: true }),
     /** What it was built from, so the bell row can say it in pounds. */

@@ -17,7 +17,7 @@ import { memoryNudgeStore } from "./store.js";
 import { memoryTriggerStateStore } from "./triggers.js";
 
 /**
- * Monday's email and "Your week is ready" push (phase-6.md decision 6): sent
+ * Monday's email and "Your week is ready" push: sent
  * by the run that builds the week, once, through `notify()`'s switches — and
  * the words match the week in Pip.
  */

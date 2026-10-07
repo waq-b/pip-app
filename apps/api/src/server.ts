@@ -62,7 +62,7 @@ const base: BuildAppOptions = {
 
 /**
  * Who sends (Phase 6). Stub mode records instead of sending, so a local run and
- * CI never reach a push service or Resend (hard line 7).
+ * CI never reach a push service or Resend (design rule 6).
  */
 function senders() {
   if (config.notify.mode === "stub") {

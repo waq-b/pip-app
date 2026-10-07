@@ -19,7 +19,7 @@ import { createNudgeService } from "./service.js";
 import { memoryNudgeStore } from "./store.js";
 
 /**
- * The loop (Phase 5 task 11, Waqar's addition 6), end to end through the real
+ * The loop, end to end through the real
  * routes in stub mode — no network, no database:
  *
  *   planted fact → passes the trust rules → a nudge in the log and in Your week

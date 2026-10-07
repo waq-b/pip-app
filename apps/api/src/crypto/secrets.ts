@@ -1,7 +1,7 @@
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 
 /**
- * Provider keys at rest (CLAUDE.md hard line 6, s3 "Key storage").
+ * Provider keys at rest (design rule 5).
  *
  * AES-256-GCM with `MASTER_KEY`, which lives in Render's environment — never
  * in Supabase, so the key and the ciphertext it opens sit with different

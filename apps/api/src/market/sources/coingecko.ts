@@ -1,7 +1,7 @@
 import { PriceSourceError, type DailyClose, type PriceSource, type PriceTarget } from "./types.js";
 
 /**
- * CoinGecko's Demo API — crypto prices in pounds (Phase 3 decision 1). Needs a
+ * CoinGecko's Demo API — crypto prices in pounds . Needs a
  * free key; attribution is required, which the provenance line gives by naming
  * it. The target's `symbol` is CoinGecko's coin id (`bitcoin`). History only
  * reaches back 365 days on this plan, so older requests are refused as

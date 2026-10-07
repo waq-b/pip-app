@@ -48,7 +48,7 @@ import type { ReadModel, ReadUser } from "./model.js";
 
 /**
  * Real accounts (Trading 212 mode): what the signed-in user holds, valued with
- * market prices — never a trading API's (hard line 8) — in pence of pounds.
+ * market prices — never a trading API's (design rule 7) — in pence of pounds.
  *
  * Reads run as the user, so Row Level Security decides what's visible. Before
  * reading, prices that are due get refreshed (shared, privileged), but a slow
@@ -56,7 +56,7 @@ import type { ReadModel, ReadUser } from "./model.js";
  * carries on in the background and the staleness ladder tells the truth.
  *
  * What isn't built from real data yet says so rather than showing samples:
- * Side Bet (Kraken, Phase 3), "What changed" and "Money in" (decision 4), the
+ * Side Bet (Kraken, Phase 3), "What changed" and "Money in" , the
  * plain-English notes (Phase 5).
  */
 

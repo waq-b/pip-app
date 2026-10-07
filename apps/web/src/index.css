@@ -215,7 +215,7 @@
   --radius-card: 26px;
   --radius-screen: 30px;
 
-  /* The handover's breakpoints: rail at 768, sidebar at 1120 (DESIGN.md §8). */
+  /* The design's breakpoints: rail at 768, sidebar at 1120 (DESIGN.md §8). */
   --breakpoint-rail: 768px;
   --breakpoint-desk: 1120px;
 }

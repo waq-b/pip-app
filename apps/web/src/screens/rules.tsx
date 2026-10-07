@@ -21,7 +21,7 @@ import { useBreakpoint } from "../shell/use-breakpoint";
  * (DESIGN.md §7). Handpicked's target and Side Bet's cap have steppers
  * (Phase 4); Foundation is the rest. The API checks the limits and judges the
  * shape — this screen only shows its answer — and nothing here may suggest Pip
- * will move money (CLAUDE.md hard lines 1, 11).
+ * will move money (design rules 1, 8).
  */
 export function RulesScreen() {
   const isDesktop = useBreakpoint() === "desktop";
@@ -177,7 +177,7 @@ function RulesLoaded({ view, isDesktop }: { view: RulesView; isDesktop: boolean 
  * States the breach in pounds first (DESIGN.md §4.1). "Show me how to fix it"
  * only does the arithmetic — two amounts, equal weight, no preference — and
  * "Raise the cap" only takes you to the stepper. Nothing here moves money; you'd
- * do either at your broker (hard lines 1, 12).
+ * do either at your broker (design rules 1, 9).
  */
 function OverLimitBanner({
   rule,

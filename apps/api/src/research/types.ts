@@ -1,7 +1,7 @@
 import type { Bucket, Pence } from "@finance-app/shared";
 
 /**
- * The research module's whole world (Phase 5 decision 9). It is handed values
+ * The research module's whole world . It is handed values
  * and hands back text. It never fetches, never reads the database, the
  * environment or a key, and nothing it returns can act on anything — hard
  * line 2 made structural. `wall.test.ts` proves the imports.
@@ -34,7 +34,7 @@ export interface ReportForWriter {
   snippet: string | null;
 }
 
-/** Percentages only — pounds, quantities and ids never reach an LLM (decision 6). */
+/** Percentages only — pounds, quantities and ids never reach an LLM . */
 export interface MovesForWriter {
   day: number | null;
   week: number | null;

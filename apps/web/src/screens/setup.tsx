@@ -33,9 +33,9 @@ import { useProfile } from "../lib/research-settings";
 /**
  * Where Pip reads your numbers from, and how this device shows them
  * (DESIGN.md §7–8). Connecting only ever accepts a key that can look: where a
- * provider lets Pip check, a key that can trade is refused (CLAUDE.md s13);
+ * provider lets Pip check, a key that can trade is refused;
  * where it can't (Trading 212), Setup says so plainly and Pip has no order code
- * to misuse (Phase 2 decision 2). "Nudge me" is left out until notifications
+ * to misuse . "Nudge me" is left out until notifications
  * exist (Phase 6); currency is fixed to pounds.
  */
 export function SetupScreen() {

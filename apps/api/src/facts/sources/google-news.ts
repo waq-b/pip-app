@@ -5,7 +5,7 @@ import { itemPublisher, rssItems } from "./rss.js";
 
 /**
  * Google News RSS search, per holding by name — the only free source found that
- * covers UK and European names (Phase 5 task 1). No key. Each item names its
+ * covers UK and European names. No key. Each item names its
  * publisher; titles end " - Publisher", which is taken off. Links are Google
  * redirects, and the description only repeats the title, so there's no snippet.
  *

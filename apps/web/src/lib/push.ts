@@ -4,7 +4,7 @@ import { useState } from "react";
 import { apiDelete, apiGet, apiPost, apiPut } from "./api";
 
 /**
- * Push on this device (phase-6.md decision 5, DESIGN §10.2–10.4).
+ * Push on this device (DESIGN §10.2–10.4).
  *
  * The OS prompt is only ever asked from a tap — Pip's own sheet first, then
  * "Turn on for this device" — never on load. On an iPhone or iPad, web push

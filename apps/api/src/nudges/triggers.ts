@@ -14,14 +14,13 @@ import {
 } from "@finance-app/shared";
 
 /**
- * When Pip recommends a course of action (phase-6.md decision 14, CLAUDE.md
- * hard line 12). For Waqar only — personal research on — and never a
+ * When Pip recommends a course of action (design rule 9). For the owner only — personal research on — and never a
  * forecast: every trigger here is about what is true *now*, measured against
  * his own rules and ordinary discipline.
  *
  * Code decides everything that matters: whether a trigger fired, what the
  * recommended course is, and every amount. The writer only explains it
- * (hard line 2). This file is pure — no clock, no database — so the same
+ * (design rule 2). This file is pure — no clock, no database — so the same
  * facts always give the same answer.
  *
  * | #  | Trigger                              | Default          | Push |

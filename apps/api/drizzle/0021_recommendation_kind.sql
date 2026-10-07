@@ -1,4 +1,4 @@
--- Recommendations get a kind of their own (phase-6.md decision 14): one reason
+-- Recommendations get a kind of their own: one reason
 -- per trigger, and a recommendation always carries its course.
 --
 -- Also brings drizzle's schema snapshot level with 0018–0020, which were

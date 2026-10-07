@@ -1,292 +1,65 @@
 # Changelog
 
-All notable changes to this project are documented here.
-Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+What changed, version by version. The project was built in numbered phases, which is why "Phase N" shows up in the docs and code comments. The version numbers below are release markers only: the packages themselves stay at `0.0.0`.
 
-## [Unreleased]
+Pip is currently parked (see the README), so the last section is unreleased.
 
-### Phase 6 — Notifications + ops
+## Unreleased: Phase 6, notifications and ops
 
-- Changed: one Groq request per build (Waqar, 2026-09-21: "limit requests to Groq and make them more performant"). Pip gathers every fact and makes every decision first, then asks once for all the words — news notes, the reasons in Pip's takes and the week's opening line (`wording.v1`) — where it used to ask once per piece and hit Groq's per-minute limit on Monday (429). Each piece is still checked on its own and falls back to Pip's words on its own; at most 8 reports per holding go in; nobody without personal research costs a request; a 429 now waits once, as long as Groq asks, up to 20s (#3230613075)
-- Fixed: a push or email that didn't go was never logged on the deployed Pip — Monday's "Your week is ready" failed on the iPhone with no trace. Failures are now a warning in Render's log with the push service's own reason ("403 BadJwtToken"), as a short code that nothing key-shaped survives (#3230613075)
-- Fixed: "Pip: prices needs a look" arrived at 08:00 London on weekday mornings — the freshness check started judging prices the same minute the day's first refresh started. It judges from 09:00 now (migration 0022, applied) (#3230613074)
-- Added: the notification loop test — every way Pip speaks, end to end on real Postgres with no network: 80% then the limit once each and the re-arm, one push per event however many runs see it, the week's notes in the bell but only "Your week is ready" on the phone, the two-a-day urgent budget, one recommendation through a flickering value with one push, a pot's drift in the bell and off the phone, a planted "buy more" answer falling back to Pip's words, Monday's push and email once only, each switch stopping its channel, a quiet connection becoming one bell row and no push, a dropped device forgotten so the app can ask again, and the jobs health check going 503 when a run is stale (#3230604575)
-- Added: connection gaps are recorded (they had a table, a bell row and no writer) — the refresh job opens one when a live account hasn't been read for 3 hours, dated from its last good poll, and closes it when the account answers; disconnecting an account closes its gap (#3230604575)
-- Fixed: the in-memory nudge log stamped notes with the real clock rather than the build's, so tests that build a week on a fixed date drifted out of the trust rules' recency window as real days passed; the log now records when a note was written, in both stores (#3230604575)
-- Fixed: the deployed Pip never logged why a note fell back to Pip's template, so a Groq outage was invisible; each fallback is now a warning in Render's log with its reason — the guard's ("forecast", "buy or sell"…) or "unavailable (403)" with Groq's status — and never the note's words (#3230799437)
-- Fixed: recording a delivered or failed push crashed on Postgres (`= any(...)` sent one id where an array was expected), after the push had already gone out — found by the first real test push; now `inArray`, with the database store tested on PGlite for one device, several, a failure and a gone device. Added `pnpm --filter api test-push [email]`: a hand-run test push through the real notifier, keys from the environment (#3230588643)
-- Fixed: an installed iPhone app could stay on the old build launch after launch — the splash gave up at 3s while the new version was still downloading, and each deploy restarted the download. The splash now waits for a download in progress, up to 15s (#3230588643)
-- Fixed: `VAPID_SUBJECT` accepts an `https:` page as well as a `mailto:` address, as the web-push standard allows — Pip refused to start with `https://pip.example.com` (#3230588643)
-- Added: the bell on every screen (phone header beside the mark, tablet rail foot, desktop popover with no scrim) with an unread count in `solid`; the last 30 days grouped Today / This week / Earlier, rows that open where they came from and mark themselves read, Mark all read, empty, loading and error states, and the Push alerts and Weekly email masters at its foot; Setup's Notifications card with the per-kind switches (greyed while push is off; urgent notes explained to non-personal accounts), this device, the email address and "Pip last checked…"; a shared switch component (#3230606263)
-- Added: push on the web — Pip's own service worker (`injectManifest`: precache, index.html for page loads, `SKIP_WAITING`, `push`, `notificationclick` that only opens paths inside Pip, `pushsubscriptionchange`); the VAPID public key in `GET /notification-settings`; the first-login sheet (switches, a button that says what it'll do, the phone's prompt only from that tap, the Home Screen step on an iPhone in Safari, "Not now" as a real answer), then the net-assets question; Setup's "This device" row with "Turn on for this device"; a check on every open that mends a lost subscription quietly; and "Pip's warming up" after 3s while a sleeping Pip wakes; `workbox-precaching`/`-routing`/`-core` added (#3230588643)
-- Changed: Side Bet's limit alerts keep a real limit's pounds off the lock screen — once net assets are set the push says "near its limit" / "has reached its limit" with the figures left in Pip; the £350 starter limit still shows its pounds, since it gives nothing away (#3230613139)
-- Added: Monday's email and "Your week is ready" push — sent once by the run that builds the week, through `notify()`'s switches; `renderWeekEmail` maps the built week, the pots' week in pounds, what Pip checked and the calendar onto the `@finance-app/emails` digest, with Waqar's latest recommendation laid out part by part; held-back notes left out; snapshot-tested (#3230611515)
-- Changed: Side Bet's limit never leaves Pip in an email or a push — R1's card and push drop the pounds ("past its limit", "the part above the limit"), since value less the amount is the limit and the limit is net assets ÷ 10; recommendation briefs now keep their parts for the email (#3230611515)
-- Added: the recommendation brief — the fact, Pip's take (course and pounds from code), why, what a disciplined investor typically does, the trade-off and "Your call."; Pip's own template for all four triggers and an optional Groq writer (`recommendation.v1`) for the three reasons only, never given a pound; the guard split into two audiences (forecasts, figures and jargon banned for everyone; advice verbs allowed only in a personal-research brief, which must carry a reason and a trade-off and name code's course and no other); wired into the daily build for personal-research users, logged as `recommendation` nudges, pushed for R1, R2 and R4, and a "Pip's take" block on Your week. Planted "buy", forecast, mismatched-course and missing-trade-off answers all fall back to the template (#3230799437)
-- Fixed: R3 made two briefs for one drift — Handpicked over and Foundation under are the same drift seen from both sides — now one reading for the shape (#3230799437)
-- Added: the recommendation triggers — R1 Side Bet's value past 10% of net assets (half a point over, on two refreshes), R2 a holding worth 3× its stake, R3 Handpicked 5+ points over or Foundation 5+ under (on two refreshes), R4 a move past twice the pot's line (hold, unless R1 or R2 also holds); the recommended course and amounts decided in code, a `step()` state machine for the calmer rule, and `recommendation_state` so one crossing makes one recommendation; 18 tests, including a 10.4 / 10.6 flicker that makes exactly one (#3230811816)
-- Added: the urgent tier — a daily note is urgent at twice the pot's big-move line, or (personal research only) with three independent named publishers on one holding within 24 hours, quiet around results except on the day itself; urgent notes skip the daily budget, are logged with `nudges.urgent`, and push at once through `notify()` (two a day, one per note, and a note held by that cap says so in its checks) (#3230606262)
-- Fixed: the nudge-service tests built the sample market on the real clock, so their expected notes drifted with the date; the sample market is now pinned (#3230606262)
-- Added: Side Bet's limit alerts — 80% of the limit and the limit itself, judged on money in less taken out after the Kraken poll (never on a price), each speaking once and staying quiet until money in is clearly back under by £25, then able to speak again; pushed through `notify()` so the switches and one-push-per-event apply, recorded either way, and shown in the bell. `limit_alerts.cleared_at` keeps the history rather than deleting rows (migration 0020, applied) (#3230613139)
-- Added: the net-assets screens — Setup's row (amber NOT SET with the £350 starter limit, keypad field with £5,000 steppers, dots by default, and an eye that fetches the figure and the limit only when tapped, since the limit gives the figure away ten times over), the last-reviewed line with its yearly prompt, and the first-login question on Pots, asked once per device with "I'd rather not say" costing nothing (#3230831246)
-- Added: the yearly net-assets check — a year after the figure was last given, the week carries a calendar nudge ("Time to check your net assets") saying what it sets and that Pip only counts Side Bet; weekly only, and never for someone who hasn't given them, since Setup asks for those. New `net_assets_review` nudge reason (migration 0019, applied) (#3230650829)
-- Added: ops that never wakes Pip — every job step records a `job_runs` row (start and finish), `private.stale_jobs()` judges freshness in SQL (stale price refresh only during working hours, a missed Monday build, anything started and never finished), and `private.check_job_freshness()` runs every 20 minutes under `pg_cron` and emails through Resend from `pg_net`, one email per incident, closed by the work recovering; `GET /status` for Setup's line and `GET /health/jobs` for looking at by hand, neither called on a schedule. Migration 0018 applied and the whole path proven on the dev database with a planted failure (#3230613074)
-- Changed: Pip is allowed to sleep (Waqar, 2026-09-17) — UptimeRobot and any scheduled ping of `/api/health` are dropped, because a liveness check on a schedule is a keep-alive in disguise and spends the free Render hours. Ops alerts come from job freshness instead: every job writes to `job_runs`, and a `pg_cron` check inside Supabase reads it and emails through Resend, one email per incident, without ever waking the API. `/api/health` stays for Render's deploy check, `/api/health/jobs` for looking at by hand. The Supabase keep-alive stays — it pings Supabase, not Pip. Planned, not yet built (task 9) (#3230613074)
-- Changed: Side Bet left the shape — it has a limit in pounds (the FCA's 10% guide on sealed net assets, or a £350 starter limit), judged on money in less taken out over 12 months from the Kraken ledger, so prices can't push anyone over it and taking profit out makes room; `near_limit` at 80% and `over_limit` at 100%, one fix-it amount, and a calm growth line when Side Bet is worth more than went in. Handpicked's target is the only slider and Foundation is the rest; the cap column is dropped (migration 0017). `net_assets` routes (status, set, reveal) keep the figure and the limit behind an explicit reveal (#3230650829)
-- Added: delivery and the bell's data — `PushSender` (web push with the VAPID pair; a 404 or 410 forgets that device) and `EmailSender` (Resend's HTTP API), both with stubs that record instead of sending; `notify()` with the switches, one push per event (claimed before anything is sent, so overlapping runs can't double-send) and two urgent pushes a day; `GET`/`PUT /notification-settings`, `POST`/`DELETE /push/subscriptions`, `GET /push/subscriptions/this-device`, `GET /notifications` and `POST /notifications/read`; `NOTIFY_MODE` (`stub` by default, `live` needs the VAPID pair, `RESEND_KEY` and `EMAIL_FROM`); 37 tests (#3230611354)
-- Added: Phase 6 storage — `push_subscriptions`, `notification_settings`, `push_deliveries`, `notification_reads`, `connection_gaps`, `net_assets` (sealed), `limit_alerts`, `recommendation_state`, `job_runs`, and `nudges.urgent` / `.recommendation` / `.trigger`; RLS on every one (own rows, or server-only with no grant), with a device's push keys and the sealed net assets never granted; `CHECK`s mirroring new shared constants in `packages/shared/src/notifications.ts` (push kinds, recommendations and their triggers and states, Side Bet's limit shares, the £350 starter limit, R1–R4 margins); migration 0016 applied; 34 tests (#3230604576)
-- Added: Pip answers on its own domain, `pip.example.com` — `CANONICAL_HOST` redirects app pages asked for on the old Render address (302), while `/api/*` answers on both so the scheduled refresh never breaks mid-move; a push subscription belongs to an origin, so the move had to come before Phase 6's push work (#3231605675)
-- Changed: Sentry dropped from Phase 6 (Waqar, 2026-09-17) — UptimeRobot, the jobs health check and Render's deploy emails cover a one-user app; an hourly error email through Resend is noted as a suggestion (#3231605675)
-- Added: `packages/emails`, Pip's email templates from the Claude Design "Pip Emails" board — pure renderers returning subject, preheader, HTML and plain text for the sign-in code, the Monday digest (one thing, quiet week, busy week capped at four, a pot not connected, stale prices), alerts (limit at 80%, cap reached, urgent move, push stopped), a recommendation sent alone, waitlist and you're in. Tables and inline styles only, dark mode via `prefers-color-scheme`, escaped copy, advice label only where money is mentioned, no link that acts on money; 77 tests. The sign-in template for Supabase is generated into `packages/emails/supabase/` (replacing `docs/email-templates/`) and the mark is `apps/web/public/email/pip-mark-96.png`. Nothing sends yet
-- Added: a launch splash that checks for an update before showing Pip (ported from Terpa) — static in `index.html` so it shows before any JS, in the saved Appearance; `src/update.ts` applies a waiting or newly found version behind it and reloads, waits at most 3s, skips first visits, offline and dev; `registerType: "prompt"` so a new version never takes over mid-use; `workbox-window` added. Replaces the reload-on-`controllerchange` from the sign-in fix (#3231281652)
-- Fixed: sign-in works in the app installed to an iPhone or Android Home Screen — email sign-in is now a 8-digit code (`verifyOtp`, type `email`) typed into Pip, because the emailed magic link opened the system browser, which has separate storage, so the installed app stayed signed out. "Email me a code" → "Enter the code from your email": number keypad, one-time-code autofill, paste-friendly, signs in on the eighth digit, wrong/expired and too-many-tries states, "Send a new code"; the send-limit and failure states kept. The email template (`docs/email-templates/sign-in-code.html`, pasted into Supabase) shows the code large and keeps the link as a desktop fallback, still detected in a browser tab. Google sign-in has the same iOS redirect problem — noted on the Pre POC sign-in item (#3230978993)
-- Fixed: the sign-in code is 8 digits, matching Supabase's Email OTP Length; a complete code is checked once (extra keypresses re-sent it, so a phone still on the 6-digit build fired bursts of wrong checks); the installed app reloads onto a new deploy when its service worker takes over, instead of running the old build for a relaunch or two (#3230978993)
+- **Notifications.** A bell on every screen, with the last 30 days of what Pip told you. Web push through Pip's own service worker, with a first-login sheet that asks once. Email through Resend.
+- **Side Bet limit alerts.** Side Bet now has a limit in pounds instead of a percentage cap: 10% of your net assets (or a flat starter limit until you set them), judged on money in less money taken out over 12 months, so a price move can't put anyone over it. Alerts at 80% and 100%, each sent once.
+- **Net assets.** A sealed, optional figure on Setup that sets Side Bet's limit. It never appears in an email or on a lock screen.
+- **Urgent notes and recommendations.** Daily notes become urgent when a holding moves twice its pot's big-move line, or several independent publishers report on it within a day. For users with personal research switched on, Pip can also recommend a course (hold, take some profit, rebalance) with the reasoning and the trade-off. The course and every amount come from code; the model only explains.
+- **Monday email.** The week's digest as an email, plus a "Your week is ready" push.
+- **Ops without a pinger.** Pip is allowed to sleep on a free host, so nothing pings it. Every job step records a `job_runs` row, and a `pg_cron` check inside the database emails the operator when work is stale, failed or never happened.
+- **One LLM request per build.** The week's news notes, the reasons in recommendations and the opening line are requested together, so Groq's per-minute limit isn't hit on a Monday.
+- **Sign-in by code.** Email sign-in is an 8-digit code typed into the app, because an emailed link opens in a different browser from an installed PWA.
+- **Update splash.** A launch splash checks for a new version before showing the app.
+- **Fixes.** Failed pushes and LLM fallbacks are logged with a reason that never contains a key or the note's words. A push-delivery bookkeeping bug on Postgres. The freshness check no longer judges prices before the day's first refresh has run. Several tests that depended on the real clock now pin it.
+- Added `packages/emails`: Pip's email templates as pure renderers returning subject, preheader, HTML and plain text.
 
-### Constitution
+## 0.5.0: Phase 5, research and "Your week" (2026-09-17)
 
-- Changed: roadmap (Waqar, 2026-09-18) — phase 7 is deep links (a server-built link to the exact instrument at Kraken or Trading 212 wherever Pip talks about a holding), T212 live becomes phase 8 with its plan unchanged (`docs/phases/phase-8.md`), phase 9 is beta; order placement leaves the phases for a new "v2 — Later features" backlog group, with every parked idea as its own item. CLAUDE.md s2, s3, s4, s5, s7 and s13 updated; board groups renamed and added, nothing deleted (#3233510467)
-- Changed: CLAUDE.md section 1 — for Waqar, Pip also recommends a course of action (hold, take some profit, rebalance) when the facts and his own rules point to one, says why, and leaves the decision to him; hard line 12 becomes "Recommendations, not forecasts" (personal_research users only, built on what is true now and on discipline, never predicting prices; others get generic information). Hard line 2 unchanged. Waqar's decision in chat, 2026-09-17 ("Change the goal: yes. Pip recommends a course of action for me when the facts and my own rules point to one.") (#3230768753)
+- **Facts layer.** News and results dates for what you hold, from Google News RSS, Marketaux, Alpha Vantage and a few RSS feeds, with per-source daily budgets and aliases for matching.
+- **Trust rules.** Deterministic checks on what may be said at all: named publishers, recency, independent sources, quiet around results, exclusions. Users set their own on Rules.
+- **The research module.** It is handed values and hands back text, and nothing else: a test fails if it imports anything outside its folder or reaches the network, environment or filesystem. An output guard rejects forecasts, price targets and amounts and falls back to Pip's own template.
+- **Your week.** A weekly build (Mondays) and daily notes, each logged with its facts, checks and outcome. A card on Pots and a `/week` screen.
+- **Profile and plan.** Goals, horizon and exclusions, stored per user.
+- **Outcomes.** What happened to a holding after a note, measured 7 and 30 days later.
+- LLM is Groq only, with strict JSON schema output.
 
-## [0.5.0] — 2026-09-17
+## 0.4.0: Phase 4, rules engine (2026-09-16)
 
-### Phase 5 — Research agent + digest
+- A pure rules engine: Foundation and Handpicked targets with a 5-point drift threshold, a cap on Side Bet, targets scaled over connected pots, and the two amounts that would fix a broken rule.
+- Saving rules with server-side limits and own-row Row Level Security. Every screen reads the same engine.
+- Rules are set with sliders and one Save button.
+- A Trading 212 account can only feed one pot.
 
-- Changed: Phase 5 close-out — Render built the first real week from the practice ISA; that build deleted at Waqar's request so it rebuilds with personal research on (switched on) and the opening-line fix; phase-5.md outcome; 0.5.0 (#3229138524)
+## 0.3.0: Phase 3, Kraken, read-only (2026-09-16)
 
-- Added: news sources verified with real calls — Google News RSS, Alpha Vantage `NEWS_SENTIMENT` and `EARNINGS_CALENDAR`, Marketaux, RSS (BBC Business, Investing.com, CoinDesk, CoinTelegraph, Nvidia IR) — coverage per practice holding, and Groq `gpt-oss-120b`/`-20b` strict JSON on prompt v1; trimmed recordings in `apps/api/fixtures/recorded/{rss,google-news,marketaux,alpha-vantage,groq}`, facts in CLAUDE.md s13 (#3229132855)
-- Added: Phase 5 storage — `facts_news` (+ `facts_news_instruments`), `facts_events`, `facts_fetches`, `user_profiles`, `trust_settings`, `digests`, `nudges` with outcome fields, `users.personal_research`; RLS (shared facts, server-only fetch bookkeeping, own rows for the rest) and `CHECK`s mirroring new shared constants (`packages/shared/src/research.ts`: trust defaults and limits, profile limits, nudge kinds/reasons); migration 0013 applied; `allowlist personal <email> on|off`; 36 tests incl. limits matching the shared constants and cross-user isolation (#3229143052)
-- Added: facts layer — adapters declaring coverage (Google News RSS by name, Marketaux, Alpha Vantage news and results dates, company newsroom and general RSS feeds), per-holding source selection, alias matching, one row per report across sources, daily budgets (Alpha Vantage leaves 7 calls for prices), due/retry timing, 90-day clean-up; a step in the refresh job; stub facts with the planted ASML item; `MARKETAUX_API`; `fast-xml-parser`; 53 tests; one live run stored 516 reports for the practice holdings (#3229142190)
-- Fixed: shared tables (instruments, prices, closes, intraday, schedules, news, results dates) readable through Supabase only by allowlisted users, not any Supabase session; leftover default grants on `users` and `waitlist` revoked (migration 0014, applied and probed); the web app never creates Supabase accounts (sign-ups also off in Supabase) and answers an unknown address like a known one; `allowlist add` makes the Supabase account; 8 tests (#3229972283)
-- Added: profile and trust rules API — `GET`/`PUT /profile` (goals, horizon, monthly money in, risk words, exclusions; `personalised` from the allowlist flag) and `GET`/`PUT /trust-rules` (defaults until saved, publishers normalised to domains), server-side limits from the shared constants with named 400s, database and in-memory stores; allowlisted users carry `personalResearch`; 44 tests (#3229141950)
-- Added: trust rules and candidate nudges — pure stage A (named publishers or the company's own newsroom, recency, exclusions) and stage B checks (independent publishers by organisation, quiet around results, cap room, exclusions), basis lines; candidates for broken cap, drift, results dates, ISA year end, big moves and news, weekly and daily, with weekly and daily budgets, daily repeats, and a "nothing needs you" result carrying what was checked and what's next; 50 tests (#3229138472)
-- Added: research module behind a proven wall — `research/` imports only itself and the shared types and never reaches the network, environment or filesystem (compiler-based import test plus ESLint); injected `Chat` with Groq's client kept outside (`nudges/groq-chat.ts`, strict JSON, low reasoning); prompt v1 and week v1; output guard (schema, lengths, cited facts, banned advice/forecast/jargon wording, any percentage) with Pip's own templates as the fallback; templates for cap, drift, results, ISA year end, moves, news (general wording without personal research) and the quiet week; stub writer; `LLM_MODE`/`LLM_MODEL`; 55 tests; real Groq calls passed the guard (#3229138921)
-- Added: Your week — weekly build from 07:00 UTC Monday (missed Mondays caught up) and daily nudges from 07:00 UTC, gathered from the read model, trust rules and stored facts; words from the research module (LLM only for shown news for personalised users), cited-publisher recheck, quiet week; every nudge logged with facts, checks, model, prompt version, price or pot share, once a day (migration 0015, applied); today's trust rules re-applied on read; `GET /week`, `GET /week/:weekOf`, `POST /nudges/:id/response`; database and in-memory stores; refresh-job step; stub mode builds on read; 30 tests; dry run on real data (#3229143051)
-- Fixed: the week's opening sentence went to Groq with holding names for someone without personal research on; now only personalised weeks ask a writer, everyone else gets "Here's your week." — found in the first week Render built (#3229138524)
-- Added: the loop test — through the real routes in stub mode, the planted ASML story passes the trust rules, is in Your week and the log, disappears the moment a stricter trust rule or an exclusion is saved (the log unchanged) and returns when the rule goes back, beside the broken cap; and the same on screen from Rules to Your week; 3 tests (#3229147434)
-- Changed: held-back reasons for exclusions and Side Bet's cap no longer repeat themselves (#3229147434)
-- Fixed: the web build broken by Your plan's type narrowing, before Render deployed it (#3229138514)
-- Added: "What Pip lets through" on Rules (a slider per trust rule with its setting in words, big-move line per pot, publisher chips with add and remove, one Save, failure state) and "Your plan" on Setup (goals and risk words with counters, horizon, pounds a month, never-nudge-me-about chips, general-notes note without personal research, one Save); both refetch Your week on save; 7 tests (#3229138514)
-- Added: Your week on screen — a card on Pots in What changed's slot (today's and this week's notes, "That's the lot", first-week and error states) and the `/week` screen: note cards with pot chip (Side Bet fenced), basis, linked sources, passed trust rules, not-advice label and What did you do? (Nothing / Acted / Dismissed); quiet week as a finding; held-back notes one tap away with reasons; today's daily notes; earlier weeks; loading, error and no-such-week states; Pots stays lit (#3229138922)
-- Removed: the web activity feed on Pots, replaced by Your week (Phase 5 Q4) (#3229138922)
-- Added: nudge outcomes — a job step fills each nudge's price 7 and 30 days on (cached close, FX-converted to pence of pounds) or a shape nudge's pot share, marks nudges with nothing to measure done, and gives up after 14 days without closes; 6 tests (#3229141907)
-- Changed: news nudge prompt v2 — say who made each claim and state only what the reports say, after v1 drafts turned "JPMorgan says" into "the company announced"; v1 kept for logged nudges (#3229138921)
-- Changed: Phase 5 sources — Finnhub, CryptoPanic and CryptoCompare dropped, Google News RSS added; LLM is Groq only, no Ollama (CLAUDE.md s3) (#3229132855)
+- A read-only Kraken client (key info, balances and ledger only), signed requests, ordered nonces and retries.
+- Pip checks the key's permissions on connect and on every poll, and refuses a key that can trade, withdraw, deposit or earn.
+- Crypto prices from CoinGecko with Kraken's public endpoints as fallback.
+- Side Bet's history and cost are rebuilt from the Kraken ledger.
 
-## [0.4.0] — 2026-09-16
+## 0.2.0: Phase 2, Trading 212 practice accounts and market data (2026-09-16)
 
-### Phase 4 — Rules engine
+- AES-256-GCM encryption for provider keys, bound to user, provider, account and field, with key versions and a re-seal tool.
+- Row Level Security as a second wall: user reads run in a transaction as the signed-in user.
+- A read-only Trading 212 client (practice environment), polling, and history rebuilt from order history.
+- Market data from Yahoo and Alpha Vantage with a shared price cache, market hours and daily call budgets.
+- A scheduled refresh job triggered by `pg_cron`.
+- Production serving from a single origin, and the first deploy to Render.
+- A GitHub Actions workflow that keeps the free Supabase project from pausing.
+- Recorded, anonymised provider responses used as test fixtures.
 
-- Added: rules engine — pure `evaluateRules` for drift (named 5-point threshold), Side Bet's cap (broken at any amount over, compared in pence), targets scaled over connected pots, over-by in points and pounds, and the two fix-it amounts; shared rule constants (defaults 70/25/5, cap max 20, FCA note above 10); 13 tests incl. edges and determinism (#3229114698)
-- Added: saving rules — `PUT /rules` with server-side limits (whole numbers, cap 0–20, shape ≤ 100), `user_rules` with own-row RLS and matching `CHECK` constraints (migration 0011, applied), database and in-memory stores; 15 tests (#3229114873)
-- Added: rules from the engine on every screen — `/rules` gives status, drift, scaling and fix-it amounts with the user's saved settings and last change; `/portfolio` and `/buckets/:id` carry the same `ruleStatus` and `overBy`, `rulesNeedAttention` and a verdict naming a broken cap; stub mode judged the same way; a route test proves the three agree over and under the cap; sample Side Bet now £208.50 over (engine arithmetic) (#3229114635)
-- Added: changing rules on the Rules screen — steppers for Handpicked's target and Side Bet's cap (Foundation is the rest), saved via `PUT /rules` with every screen refetched, a failed save says nothing changed, cap stepper stops at 20%, FCA restricted-investor line above 10%, "Last changed", a note when a pot is left out of the shape, target bars marking the scaled line; 8 web tests (#3229115872)
-- Added: a broken cap, from the engine — banner buttons "Show me how to fix it" (panel with the two fix-it amounts at equal weight, ending "You'd do either at your broker") and "Raise the cap" (focuses Side Bet's stepper, says it moves no money); red dot, pot cards and cap bars follow the engine's status rather than rounded percentages; the shape sentence names drifted pots calmly; 13 web tests (#3229114771)
-- Changed: rules are set with sliders instead of −/+ steppers, and saved with one Save rules button rather than on every change — far fewer API calls, and no waiting between taps (Waqar) (#3229115872)
-- Fixed: the same Trading 212 account can no longer be connected to both Foundation and Handpicked — Pip stores each account's id and refuses the second pot with "That's the account already connected as…" (migration 0012, applied); 3 tests (#3229114694)
-- Fixed: moving one rules slider no longer shifts the other's thumb — each keeps a fixed range (Handpicked 0–100, cap 0–20) and the one being moved stops where the other leaves room (#3229115872)
-- Added: "Foundation takes whatever's left." under each rules slider, and Foundation's number lights briefly when a slider changes it (#3229115872)
-- Changed: Phase 4 close-out — Waqar checked saving rules on the deployed Pip; run-through locally with real data and a broken cap on sample data; docs pass; 0.4.0 (#3229114694)
+## 0.1.0: Phase 1, the app shell and auth (2026-09-16)
 
-## [0.3.0] — 2026-09-16
+- The whole UI against stub data: Pots, pot detail, holding detail, Rules, Setup and sign-in, at phone, tablet and desktop sizes, in light and dark.
+- Design tokens, self-hosted fonts, the seven data blocks, and the staleness ladder.
+- Supabase Auth with an allowlist: the API verifies the token on every route and checks the allowlist. The server refuses everyone if it has no verifier.
+- A test that walks the route table and asserts every non-exempt route answers 401 without a session.
 
-### Phase 3 — Kraken (read-only)
+## Phase 0: scaffold
 
-- Added: Kraken and CoinGecko verified with real calls — `GetApiKeyInfo` reports a read-only key's permissions, CoinGecko GBP prices and its 365-day history cap, Kraken public daily OHLC; anonymised recordings in `apps/api/fixtures/recorded/{kraken,coingecko}`, facts in CLAUDE.md s13 (#3229045898)
-- Added: read-only Kraken client — `GetApiKeyInfo`, `BalanceEx` and paged `Ledgers` only, signed requests, ordered nonces, rate-limit counter and retries, typed errors; permission check that refuses any key able to trade, withdraw, deposit or earn; 14 fixture tests incl. a source scan for money-moving methods (#3229053606)
-- Added: crypto prices — CoinGecko (primary, pounds, 24 h intraday, daily closes up to 365 days) and Kraken's public Ticker/OHLC (fallback and older history); crypto refreshes every 15 min around the clock; daily budgets CoinGecko 300, Kraken 1,000; `COINGECKO_KEY`; `instruments.coingecko_id` and `kraken_pair` (migration 0008, applied); 13 tests (#3229040417)
-- Added: storage for Kraken accounts — credentials with account kind `spot` (Side Bet), `kraken_ledger` with own-rows RLS, `holdings.staked_quantity`; holding cost and average price may be null until known, and the read model then marks "since bought" unavailable (`sinceBoughtUnavailable`) and leaves a pot's all-time change unstated; migration 0009 (applied) (#3229050622)
-- Added: connecting and polling Kraken on the API — permissions checked on connect and on every poll (keys able to trade, withdraw, deposit or earn refused, listed by Kraken's names), key + private key sealed, balances to Side Bet holdings (staked and bonded balances merged into their coin) and cash in pounds, ledger stored incrementally, coins named and mapped to CoinGecko ids and Kraken pounds pairs; disconnect clears Side Bet; refresh job polls Kraken; 11 tests. Setup still shows Kraken as coming soon until task 8 (#3229050636)
-- Added: Side Bet history and cost from the Kraken ledger — balances per day valued at market closes into daily values, average cost per coin (pounds/dollars/euros paid, transfers and swaps at that day's price, rewards free, staking moves ignored, unknown kept unknown), a check that the ledger ends at current holdings, costs refreshed on every poll; rebuild on connect and in the refresh job; 10 tests (#3229045899)
-- Added: Side Bet live in the read model — counted in totals, split and rules once Kraken is connected, coins shown in coin units with staked amounts and "No price yet", "since bought" and all-time marked unavailable while cost is unknown, never "markets closed"; hourly crypto refresh outside market hours only while someone holds crypto (migration 0010, applied); 6 tests (#3229040481)
-- Added: Kraken in Setup — steps for a read-only Spot key, API key and hidden private-key fields, the permission-check note; offered whenever the server can price coins; Side Bet's not-connected page links to Setup; holdings and holding pages say "Cost not known yet" instead of a flat change; 4 web tests (#3229046122)
-- Fixed: a Kraken key refused outright (as its IP restriction does) now says to check the restriction, not to tick Query funds (#3229045414)
-- Fixed: from the run-through — a connected but empty pot says "Nothing in it yet" instead of "£0.00 · today", names no price source, and doesn't offer to connect an account that is already connected (#3229045414)
-- Changed: Phase 3 close-out — deployed, run-through at three widths with Kraken connected, docs pass, 0.3.0 (#3229045414)
-
-### Roadmap
-
-- Changed: phases reordered (Waqar) — Kraken 3, rules 4, research 5, notifications 6, T212 live 7; the drafted live plan moved to `docs/phases/phase-7.md`, and phase numbers in docs, code comments and tests follow (#3226664941)
-
-## [0.2.0] — 2026-09-16
-
-### Phase 2 — T212 paper + market data
-
-- Added: secret box for provider keys — AES-256-GCM with `MASTER_KEY`, random IV per value, sealed values bound to user + provider + account + field, key version stamped for rotation; vague failures; 13 tests incl. tampering, wrong key and a value moved between rows (#3228268479)
-- Added: startup config — `PROVIDER_MODE` validated, `t212` refused without a valid `MASTER_KEY`; `pnpm --filter api master-key` generates one (#3228268479)
-- Added: server logger with pino redaction of auth and job-secret headers and key-shaped fields, with a test that real-looking secrets never reach the log (#3228268479)
-- Added: key encryption section and `MASTER_KEY` rotation runbook in ARCHITECTURE.md (#3228268479)
-- Added: Phase 2 tables — `provider_credentials`, `instruments` (keyed by T212 ticker), `prices`, `daily_closes`, `intraday_series`, `holdings`, `cash`, `trades`, `daily_values`, `source_usage` — applied to the Supabase dev project (#3228259812)
-- Added: Row Level Security for them — signed-in users read only, own rows via `private.current_app_user_id()`, sealed credential columns never granted, shared market data readable, server-only tables closed; verified on the dev database with throwaway users in a rolled-back transaction (#3228259812)
-- Added: `db/rls.test.ts` now also fails if a user-owned table lacks an own-rows policy or sealed columns are granted (#3228259812)
-- Added: `pnpm --filter api reseal-keys` — runbook step 3 of a master key rotation, with tests (#3228259812)
-- Added: `asUser` — user-facing reads run in a transaction as `authenticated` with the verified user's JWT claims, so Row Level Security applies to every route; transaction-local, so nothing leaks across pooled connections; checked on the Supabase dev project (#3228269250)
-- Added: RLS isolation tests on PGlite (in-process Postgres, real migrations, no network): own rows only even with no `where` clause, sealed columns and writes refused, role reset after the transaction (#3228269250)
-- Changed: the auth guard links an allowlist row to its Supabase identity on first contact, not only on `/me`, so RLS can find the user's rows from the first request (#3228269250)
-- Added: read-only Trading 212 client, practice environment only — HTTP Basic key:secret, GET to allowlisted paths only, cursor-paged order history, rate limits paced from T212's headers, typed errors incl. the missing permission behind a bare 403, and shape checks that fail loudly if the beta API changes (#3228259891)
-- Added: T212 → stored rows (holdings, cash, instruments, trades) in pence with full-precision quantities, dropping T212's prices and values; non-GBP accounts refused (#3228259891)
-- Added: T212 ticker → Yahoo / Alpha Vantage symbols by exchange (#3228259891)
-- Added: Yahoo Finance (primary) and Alpha Vantage (fallback) price sources — quotes, today's intraday points (Yahoo), daily closes by exchange day, GBP→USD/EUR — with pence normalised to `GBX`, blocked/not-found/unavailable errors, and a fallback that reports which source answered (#3228256875)
-- Added: market hours from Trading 212's working schedules — regular session only, holidays closed (#3228256875)
-- Added: shared price cache — one refresh per instrument/FX pair for all users, timed by market hours (15 min open, once after close, hourly unknown, 30 min FX, 5 min back-off after failure), last good price kept on failure, intraday points and gap-filled daily closes stored (#3228259813)
-- Added: daily call budgets per source counted atomically in Postgres (Alpha Vantage 22, Yahoo 1,500), failing over when spent (#3228259813)
-- Added: `market_schedules` table with RLS, applied to the dev project (#3228259813)
-- Added: polling a Trading 212 account — sealed key opened in memory, holdings and cash replaced per poll, new instruments and market hours learned, clear outcomes for invalid keys, missing permissions, non-GBP accounts and outages (#3228269192)
-- Added: daily snapshots of each pot's value and cost from market prices, skipping any pot it can't fully price (#3228269192)
-- Added: valuation in one place — pence, dollars and euros to pounds, never guessing a missing rate (#3228269192)
-- Added: real Trading 212 connect — key and secret validated against the practice API before anything is stored, sealed per user and account, first poll straight away, reconnecting replaces the key, disconnecting removes the account's data and that pot's history (#3228251518)
-- Changed: connections are one row per account (`trading212:isa`, `trading212:invest`, `kraken`) with `available` and `permissionsVerified`; new outcomes `missing_permission`, `not_pounds`, `unavailable`, `not_available_yet` (#3228251518)
-- Changed: Setup asks for a Trading 212 key and secret per account with the exact permissions to tick, says plainly Pip can't check T212 permissions, shows the new refusals, and greys out Kraken as coming soon; "Pip checked" is Kraken-only and the footer now reads "Pip only reads your accounts" (#3228251518)
-- Added: history rebuilt from Trading 212 order history — holdings per day × that day's close × FX, cost on T212's own fee-exclusive basis, never overwriting a real snapshot, writing nothing when fills don't match current holdings, and starting where prices allow (#3228431080)
-- Changed: daily values count investments only, not cash, so rebuilt and live days line up; cash is shown at its current amount (#3228431080)
-- Added: `POST /jobs/refresh` — machine-authenticated with `JOB_SECRET` (constant-time), 202 straight away, then polls due accounts, rebuilds one pending history, refreshes due prices and snapshots today's values; concurrent triggers share one run (#3228268481)
-- Added: `pg_cron` schedule calling the job every 30 min on weekdays in market hours and daily at 22:00 UTC, reading its URL and secret from a private settings row set at deploy; `pg_net` in the `extensions` schema; applied to the dev project (#3228268481)
-- Added: GitHub Actions keep-alive that queries Supabase every three days so the free project doesn't pause (#3228268481)
-- Added: real read model for Trading 212 mode — portfolio, pots, holdings and rules from real holdings valued at market prices, read as the user under RLS, with a short refresh-on-read (#3228269191)
-- Added: honest figures — today from the previous close (or from cost for something first bought today), all time against T212's cost basis, this month against the value a month ago or marked unavailable; Side Bet not connected and excluded; pots syncing until history is rebuilt; cash as its own row (#3228269191)
-- Added: optional response fields for these states — `status`, `changeUnavailable`, `activityComingSoon`, `moneyIn.comingSoon`, `monthlySplit.comingSoon`, `linkable`, rule `available` (#3228269191)
-- Changed: read routes delegate to a read model (stub or live); the server wires Trading 212 mode end to end and refuses `T212_ENV` other than `demo` and job secrets under 32 characters (#3228269191)
-- Added: web states for real accounts — Side Bet and unconnected accounts say "Not connected yet", pots say "Reading your account…" while syncing, "Not enough history yet" replaces an invented change, "History starts today" replaces a chart error, What changed / Money in / monthly split say "Coming soon", cash rows don't link, the plain-English note is hidden until there is one (#3228268464)
-- Changed: a read waits at most 2 s for due prices (was 3.5 s) (#3228268464)
-- Added: production serving from one origin — `/api/*` to the API, everything else to the built web app with an `index.html` fallback, immutable assets, no-cache shell and basic security headers; the server starts through `tsx` so the shared TypeScript package resolves (#3228260334)
-- Added: Render free web service `pip` (https://pip-old.example.net, Frankfurt, auto-deploy from `main`) with non-secret env; build verified on Render; `pg_cron` settings row points at its job endpoint. Waiting on the four secrets and the Supabase redirect URL before it starts (#3228260334)
-- Fixed: the sign-in email limit message said to wait "a few minutes"; Supabase's built-in sender allows about two an hour, so it now says to try again in an hour (#3228260334)
-- Added: `pnpm --filter api sign-in-link` — a one-time local sign-in link from Supabase's admin API, no email sent; local-only, localhost-only, auth unchanged (#3228260334)
-- Fixed: a pot holding shares on a closed market showed amber "4 hours old" in the evening; a closed market's closing price no longer counts as stale, only listings still trading set a pot's price age (#3228256569)
-- Fixed: "everything else updated just now" appeared with no other connected pots; unconnected pots are left out of price freshness (#3228256569)
-- Fixed: a pot chart with a single day still said "Since Sep 2026" above "History starts today" (#3228256569)
-- Added: recorded, anonymised responses from a Trading 212 practice ISA, Yahoo's chart endpoint and Alpha Vantage in `apps/api/fixtures/recorded/`, for tests to replay (#3228269249)
-- Changed: CLAUDE.md s13 rewritten from real calls — T212 key + secret auth, current endpoints, bare-403 missing permissions, no account type, pence prices, ticker-not-ISIN mapping, rate limits; Yahoo and Alpha Vantage facts; Supabase free-tier facts (#3228269249)
-- Added: task 1 findings in `docs/phases/phase-2.md` — map by ticker, market hours from T212 exchange schedules, ISA vs Invest must be asked (#3228269249)
-
-### Docs
-
-- Added: `docs/phases/phase-2.md` — Phase 2 plan, signed off: T212 practice account, Yahoo + Alpha Vantage market data, own encryption, per-request RLS, history backfill, scheduled refresh with keep-alive, deploy to Render; 15 tasks on the board (#3226664942)
-- Changed: CLAUDE.md s3 records the Phase 2 market-data decision; `.env.example` gains `AV_ACCESS_KEY` (#3226664942)
-- Added: a Release column on the board with a `Pre POC release` label, documented in CLAUDE.md s7; the first two items are rotating the database password and scaling sign-in emails (#3228228974, #3228232318)
-- Changed: Phase 2 docs pass — ARCHITECTURE layout, data flow and stub-mode sections describe both modes; FEATURES opens with where Pip is now; the Phase 2 plan records what shipped against its definition of done (#3228256569)
-
-## [0.1.0] — 2026-09-16
-
-### Phase 1 — Base UI + auth
-
-- Added: `docs/phases/phase-1.md` — Phase 1 plan from the Claude Design handover (Pip), with scope decisions, hard-line design corrections and a 20-task breakdown (#3226664834)
-- Added: design assets — `docs/design/Pip.dc.html` reference, logo mark SVGs in `apps/web/src/assets/brand/`, favicon and PWA/apple-touch icons, self-hosted Caprasimo + Figtree via `@fontsource`, `lucide-react` (#3226676914)
-- Changed: `index.html` and the PWA manifest now carry the Pip name, description and cream/dark theme colours (#3226676914)
-- Removed: unreferenced `apps/web/public/icons.svg` left over from the Phase 0 scaffold (#3226676914)
-- Added: `docs/DESIGN.md` — product voice, pot identities, brand tokens (light/dark/per-pot), type scale, copy rules, the seven data blocks, screen inventory with every state, and the hard-line corrections to the prototype (#3226691677)
-- Changed: `.prettierignore` now covers `docs/design/`, so the design handover is never reformatted
-- Changed: second design handover — `docs/design/Pip.dc.html` updated with desktop/tablet layouts, the mark at icon sizes and the amber staleness state (#3226676914)
-- Added: small-cut logo `pip-mark-small.svg` (16–48px geometry); favicon rebuilt on it; maskable icon rebuilt as the terracotta plate with the reversed mark (#3226676914)
-- Changed: `docs/DESIGN.md` rewritten — amber state tokens and the staleness ladder, three breakpoints with the sidebar/rail navigation, the desktop four-column table, and both icon cuts (#3226691677)
-- Changed: `docs/phases/phase-1.md` replanned for the second handover — responsive work folded in, task list now 22 items (#3226664834)
-- Added: `BUCKET_META` in `packages/shared` — display name, accent scope and provider per bucket id, so UI names never reach the API or database (#3226691676)
-- Added: `packages/shared/src/api.ts` — response types for portfolio, bucket detail, instrument detail, rules, activity, connections and the connect flow, with money as integer pence and per-pot `PriceFreshness` (#3226691676)
-- Added: `docker-compose.yml` — local Postgres 17 for development, serving the `DATABASE_URL` in `.env.example` (#3226691746)
-- Added: Auth.js tables (`accounts`, `sessions`, `verification_tokens`) and `waitlist` to the Drizzle schema; `users` gains the profile columns Auth.js expects (#3226691746)
-- Added: first generated migration in `apps/api/drizzle/`, plus `db:generate` / `db:migrate` / `db:studio` scripts (#3226691746)
-- Added: Google sign-in via Auth.js — `@auth/core` mounted on Fastify by hand at `/auth/*` (there is no published `@auth/fastify`), with the Drizzle adapter and server-side database sessions (#3226677189)
-- Added: the allowlist gate in `callbacks.signIn` — unverified, unlisted and email-less sign-ins are all sent to `/not-on-the-list`, so an empty allowlist admits nobody (#3226677189)
-- Added: `AllowlistStore` and `SessionStore` interfaces with Postgres and in-memory implementations, so auth tests never open a socket (#3226677189)
-- Added: 12h idle session expiry plus a 7-day absolute cap via a new `sessions.created_at` column and `isLive()` (#3226677189)
-- Added: `pnpm --filter api allowlist <list|add|remove>` CLI, the only way to grant access (#3226677189)
-- Fixed: `apps/api` ran every test suite twice, the second time against stale compiled output in `dist/`; vitest now excludes it (#3226677189)
-- Added: global session guard — an `onRequest` hook on the root instance, so every route is protected by existing; only `/health` and `/auth/*` are exempt (#3226677090)
-- Added: route-coverage test that walks the real route table and asserts every non-exempt route answers 401 without a session, failing rather than passing vacuously if the table is empty (#3226677090)
-- Added: `useSecureCookiesFromEnv()` so the guard and the Auth.js config can't disagree about the cookie name (#3226677090)
-- Added: waitlist signup — a rejected sign-in mints a 15-minute HMAC token carrying the Google-verified address, and `POST /waitlist` takes the email from inside that token rather than the request body (#3226682602)
-- Added: `WaitlistStore` with Postgres and in-memory implementations; asking twice is idempotent and keeps the first ask (#3226682602)
-- Changed: `/waitlist` joins `/health` and `/auth/*` as a session-free path, gated by its own signed token; the route is not registered at all when no `AUTH_SECRET` is configured (#3226682602)
-- Added: `market/market.ts` — the market-data interface (price, series, per-pot freshness), kept separate from trading providers so no price ever comes from a trading API (#3226691678)
-- Added: `market/stub` — deterministic prices seeded by instrument id, so fixtures, tests and screenshots agree, with per-pot staleness overrides (age, outright failure, markets closed) to exercise the amber/red ladder (#3226691678)
-- Added: read routes — `/portfolio`, `/buckets/:id`, `/instruments/:id`, `/rules`, `/activity`, `/connections`, composing what is held (trading layer) with what it's worth (market layer) (#3226676894)
-- Added: the design's sample data as fixtures, with the hard-line corrections applied at source — no copy implies Pip moves money, and no entry crosses pots (#3226676894)
-- Changed: trading provider fixtures rebuilt with the real holding set, and provider money moved from floating-point pounds to integer pence to match the API types (#3226676894)
-- Changed: current prices now come from the market layer rather than the trading fixtures, with each generated series anchored to end at that price, so hard line 8 holds structurally and not just by convention (#3226676894)
-- Fixed: `Timeframe` was defined in the shared API types but missing from the package's exports (#3226676894)
-- Fixed: stub provider threw at import — `HISTORY` was built from `MONTHS` before that const was initialised (#3226676894)
-- Added: `POST` / `DELETE /connections/:provider` — the full connect flow against a handler that inspects the key and stores nothing, ready for Phase 2 to swap in real validation behind the same responses (#3226677039)
-- Added: outright refusal of any key carrying a trade or withdraw scope, enforced in the API rather than the UI (#3226677039)
-- Changed: `docs/ARCHITECTURE.md` freshened — header, docs tree, and the `app.ts` description were still describing Phase 0 (#3226677039)
-- Removed: `docker-compose.yml`. Postgres is hosted in every environment (Neon or Supabase, with its own development database), so there is no local server and no Docker — one `DATABASE_URL` is the whole story (#3226691746)
-- Added: web foundation — every DESIGN.md token as Tailwind v4 theme variables (light, dark, the three pot scopes, amber), self-hosted fonts, router, query client and a same-origin API client (#3226691561)
-- Added: appearance that follows the device until someone chooses, stored per device and wrapped so a browser that refuses storage still themes correctly (#3226691561)
-- Added: Vite dev proxy for the API's paths, so the session cookie stays same-origin instead of being dropped as cross-site (#3226691561)
-- Added: responsive app shell — bottom tab bar under 768, a 76px icon rail from 768 with content capped at 640, a 232px labelled sidebar from 1120 with content capped at 1080 (#3227556742)
-- Added: the red alert dot on Rules at every width, and the "Read-only access" badge in the desktop sidebar (#3227556742)
-- Added: `PipMark` component that picks the small cut below 48px, which the rail and sidebar need (#3227556742)
-- Added: `pointerWords()` so screens say tap on a phone and click elsewhere, and phone/computer to match (#3227556742)
-- Added: a `matchMedia` stub in the web test setup, since jsdom has none (#3227556742)
-- Fixed: Pots went dark on pot and instrument detail — `NavLink` overwrote the `aria-current` it was given with its own route match; active state now comes from each destination's `matches` at every width (#3227556742)
-- Fixed: the mark and the Rules alert dot were hard-coded to light-mode hex values, so neither changed palette in dark mode; both now read `--pip-seed-*` and `--pip-alert` tokens (#3227556742)
-- Added: a test that fails if a hex colour appears in the shell's components, reading their source via Vite's `?raw` so it needs no Node APIs (#3227556742)
-- Added: `lib/format.ts` — every figure goes through it; `formatChange` always puts money first, so there is no way to render a bare percentage; losses use a true minus sign (#3226676977)
-- Added: the seven data blocks — `BigNumber`, `Sparkline`, `LineChart`, `BarChart`, `AllocationRing` with `StackedBar`, `HoldingsTable`, `ProgressCapBar` — plus `ProvenanceLine`, `AgeChip`, `NotAdviceLabel` and `Skeleton` (#3226676977)
-- Added: `LineChart` requires a caption and uses it as the accessible description; each instance gets its own gradient id so two charts on a screen don't share a colour (#3226676977)
-- Changed: the holdings table shows pounds before every percentage, stricter than the design prototype, which showed bare percentages there (#3226676977)
-- Added: `components/no-hex.test.ts` globs the whole folder, so new components are held to the token rule without being listed (#3226676977)
-
-- Changed: auth rebuilt on Supabase — the API verifies the Supabase access token (JWKS, issuer and audience checked, asymmetric algorithms only) on every route, then checks the allowlist: `401 unauthenticated` without a valid token, `403 not_on_the_list` without a row (#3227825365)
-- Added: `GET /me`, reachable by anyone signed in, saying whether they're allowed and linking their allowlist row to their Supabase identity on first arrival (#3227825365)
-- Changed: the waitlist is an ordinary authenticated route taking the address from the verified token; the signed waitlist token and the session-free `/waitlist` exemption are gone, leaving `/health` as the only route that answers without a token (#3227825365)
-- Changed: `buildApp()` with no verifier refuses everyone, so a misconfigured server fails closed (#3227825365)
-- Removed: Auth.js — `@auth/core`, `@auth/drizzle-adapter`, the Fastify mount, database sessions and their store, and the `AUTH_*` env vars (#3227825365)
-- Changed: `users` is now the allowlist, keyed by email and linked to Supabase's `auth.users`; the separate `allowlist` table and the Auth.js tables are gone. Migrations regenerated from scratch — none had ever been applied (#3227824374)
-- Added: Row Level Security on every table, with no policies, and `db/rls.test.ts`, which fails if a table in the schema lacks it (#3227824374)
-- Added: web sign-in through Supabase, behind a small `AuthClient` interface so screens never import Supabase and tests use a fake; every API request carries the current access token, read fresh so a refresh is always used (#3227832120)
-- Added: `RequireSession` routes by the two walls — signed out to sign in, not allowed to the refusal screen, allowed into the app — and `GET /me` in shared types as `MeResponse` (#3227832120)
-- Added: sign-in screen — the promise, one Google button, a checking state, a retry when sign-in can't start, and a desktop two-column layout (#3226677040)
-- Added: not-on-the-list screen — names the account back, joins the waiting list with the sign-in alone, and offers a different account; no promise of an email (#3226677040)
-- Fixed: a session the API rejects looped between the app and sign-in; the browser now signs it out, and the auth provider keeps its actions and unchanged state stable so signing out can't retrigger itself (#3227832120)
-- Added: Pots home screen — the hero total and verdict, timeframe pills that change every figure (keeping the old numbers up while new ones load), the three pots with Side Bet fenced and red only over its cap, the allocation ring with the target stated in words, what changed, the provenance line and the read-only footer (#3226691689)
-- Added: phone, tablet and desktop layouts for Pots — single-row pots on a tablet; pots side by side and "The shape you asked for" on desktop (#3226691689)
-- Added: loading (skeleton shapes), empty (points to connecting an account) and error (reassures, offers a retry) states for Pots (#3226691689)
-- Changed: stubbed test responses now receive the request URL, so tests can answer by query string (#3226691689)
-- Added: pot detail screen — header with badge and plain-English line, value chart with its caption and provenance, six months of money in, what's inside as a stacked bar and the holdings table, and a footer naming the provider where buying and selling actually happens (#3226677091)
-- Added: pot detail states — loading shapes, no history (value kept, only the chart replaced), an empty Side Bet that says it may stay empty, error with retry, and "no such pot" for unknown ids without calling the API (#3226677091)
-- Added: desktop sidebar lists the three pots under Pots while you're inside one, with the current pot lit (#3226677091)
-- Changed: retry policy moved from individual hooks into the app's query client — never retry a 4xx, retry 5xx and network errors twice (#3226677091)
-- Added: holding (instrument) detail screen — pot and ticker chips, quantity and unit price, what it's worth to you with today and since-you-bought led by pounds, a price chart with Day/Month/Year/All pills, the plain-English explainer under the not-advice label, and the read-only footer; a breadcrumb on desktop (#3226677041)
-- Added: price chart captions stating what the price did in pounds, since the API sends none and every chart needs a sentence (#3226677041)
-- Added: holding states — loading shapes, bought today (won't draw one day as a trend), error with retry, and "no such holding" (#3226677041)
-- Fixed: month labels could read "Sept" on some machines, because ICU versions disagree; the API's money-in labels and the chart's start label now use fixed three-letter names (#3226677041)
-- Added: Rules screen, display only — a card per pot with its target or hard cap, a bar showing where it sits and a plain-English line; an over-cap banner led by pounds and marked not advice; the monthly split described as the user's own broker setup; loading and error states; three cards side by side on desktop. No steppers or fix-it buttons — rule editing is Phase 5 (#3226682603)
-- Added: the red dot on Rules is now wired — it lights across the app when a rule reports an over-cap amount (#3226682603)
-- Added: Setup screen — connected accounts with what they feed, freshness and a Live/Expired badge; a connection card with "This key cannot place orders. Pip checked." and Disconnect; "Nothing plugged in yet" with both providers; connections and preferences side by side on desktop (#3226691747)
-- Added: connect flow — numbered steps, key field, a checking state, an unrecognised key shown back masked with "Try that again", a key that can trade refused on purpose with what must be off and no way round it, and a can't-reach-Pip state (#3226691747)
-- Added: preferences — Appearance with a way back to following the device, Hide the numbers (blurs big totals until tapped, remembered per device), currency fixed to GBP; no Nudge me until Phase 7 (#3226691747)
-- Removed: the placeholder screen, now that every section is built (#3226691747)
-- Added: the staleness ladder — one pure function turns per-pot freshness into green, amber (line naming the late pots, age chips), red (card with Try again, amber stands down, affected figures at 60%, total marked "Roughly") or markets-closed green; wired into Pots, pot detail and holding detail (#3227558097)
-- Changed: provenance lines now read "<source> · updated N min ago" instead of "Prices: <source>" (#3227558097)
-- Added: `STUB_STALENESS` env flag puts the stub dev server on any rung of the ladder; unreadable values stop startup (#3227558097)
-
-- Changed: sign-in is an emailed magic link for now instead of Google (Waqar, 2026-09-16) — email field, "Check your email", "Use a different email", and a wait message when Supabase's email limit is hit; the Google button, "Checking you're on the list" state and Google mark are removed (#3228026929)
-- Added: the real Supabase project is wired for local use — migrations applied through Drizzle, Waqar on the allowlist, `api` and `web` dev scripts read their gitignored env files, `.claude/launch.json` starts both (#3228026929)
-
-- Fixed: opening or reloading `/rules` or a holding page showed the API's raw JSON — those screen paths were also proxied API paths. The app now calls the API under `/api` (#3226682789)
-- Fixed: sample data contradicted itself — Nvidia, Apple and ASML showed today's percentages that didn't match their pounds, and holding charts didn't start at the price paid. Stub charts are now anchored and a consistency test guards the fixtures (#3226682789)
-- Fixed: Setup's sample accounts aged with the clock ("synced 2 hours ago"); their last-read times are now relative to the request (#3226682789)
-- Fixed: desktop holdings table squeezed names to one word per line; the table's column is wider and long names truncate (#3226682789)
-- Fixed: a price feed that had just failed read "Your Side Bet number is from just now" (#3226682789)
-- Added: Phase 1 run-through at phone, tablet and desktop in light and dark, signed in for real through Supabase, with the staleness ladder shown amber and red against the running stub API (#3226682789)
-
-#### Docs
-
-- Changed: CLAUDE.md s3 and the Phase 1 plan record magic-link sign-in as the one way in for now, Google later (#3228026929)
-
-- Changed: Supabase adopted for Postgres and Auth (Waqar, 2026-09-16). CLAUDE.md s3 now records Supabase Auth with Google only, Fastify as the backend and the wall, RLS as a second wall, `pg_cron` for scheduling, Realtime and Storage skipped, and Render free + Supabase free with no $25 tier on either. Folder tree and provider facts updated to match (#3226664942)
-- Added: `docs/ARCHITECTURE.md` platform section recording the decision, while the rest of the doc still describes the Auth.js build that exists today (#3226664942)
-- Added: Phase 1 rework table in `docs/phases/phase-1.md` — tasks 5–8 and 15 were built against Auth.js and are superseded (#3226664942)
-- Added: `docs/phases/phase-2-inputs.md` — decisions carried into Phase 2 planning, the Vault-versus-own-encryption recommendation, the scheduling split, and the free-tier pause mitigation (#3226664942)
-
-### Phase 0 — Scaffold
-
-- Added: pnpm workspace root — `pnpm-workspace.yaml`, root `package.json`, shared `tsconfig.base.json`, ESLint 9 flat config, Prettier, `.gitignore`, `.env.example` (#3226662417)
-- Added: `apps/web` — Vite + React 19 + TypeScript + Tailwind v4 + PWA plugin, mobile-first placeholder screen rendering the three buckets from `@finance-app/shared`, Vitest + Testing Library (#3226662419)
-- Added: `apps/api` — Fastify server with a `/health` route, `src/providers/provider.ts` trading-provider interface, Vitest (#3226660714)
-- Added: `packages/shared` — `BUCKETS`/`Bucket` constant, consumed by both apps via `workspace:*` (#3226662418)
-- Added: stub trading provider (`apps/api/src/providers/stub`) implementing `getPositions`/`getCash`/`getHistory` with fake per-bucket data, selected via `PROVIDER_MODE=stub` (#3226662452)
-- Added: Postgres + Drizzle wiring in `apps/api` — `drizzle.config.ts`, lazy `DATABASE_URL` client, minimal multi-user schema (`users`, `allowlist`); no live DB touched by tests (#3226662656)
-- Added: CI pipeline (`.github/workflows/ci.yml`) — install, lint, format check, test, build on every push to `main` and every PR, stub mode only, no secrets configured (#3226662384)
-- Added: `docs/ARCHITECTURE.md` and `docs/FEATURES.md`, plus a `docs/DESIGN.md` placeholder blocked on the Phase 1 Claude Design handover (#3226662383)
-- Added: this changelog, in keep-a-changelog format (#3226660804)
-- Changed: Phase 0's DB task rescoped from SQLite to Postgres + multi-user schema to match the updated CLAUDE.md; see `docs/phases/phase-0.md`
+- pnpm workspace, TypeScript, ESLint, Prettier, Vitest, the stub trading provider, the Drizzle and Postgres wiring, and the CI workflow.

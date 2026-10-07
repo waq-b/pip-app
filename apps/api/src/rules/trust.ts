@@ -1,7 +1,7 @@
 import { DAILY_RECENCY_HOURS, type NudgeCadence, type TrustSettings } from "@finance-app/shared";
 
 /**
- * Trust rules (Phase 5 decision 3): deterministic checks that decide whether a
+ * Trust rules : deterministic checks that decide whether a
  * nudge is shown at all. The LLM finds and writes; these decide. Pure — no
  * I/O, no clock — so the same facts and settings always give the same answer,
  * at build time and again when a week is read back after a rule changes.
@@ -96,7 +96,7 @@ export interface StageAContext {
   cadence: NudgeCadence;
   settings: TrustSettings;
   exclusions: string[];
-  /** The holding's own newsroom domains — they count for that company only (Waqar, 2026-09-17). */
+  /** The holding's own newsroom domains — they count for that company only . */
   ownNewsroomDomains: string[];
 }
 

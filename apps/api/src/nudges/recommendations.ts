@@ -11,7 +11,7 @@ import {
 } from "./triggers.js";
 
 /**
- * Recommendations on the daily path (phase-6.md decision 14): the build's
+ * Recommendations on the daily path: the build's
  * own numbers → the triggers → one brief per confirmed crossing, logged as a
  * `recommendation` nudge. Personal research only — the caller checks.
  */

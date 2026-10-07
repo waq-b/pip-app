@@ -8,7 +8,7 @@ import { NavigationRoute, registerRoute } from "workbox-routing";
 import { parsePush, safePath } from "./sw-message";
 
 /**
- * Pip's service worker (Phase 6 task 7). Built with `injectManifest` so it
+ * Pip's service worker. Built with `injectManifest` so it
  * can take pushes as well as keeping the app offline-ready:
  *
  * - precache the built app, and answer every page load with `index.html`
@@ -16,7 +16,7 @@ import { parsePush, safePath } from "./sw-message";
  * - `SKIP_WAITING` from `update.ts`, so a new version still only takes over
  *   behind the launch splash;
  * - `push`: show what the server sent — a title, a body and the screen to open.
- *   It never holds anything that could move money (hard line 1);
+ *   It never holds anything that could move money (design rule 1);
  * - `notificationclick`: open that screen, in Pip if it's already open;
  * - `pushsubscriptionchange`: subscribe again with the same key. The worker
  *   has no sign-in, so the app tells the server on its next open.

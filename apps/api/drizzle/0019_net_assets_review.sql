@@ -1,4 +1,4 @@
--- The yearly net-assets check (phase-6.md decision 13): a calendar nudge a year
+-- The yearly net-assets check: a calendar nudge a year
 -- after the figure was last given, since it's what sets Side Bet's limit and
 -- the FCA's own statement is renewed yearly.
 ALTER TABLE "nudges" DROP CONSTRAINT IF EXISTS "nudges_kind_reason";--> statement-breakpoint

@@ -10,11 +10,11 @@ import type { Db } from "../db/user-scope.js";
 import type { SideBetInput } from "./engine.js";
 
 /**
- * Side Bet's limit, and what it's judged against (phase-6.md decision 13).
+ * Side Bet's limit, and what it's judged against.
  *
  * The limit is the FCA's 10% guide applied to the net assets the user told Pip
  * — or a flat starter limit until they have. Pip can't restrict anything and
- * doesn't pretend to: it says where the line is (hard line 1). It also only
+ * doesn't pretend to: it says where the line is (design rule 1). It also only
  * counts Side Bet, not high-risk investments held anywhere else.
  *
  * What it's judged against is **money in, less taken out** over the last 12
@@ -43,7 +43,7 @@ export function windowStart(now: Date): Date {
  * their sum: deposits are positive, withdrawals negative.
  *
  * Only pounds are counted. A deposit in another currency, or crypto sent in
- * from elsewhere, isn't counted yet — Waqar's account is in pounds, and
+ * from elsewhere, isn't counted yet — the owner's account is in pounds, and
  * guessing at a rate would put a number Pip isn't sure of against a limit that
  * matters. Recorded in ARCHITECTURE as a known gap.
  */

@@ -1,8 +1,8 @@
--- Scheduled refresh (Phase 2 task 11): pg_cron asks the API to refresh.
+-- Scheduled refresh: pg_cron asks the API to refresh.
 --
 -- Where to call and the job secret live in `private.job_settings`, filled in
 -- at deploy time — never in git. Until that row exists the scheduled call does
--- nothing. The work itself runs in Fastify (hard line 6: provider keys are only
+-- nothing. The work itself runs in Fastify (design rule 5: provider keys are only
 -- ever opened there); the database only knocks on the door.
 --
 -- Schedule: every 30 minutes on weekdays 07:00–21:59 UTC (London, European

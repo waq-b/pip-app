@@ -11,7 +11,7 @@ import {
  * Phase 5 settings: the profile Pip writes for, and the trust rules that
  * decide what it may show. Behind the auth guard like every route; limits are
  * checked here whatever the screen allowed. Neither can move money, and
- * neither changes the shape rules (hard lines 1, 2).
+ * neither changes the shape rules (design rules 1, 2).
  */
 export function registerResearchSettingsRoutes(
   app: FastifyInstance,

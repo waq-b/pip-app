@@ -9,7 +9,7 @@ const RANGES: PriceRange[] = ["day", "month", "year", "all"];
  * Everything the screens read. The routes validate input and hand over to the
  * read model — stub sample data or real accounts (`read/`). Each response is
  * composed from two sources that are never mixed: what is held, and what it
- * is worth (CLAUDE.md s4).
+ * is worth.
  *
  * All of these sit behind the auth guard — registered after it, and the
  * route-coverage test proves it.

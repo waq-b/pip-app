@@ -3,7 +3,7 @@ import { getDb } from "../db/client.js";
 import { users } from "../db/schema.js";
 
 /**
- * The wall behind the wall (CLAUDE.md hard line 4). A verified token proves who
+ * The wall behind the wall (design rule 4). A verified token proves who
  * someone is; a row in `users` is what lets them in.
  *
  * An interface so tests inject a fake and never open a socket.

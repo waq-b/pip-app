@@ -39,7 +39,7 @@ export const TTL = {
   marketOpenMs: 15 * 60_000,
   unknownScheduleMs: 60 * 60_000,
   fxMs: 30 * 60_000,
-  /** Crypto never closes (Phase 3 decision 6); the scheduled job refreshes it hourly. */
+  /** Crypto never closes ; the scheduled job refreshes it hourly. */
   cryptoMs: 15 * 60_000,
   /** After a failure, leave the source alone this long. */
   failureBackoffMs: 5 * 60_000,

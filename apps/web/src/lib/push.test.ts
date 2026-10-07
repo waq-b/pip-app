@@ -10,7 +10,7 @@ import {
 } from "./push";
 
 /**
- * Push on this device (phase-6.md decision 5). The rules that matter: an
+ * Push on this device. The rules that matter: an
  * iPhone in a Safari tab is told to add Pip to the Home Screen, a push can
  * only ever open a screen inside Pip, and a dropped subscription is mended
  * quietly when permission is still granted.

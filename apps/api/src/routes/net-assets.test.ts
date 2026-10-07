@@ -4,7 +4,7 @@ import { memoryNetAssetsStore } from "../rules/net-assets.js";
 import { testAuth } from "../test-support/auth.js";
 
 /**
- * Net assets (phase-6.md decision 13): the most sensitive figure Pip holds. It
+ * Net assets: the most sensitive figure Pip holds. It
  * sets Side Bet's limit and nothing else, and neither it nor the limit comes
  * back unless it's asked for outright — the limit gives the figure away ten
  * times over.

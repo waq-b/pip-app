@@ -20,7 +20,7 @@ import {
 } from "./types.js";
 
 /**
- * The collector (Phase 5 task 3): one step of the scheduled refresh job. For
+ * The collector: one step of the scheduled refresh job. For
  * everything anyone holds, it asks each adapter whose coverage includes the
  * holding — when that read is due and the source's daily budget allows — and
  * stores what comes back in the shared facts tables. Every read is isolated: a

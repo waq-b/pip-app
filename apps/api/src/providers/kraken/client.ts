@@ -1,5 +1,5 @@
 /**
- * Kraken spot, read-only (CLAUDE.md s13, hard lines 1, 3).
+ * Kraken spot, read-only (design rules 1, 3).
  *
  * Kraken has no practice mode, so this reads a real account — which is why the
  * client can only call three methods, all reads: the key's own permissions,

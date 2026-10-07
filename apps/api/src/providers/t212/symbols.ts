@@ -1,8 +1,7 @@
 /**
  * Trading 212 tickers carry the exchange: `NVDA_US_EQ`, `GRGl_EQ` (London),
  * `ASMLa_EQ` (Amsterdam). Market-data sources want their own spelling of the
- * same listing — never the ISIN, which is shared across listings (CLAUDE.md
- * s13). Unknown formats return null and need a manual override.
+ * same listing — never the ISIN, which is shared across listings . Unknown formats return null and need a manual override.
  */
 
 interface Venue {

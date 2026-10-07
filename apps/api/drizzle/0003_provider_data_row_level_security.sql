@@ -1,7 +1,7 @@
 -- Row Level Security for the Phase 2 tables: the second wall behind the API.
 --
 -- Fastify reads user data as the `authenticated` role with the user's verified
--- JWT claims set for the transaction (Phase 2 task 4), so these policies decide
+-- JWT claims set for the transaction, so these policies decide
 -- what a route can see even if the route itself has a bug. Scheduled jobs and
 -- credential writes use the privileged connection, which bypasses RLS and does
 -- only what the job needs. The anon key the web app ships gets nothing.

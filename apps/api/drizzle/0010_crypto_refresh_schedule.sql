@@ -1,4 +1,4 @@
--- Crypto refresh around the clock (Phase 3 decision 6).
+-- Crypto refresh around the clock .
 --
 -- Stocks keep their schedule (0006). Crypto never closes, so outside those
 -- hours — weekday nights and all weekend — pg_cron asks for a refresh every

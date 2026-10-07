@@ -1,5 +1,5 @@
 /**
- * What a Kraken key may and must be able to do (Phase 3 decision 2, hard line 3).
+ * What a Kraken key may and must be able to do (design rule 3).
  * Kraken reports a key's permissions itself (`GetApiKeyInfo`), so unlike
  * Trading 212, Pip can refuse a key that could move money.
  */

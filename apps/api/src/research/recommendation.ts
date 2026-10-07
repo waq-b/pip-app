@@ -9,7 +9,7 @@ import type { NudgeDraft, PlanForWriter } from "./types.js";
 import { percentText, wholePounds } from "./words.js";
 
 /**
- * The recommendation brief (phase-6.md decision 14, CLAUDE.md hard line 12).
+ * The recommendation brief (esign rule 9).
  * Personal research only. Code has already decided the trigger, the course
  * and every pound; this file only turns them into words:
  *

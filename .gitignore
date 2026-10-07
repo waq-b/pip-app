@@ -21,3 +21,16 @@ pnpm-debug.log*
 
 # Local database dumps (Pip is parked; restore from here if Supabase won't resume it)
 backups/
+
+# Local agent/tool config and internal planning notes (never committed)
+.claude/
+CLAUDE.md
+AGENTS.md
+docs/phases/
+
+# Build output and caches
+dist/
+storybook-static/
+.venv/
+.cache/
+*.tsbuildinfo

@@ -10,7 +10,7 @@ import type { SideBetInput } from "./engine.js";
 import { checkLimitAlerts } from "./limit-alerts.js";
 
 /**
- * Side Bet's two alerts (phase-6.md decision 2). Money in, less taken out, only
+ * Side Bet's two alerts. Money in, less taken out, only
  * moves when money moves — so unlike the old percentage cap there is nothing to
  * flicker, and an alert that has spoken stays quiet until it clearly clears.
  */

@@ -38,7 +38,7 @@ import { renderWeekEmail, SEALED_R1 } from "./email.js";
 import type { NewNudge, NudgeStore, StoredNudge, StoredWeek } from "./store.js";
 
 /**
- * Building and reading "Your week" (Phase 5 task 7).
+ * Building and reading "Your week".
  *
  * Build: gather → candidates (trust rules, budgets) → words (the research
  * module; the LLM only for shown news for personalised users) → re-check
@@ -47,7 +47,7 @@ import type { NewNudge, NudgeStore, StoredNudge, StoredWeek } from "./store.js";
  *
  * Read: today's trust rules are applied again to what was stored, so a rule
  * made stricter hides a nudge straight away. A rule loosened doesn't bring
- * one back until the next build (decision 3).
+ * one back until the next build .
  */
 
 export interface NudgeUser extends ReadUser {
@@ -233,7 +233,7 @@ function rowsFor(
 }
 
 /**
- * Urgent notes go out straight away (Phase 6 decision 3) — for people with
+ * Urgent notes go out straight away  — for people with
  * personal research on only; everyone else's wait for the week. `notify()`
  * decides the rest: their switches, one push per note however many runs see
  * it, and two urgent pushes a day. A note that doesn't go out because of that
@@ -611,7 +611,7 @@ export function createNudgeService(
   }
 
   /**
-   * Monday's email and its "Your week is ready" push (phase-6.md decision 6).
+   * Monday's email and its "Your week is ready" push.
    * `notify()` checks each switch; the push is one per week by its key.
    */
   async function announceWeek(user: NudgeUser, weekOf: string, gathered: Gathered, now: Date) {

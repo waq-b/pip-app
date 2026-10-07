@@ -263,7 +263,7 @@ function Movement({ label, change }: { label: string; change: InstrumentDetail["
 /**
  * Hand-written in Phase 1 and supplied by the Phase 5 research module later.
  * Either way it reads like a view on a company, so it is labelled as
- * information, not advice (CLAUDE.md hard line 12).
+ * information, not advice (design rule 9).
  */
 function Explainer({ note }: { note: string }) {
   return (

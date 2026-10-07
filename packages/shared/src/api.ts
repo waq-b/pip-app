@@ -43,8 +43,8 @@ export type PriceRange = "day" | "month" | "year" | "all";
 
 /**
  * What the provenance line reads from. `source` names the MARKET DATA source
- * and never a trading API (CLAUDE.md hard line 8). The staleness ladder itself
- * (green / amber / red / markets-closed) is derived in Phase 1 task 21 — this
+ * and never a trading API (design rule 7). The staleness ladder itself
+ * (green / amber / red / markets-closed) is derived in the web app — this
  * is only the raw material.
  */
 export interface PriceFreshness {
@@ -143,7 +143,7 @@ export interface PortfolioSummary {
   freshness: BucketFreshness[];
   /** True when there isn't enough history to state `change` for the timeframe asked. */
   changeUnavailable?: boolean;
-  /** "What changed" isn't built from real accounts yet (Phase 2 decision 4). */
+  /** "What changed" isn't built from real accounts yet . */
   activityComingSoon?: boolean;
   /** A cap is broken: the red dot on Rules. Same engine as `/rules`. */
   rulesNeedAttention?: boolean;
@@ -192,7 +192,7 @@ export interface BucketDetail {
   moneyIn: {
     months: MonthlyContribution[];
     caption: string;
-    /** Not built from real accounts yet (Phase 2 decision 4). */
+    /** Not built from real accounts yet . */
     comingSoon?: boolean;
   };
   holdings: Holding[];
@@ -260,14 +260,14 @@ export interface RulesView {
   leftOut?: Bucket[];
   /**
    * When Side Bet is past its limit: what taking that much out would bring it
-   * back under. Arithmetic, not advice — and Pip can't do it (hard line 1).
+   * back under. Arithmetic, not advice — and Pip can't do it (design rule 1).
    */
   fixIt?: { outOfSideBet: Pence };
   /** What the user pays in monthly, as set up at their broker — Pip only reads it. */
   monthlySplit: {
     total: Pence;
     perBucket: { bucket: Bucket; amount: Pence; percent: Percent }[];
-    /** Not read from real accounts yet (Phase 2 decision 4). */
+    /** Not read from real accounts yet . */
     comingSoon?: boolean;
   };
 }
@@ -317,7 +317,7 @@ export interface Connection {
   available: boolean;
   /**
    * Whether Pip can confirm a key is read-only. Kraken can; Trading 212 has no
-   * way to ask, so Setup says so instead of "Pip checked" (Phase 2 decision 2).
+   * way to ask, so Setup says so instead of "Pip checked" .
    */
   permissionsVerified: boolean;
 }
@@ -332,7 +332,7 @@ export interface ConnectRequest {
 
 /**
  * The result of pasting a key. A key that can trade is refused outright where
- * Pip can tell (CLAUDE.md s13); where it can't, Setup says so plainly.
+ * Pip can tell; where it can't, Setup says so plainly.
  */
 export type ConnectOutcome =
   | "connected"
@@ -342,7 +342,7 @@ export type ConnectOutcome =
   | "not_pounds"
   | "unavailable"
   | "not_available_yet"
-  /** The key belongs to an account already connected to another pot (hard line 11). */
+  /** The key belongs to an account already connected to another pot (design rule 8). */
   | "same_account";
 
 export interface ConnectPermission {
@@ -370,8 +370,8 @@ export interface ConnectResult {
 export interface ProfileView {
   profile: Profile;
   /**
-   * Pip writes notes for this person's own plan. False for everyone Waqar
-   * hasn't turned it on for — they get general notes (hard line 12).
+   * Pip writes notes for this person's own plan. False for everyone the owner
+   * hasn't turned it on for — they get general notes (design rule 9).
    */
   personalised: boolean;
   /** ISO timestamp; absent until they first save. */

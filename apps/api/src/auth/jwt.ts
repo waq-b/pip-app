@@ -15,7 +15,7 @@ export interface TokenVerifier {
 
 /**
  * Verifies a Supabase access token against the project's published signing
- * keys (CLAUDE.md s3: the API verifies the JWT on every route). Issuer and
+ * keys (the API verifies the JWT on every route). Issuer and
  * audience are both checked, so a token from another Supabase project — or
  * one meant for something other than a signed-in user — is refused.
  */

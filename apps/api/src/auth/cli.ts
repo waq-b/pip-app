@@ -57,7 +57,7 @@ async function main() {
 
     case "personal": {
       // Personalised research (Phase 5): nudges written for this person's own
-      // plan. Everyone else gets general notes (hard line 12). Only here, never
+      // plan. Everyone else gets general notes (design rule 9). Only here, never
       // through the API.
       const email = requireEmail(rawEmail);
       if (rawSwitch !== "on" && rawSwitch !== "off") {

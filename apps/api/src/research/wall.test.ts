@@ -4,7 +4,7 @@ import ts from "typescript";
 import { describe, expect, it } from "vitest";
 
 /**
- * The wall (Phase 5 decision 9, hard line 2): the research module can only be
+ * The wall (design rule 2): the research module can only be
  * handed values and hand back text. Proven here, not promised in a comment —
  * every import in `research/` must stay inside `research/` or be the shared
  * types package, and nothing in it may reach the network, the environment, a

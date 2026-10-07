@@ -7,7 +7,7 @@ import {
 } from "./triggers.js";
 
 /**
- * When Pip recommends a course of action (phase-6.md decision 14). The point
+ * When Pip recommends a course of action. The point
  * of every test here: one crossing makes one recommendation, and a value that
  * flickers with prices never makes two.
  */

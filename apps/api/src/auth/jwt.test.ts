@@ -13,7 +13,7 @@ let verifier: TokenVerifier;
 
 /**
  * Real signatures, from a key generated for the test run. No Supabase project,
- * no network (CLAUDE.md hard line 7).
+ * no network (design rule 6).
  */
 beforeAll(async () => {
   const ours = await generateKeyPair("ES256");

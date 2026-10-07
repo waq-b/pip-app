@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 /**
- * The handover's two breakpoints (DESIGN.md §8): the tab bar becomes a rail at
+ * The design's two breakpoints (DESIGN.md §8): the tab bar becomes a rail at
  * 768, and the rail becomes a labelled sidebar at 1120.
  */
 export const RAIL_MIN_WIDTH = 768;

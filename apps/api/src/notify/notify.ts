@@ -4,9 +4,9 @@ import type { NotificationStore } from "./store.js";
 
 /**
  * Whether to send, and to which devices. Everything here is a rule the phase
- * plan settled (decision 1): the user's switches, one push per event, and at
+ * plan settled : the user's switches, one push per event, and at
  * most two urgent pushes a day. A notification is information — it never asks
- * for a decision and tapping it only opens Pip (hard lines 1 and 2).
+ * for a decision and tapping it only opens Pip (design rules 1 and 2).
  */
 
 export interface PushRequest {

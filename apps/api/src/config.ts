@@ -53,7 +53,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
   }
 
   const secretBox = secretBoxFromEnv(env);
-  // Real keys are never stored without encryption (hard line 6). Stub mode
+  // Real keys are never stored without encryption (design rule 5). Stub mode
   // stores none, so it can run without a master key.
   if (mode === "t212" && !secretBox) {
     throw new ConfigError(
@@ -61,7 +61,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     );
   }
 
-  // Hard line 3: practice before live. Live arrives, read-only, in Phase 8.
+  // Design rule 3: practice before live. Live arrives, read-only, in Phase 8.
   const t212Env = env.T212_ENV ?? "demo";
   if (mode === "t212" && t212Env !== "demo") {
     throw new ConfigError(`T212_ENV must be "demo" until Phase 8, not "${t212Env}"`);

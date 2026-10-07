@@ -25,10 +25,10 @@ import {
 } from "../rules/trust.js";
 
 /**
- * Candidate nudges (Phase 5 task 5): everything that might be worth saying
+ * Candidate nudges: everything that might be worth saying
  * this week or today, built from numbers and facts Pip already has, each
  * checked against the user's trust rules, then trimmed to the budgets. Pure —
- * the build (task 7) gathers the input and the research module writes the
+ * the build gathers the input and the research module writes the
  * words. Nothing here produces text a reader sees beyond the basis line and
  * check details, and nothing can act on anything.
  */
@@ -87,7 +87,7 @@ export interface CandidateInput {
   netAssets?: { reviewedAt: Date; dueReview: boolean } | null;
   /**
    * The user has personal research on. Urgent news is only ever built for
-   * them — everyone else gets general notes (hard line 12).
+   * them — everyone else gets general notes (design rule 9).
    */
   personalised?: boolean;
 }
@@ -95,7 +95,7 @@ export interface CandidateInput {
 export interface Candidate {
   kind: NudgeKind;
   /**
-   * Past the urgent line (Phase 6 decision 3): pushed straight away, and not
+   * Past the urgent line : pushed straight away, and not
    * counted against the daily budget. Only ever set on the daily path.
    */
   urgent: boolean;
@@ -375,8 +375,8 @@ export function buildCandidates(input: CandidateInput): CandidateBuild {
       }
     }
 
-    // News is a weekly nudge (Phase 5 decision 4) — except urgent news, the one
-    // daily exception (Phase 6 decision 3), and only for personal research.
+    // News is a weekly nudge  — except urgent news, the one
+    // daily exception , and only for personal research.
     if (cadence === "daily") {
       if (!input.personalised) continue;
       const urgentNews = urgentNewsFor(holding, input);
@@ -476,7 +476,7 @@ function awarenessRank(c: Candidate): [number, number, number] {
 }
 
 /**
- * Urgent news (Phase 6 decision 3): enough independent named publishers on
+ * Urgent news : enough independent named publishers on
  * one holding within a day. The quiet period around results still holds —
  * except on the results day itself, when the news *is* the results.
  */

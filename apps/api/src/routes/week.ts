@@ -3,7 +3,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { NudgeService, NudgeUser } from "../nudges/service.js";
 
 /**
- * Your week (Phase 5 task 7). Behind the auth guard like every route. Reading
+ * Your week. Behind the auth guard like every route. Reading
  * applies today's trust rules to what was built; marking what you did is the
  * only write, and only ever to your own nudge.
  */

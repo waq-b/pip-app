@@ -112,7 +112,7 @@ export const NUDGE_REASONS = {
   shape: ["cap", "drift"],
   calendar: ["earnings", "isa_year_end", "net_assets_review"],
   awareness: ["news", "move"],
-  /** Phase 6, personal research only: one per trigger (CLAUDE.md hard line 12). */
+  /** Phase 6, personal research only: one per trigger (design rule 9). */
   recommendation: ["side_bet_over_limit", "holding_multiple", "pot_off_target", "urgent_move"],
 } as const satisfies Record<NudgeKind, readonly string[]>;
 export type NudgeReason = (typeof NUDGE_REASONS)[NudgeKind][number];
