@@ -19,7 +19,7 @@ pnpm-debug.log*
 
 .turbo/
 
-# Local database dumps (Pip is parked; restore from here if Supabase won't resume it)
+# Local database dumps
 backups/
 
 # Local agent/tool config and internal planning notes (never committed)

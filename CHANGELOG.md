@@ -2,7 +2,7 @@
 
 What changed, version by version. The project was built in numbered phases, which is why "Phase N" shows up in the docs and code comments. The version numbers below are release markers only: the packages themselves stay at `0.0.0`.
 
-Pip is currently parked (see the README), so the last section is unreleased.
+Pip is currently paused (see the README), so the last section is unreleased.
 
 ## Unreleased: Phase 6, notifications and ops
 

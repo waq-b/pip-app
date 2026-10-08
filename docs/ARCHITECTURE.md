@@ -1,6 +1,6 @@
 # Architecture
 
-How Pip is put together, as built. Pip is parked (see the README) but everything below exists in the code.
+How Pip is put together, as built. Pip is currently paused (see the README) but everything below exists in the code.
 
 "Phase N" in this document and in the code comments refers to the build stages listed in [CHANGELOG.md](../CHANGELOG.md).
 
@@ -602,7 +602,7 @@ The guard is an `onRequest` hook on the root instance — deliberately not added
 
 ## Deploy (Render)
 
-Pip ran as one **Render free web service** in Frankfurt (nearest to Supabase's eu-west-1), deploying `main` automatically on every push. It is currently paused to save hosting costs, so there is no live URL; the notes below describe how it was deployed.
+Pip ran as one **Render free web service** in Frankfurt (nearest to Supabase's eu-west-1), deploying `main` automatically on every push. It is currently paused, so there is no live URL; the notes below describe how it was deployed.
 
 - **Build:** `pnpm install --frozen-lockfile`, then `web` build (needs `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` at build time), then `api` build.
 - **Start:** `cd apps/api && node --import tsx dist/server.js`. `tsx` is a runtime dependency because `@finance-app/shared` is TypeScript source; plain Node can't resolve it.

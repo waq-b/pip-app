@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/waq-b/pip-app/actions/workflows/ci.yml/badge.svg)](https://github.com/waq-b/pip-app/actions/workflows/ci.yml)
 
-> **Status: parked, not abandoned.** I paused Pip to stop paying for hosting. It works end to end against a Trading 212 practice account, but it is not deployed, so there is no live URL.
+> **Status: currently paused.** It works end to end against a Trading 212 practice account, but it is not deployed, so there is no live URL.
 
 ![Design mockup of the Pots home screen on desktop](docs/images/design-desktop-pots.jpg)
 
@@ -69,7 +69,7 @@ TypeScript monorepo (pnpm workspaces). React, Vite and Tailwind; Node and Fastif
 2. **Per-user key encryption with context binding.** The AES-GCM additional data includes user, provider, account kind and field. Master keys are versioned and there is a re-seal tool for rotation.
 3. **Fastify is the wall; Row Level Security is the second wall.** User-facing reads run in a transaction that sets the verified user id and drops to a non-bypass role (`db/user-scope.ts`), so a route bug still cannot read another user's rows. `db/rls.test.ts` exercises this, and a test walks the route table to check that every non-exempt route answers 401 without a token.
 4. **Stub mode is first class.** Providers, market data, the LLM and notification senders all have stubs that need no network.
-5. **Built to sleep.** Free-tier hosting means Pip may be asleep, so nothing pings it. Every job records a run, and a check inside the database flags stale or missing work.
+5. **Built to sleep.** Pip's API can be asleep when idle, so nothing pings it to keep it awake. Every job records a run, and a check inside the database flags stale or missing work.
 
 ## Run it locally
 

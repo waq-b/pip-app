@@ -1,6 +1,6 @@
 # Features
 
-What the app does: every screen, rule, alert and state, written for a person rather than a compiler. Pip is currently parked (see the README), so this describes the app as it stood when I paused it.
+What the app does: every screen, rule, alert and state, written for a person rather than a compiler. Pip is currently paused (see the README), so this describes the app as it stood at that point.
 
 ## Where Pip is: working, against a Trading 212 practice account
 
